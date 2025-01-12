@@ -3,8 +3,10 @@
  */
 
 // $antlr-format alignTrailingComments true, columnLimit 150, maxEmptyLinesToKeep 1, reflowComments false, useTab false
-// $antlr-format allowShortRulesOnASingleLine true, allowShortBlocksOnASingleLine true, minEmptyLines 0, alignSemicolons ownLine
-// $antlr-format alignColons trailing, singleLineOverrulesHangingColon true, alignLexerCommands true, alignLabels true, alignTrailers true
+// $antlr-format allowShortRulesOnASingleLine true, allowShortBlocksOnASingleLine true, minEmptyLines 0, alignSemicolons
+// ownLine
+// $antlr-format alignColons trailing, singleLineOverrulesHangingColon true, alignLexerCommands true, alignLabels true,
+// alignTrailers true
 
 lexer grammar JavaLexer;
 
@@ -277,24 +279,6 @@ URSHIFT_ASSIGN : '>>>=';
 // §3.8 Identifiers (must appear after all keywords in the grammar)
 
 Identifier: IdentifierStart IdentifierPart*;
-/*
-fragment
-JavaLetter
-	:	[a-zA-Z$_] // these are the "java letters" below 0x7F
-	|	// covers all characters above 0x7F which are not a surrogate
-		~[\u0000-\u007F\uD800-\uDBFF] {this.wasJavaIdentiferStart()}?
-	|	// covers UTF-16 surrogate pairs encodings for U+10000 to U+10FFFF
-		[\uD800-\uDBFF] [\uDC00-\uDFFF] {this.wasJavaIdentiferStartUTF16()}?
-	;
-
-fragment
-JavaLetterOrDigit
-	:	[a-zA-Z0-9$_] // these are the "java letters or digits" below 0x7F
-	|	// covers all characters above 0x7F which are not a surrogate
-		~[\u0000-\u007F\uD800-\uDBFF] {this.wasJavaIdentiferPart()}?
-	|	// covers UTF-16 surrogate pairs encodings for U+10000 to U+10FFFF
-		[\uD800-\uDBFF] [\uDC00-\uDFFF] {this.wasJavaIdentiferPartUTF16()}?
-    ;*/
 
 // Dropped SMP support as ANTLR has no native support for it
 fragment IdentifierStart:

@@ -171,3 +171,8 @@ cython_debug/
 .pypirc
 
 .idea
+
+# ANTLR
+gen/
+antlr/java/JavaLexer.tokens
+antlr/java/gen/
