@@ -1,0 +1,36 @@
+[build-system]
+requires = [
+    "setuptools>=75.8.0",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "java-ast"
+version = "0.0.1"
+description = "jAST: Analyzing and Modifying Java ASTs with Python"
+readme = "README.md"
+license = { file = "COPYING" }
+requires-python = ">=3.10"
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Analysis",
+]
+dependencies = [
+    "antlr4-python3-runtime>=4.13.2",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+    "pytest-html>=4.1.1",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
