@@ -1,2 +1,2 @@
-class JASTConverter():
+class JASTConverter:
     pass

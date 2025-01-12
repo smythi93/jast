@@ -2,6 +2,7 @@ from typing import Any
 
 from jast._jast import JAST
 
+
 class JNodeVisitor:
     # noinspection PyMethodMayBeStatic
     def default_result(self) -> Any:
@@ -13,7 +14,7 @@ class JNodeVisitor:
 
     def visit(self, node: JAST):
         """Visit a node."""
-        method = 'visit_' + node.__class__.__name__
+        method = "visit_" + node.__class__.__name__
         visitor = getattr(self, method, self.generic_visit)
         # noinspection PyArgumentList
         return visitor(node)

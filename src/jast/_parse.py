@@ -9,6 +9,7 @@ class ParseMode(enum.Enum):
     STMT = "stmt"
     EXPR = "expr"
 
+
 def parse(src: str, mode: ParseMode | str | int = ParseMode.UNIT) -> JAST:
     if isinstance(mode, str):
         mode = ParseMode[mode]
