@@ -19,7 +19,7 @@ class ParseMode(enum.Enum):
     EXPR = "expr"
 
 
-class SimpleErrorListener(ErrorListener):
+class _SimpleErrorListener(ErrorListener):
     # noinspection PyPep8Naming
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
         raise ParseCancellationException(f"Line {line}, Column {column}: error: {msg}")
@@ -27,13 +27,13 @@ class SimpleErrorListener(ErrorListener):
 
 class _Parser:
     def __init__(self):
-        self._error_listener = SimpleErrorListener()
+        self._error_listener = _SimpleErrorListener()
         self._parse_modes = list(ParseMode)
         self._converter = JASTConverter()
 
     def parse(self, src: str, mode: ParseMode | str | int = ParseMode.UNIT) -> JAST:
         if isinstance(mode, str):
-            mode = ParseMode[mode]
+            mode = ParseMode(mode)
         elif isinstance(mode, int):
             mode = self._parse_modes[mode]
         stream = InputStream(src)
@@ -41,15 +41,16 @@ class _Parser:
         lexer.addErrorListener(self._error_listener)
         token_stream = CommonTokenStream(lexer)
         parser = JavaParser(token_stream)
+        parser.addErrorListener(self._error_listener)
 
         if mode == ParseMode.UNIT:
             tree = parser.compilationUnit()
         elif mode == ParseMode.DECL:
             tree = parser.declarationStart()
         elif mode == ParseMode.STMT:
-            tree = parser.blockStatement()
+            tree = parser.statementStart()
         elif mode == ParseMode.EXPR:
-            tree = parser.expression()
+            tree = parser.expressionStart()
         else:
             raise ValueError(f"Invalid ParseMode: {mode}")
 

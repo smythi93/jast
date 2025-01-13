@@ -18,6 +18,14 @@ class JavaParserVisitor(ParseTreeVisitor):
     def visitDeclarationStart(self, ctx: JavaParser.DeclarationStartContext):
         return self.visitChildren(ctx)
 
+    # Visit a parse tree produced by JavaParser#statementStart.
+    def visitStatementStart(self, ctx: JavaParser.StatementStartContext):
+        return self.visitChildren(ctx)
+
+    # Visit a parse tree produced by JavaParser#expressionStart.
+    def visitExpressionStart(self, ctx: JavaParser.ExpressionStartContext):
+        return self.visitChildren(ctx)
+
     # Visit a parse tree produced by JavaParser#ordinaryCompilationUnit.
     def visitOrdinaryCompilationUnit(
         self, ctx: JavaParser.OrdinaryCompilationUnitContext

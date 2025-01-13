@@ -25,6 +25,22 @@ class JavaParserListener(ParseTreeListener):
     def exitDeclarationStart(self, ctx: JavaParser.DeclarationStartContext):
         pass
 
+    # Enter a parse tree produced by JavaParser#statementStart.
+    def enterStatementStart(self, ctx: JavaParser.StatementStartContext):
+        pass
+
+    # Exit a parse tree produced by JavaParser#statementStart.
+    def exitStatementStart(self, ctx: JavaParser.StatementStartContext):
+        pass
+
+    # Enter a parse tree produced by JavaParser#expressionStart.
+    def enterExpressionStart(self, ctx: JavaParser.ExpressionStartContext):
+        pass
+
+    # Exit a parse tree produced by JavaParser#expressionStart.
+    def exitExpressionStart(self, ctx: JavaParser.ExpressionStartContext):
+        pass
+
     # Enter a parse tree produced by JavaParser#ordinaryCompilationUnit.
     def enterOrdinaryCompilationUnit(
         self, ctx: JavaParser.OrdinaryCompilationUnitContext

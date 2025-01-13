@@ -1,4 +1,4 @@
-from _jast import (
+from jast._jast import (
     JAST,
     Identifier,
     QualifiedName,
@@ -122,7 +122,7 @@ from _jast import (
     Constant,
     Name,
     Class,
-    ExplictGenericInvocation,
+    ExplicitGenericInvocation,
     ArrayAccess,
     Member,
     Reference,
@@ -166,7 +166,6 @@ from _jast import (
     Declaration,
     PackageDeclaration,
     ImportDeclaration,
-    TopLevelDeclaration,
     EmptyDeclaration,
     ModuleDirective,
     RequiresDirective,
@@ -189,7 +188,8 @@ from _jast import (
     AnnotationConstantDeclaration,
     AnnotationDeclaration,
 )
-from _visitors import JNodeVisitor, JNodeTransformer
+from jast._parse import parse, ParseMode
+from jast._visitors import JNodeVisitor, JNodeTransformer
 
 __all__ = [
     "JAST",
@@ -315,7 +315,7 @@ __all__ = [
     "Constant",
     "Name",
     "Class",
-    "ExplictGenericInvocation",
+    "ExplicitGenericInvocation",
     "ArrayAccess",
     "Member",
     "Reference",
@@ -359,7 +359,6 @@ __all__ = [
     "Declaration",
     "PackageDeclaration",
     "ImportDeclaration",
-    "TopLevelDeclaration",
     "EmptyDeclaration",
     "ModuleDirective",
     "RequiresDirective",
@@ -383,4 +382,6 @@ __all__ = [
     "AnnotationDeclaration",
     "JNodeVisitor",
     "JNodeTransformer",
+    "parse",
+    "ParseMode",
 ]

@@ -17,7 +17,7 @@ class JAST(abc.ABC):
         pass
 
     def __iter__(self) -> Iterator[Tuple[str, "JAST" | List["JAST"]]]:
-        pass
+        return iter([])
 
 
 class _JAST(JAST, abc.ABC):
@@ -232,7 +232,7 @@ class Annotation(Modifier):
     def __init__(
         self,
         name: QualifiedName = None,
-        elements: List[ElementValuePair | "ElementValue"] = None,
+        elements: List[Union[ElementValuePair, "ElementValue"]] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -250,7 +250,7 @@ class Annotation(Modifier):
             yield "elements", self.elements
 
 
-ElementValue = ElementValueArrayInitializer | Annotation | "Expr"
+ElementValue = Union[ElementValueArrayInitializer, Annotation, "Expr"]
 
 
 # Types
@@ -860,7 +860,7 @@ class Lambda(Expr):
         parameters: Identifier
         | List[Identifier]
         | List[Union["Parameter", "VariableArityParameter"]] = None,
-        body: Expr | "Block" = None,
+        body: Union[Expr, "Block"] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -1272,13 +1272,13 @@ class Constant(Expr):
         super().__init__(**kwargs)
         if value is None:
             raise ValueError("literal is required for Constant")
-        self.literal = value
+        self.value = value
 
     def __repr__(self):
         return "Constant()"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "literal", self.literal
+        yield "value", self.value
 
 
 class Name(Expr):
@@ -1309,7 +1309,7 @@ class Class(Expr):
         yield "type", self.type
 
 
-class ExplictGenericInvocation(Expr):
+class ExplicitGenericInvocation(Expr):
     def __init__(
         self,
         type_arguments: TypeArguments = None,
@@ -1403,7 +1403,7 @@ class Reference(Expr):
 
 
 class ArrayInitializer(_JAST):
-    def __init__(self, values: List[Expr | "ArrayInitializer"] = None, **kwargs):
+    def __init__(self, values: List[Union[Expr, "ArrayInitializer"]] = None, **kwargs):
         super().__init__(**kwargs)
         self.values = values or []
 
@@ -1595,12 +1595,24 @@ class LocalVariableDeclaration(Statement):
 
 
 class Block(Statement):
+    def __init__(self, body: List[Statement] = None, **kwargs):
+        super().__init__(**kwargs)
+        self.body = body or []
+
+    def __repr__(self):
+        return "Block()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "body", self.body
+
+
+class Compound(Statement):
     def __init__(self, statements: List[Statement] = None, **kwargs):
         super().__init__(**kwargs)
         self.statements = statements or []
 
     def __repr__(self):
-        return "Block()"
+        return "Compound()"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "statements", self.statements
@@ -2119,8 +2131,8 @@ class PackageDeclaration(Declaration):
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
-            yield self.annotations
-        yield self.name
+            yield "annotations", self.annotations
+        yield "name", self.name
 
 
 # Import Declarations
@@ -2145,7 +2157,7 @@ class ImportDeclaration(Declaration):
         return f"ImportDeclaration({self.name!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield self.name
+        yield "name", self.name
 
 
 # Top Level Declarations
@@ -2184,8 +2196,8 @@ class RequiresDirective(ModuleDirective):
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
-            yield self.modifiers
-        yield self.name
+            yield "modifiers", self.modifiers
+        yield "name", self.name
 
 
 class ExportsDirective(ModuleDirective):
@@ -2205,9 +2217,9 @@ class ExportsDirective(ModuleDirective):
         return f"ExportsDirective({self.name!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield self.name
+        yield "name", self.name
         if self.to:
-            yield self.to
+            yield "to", self.to
 
 
 class OpensDirective(ModuleDirective):
@@ -2227,9 +2239,9 @@ class OpensDirective(ModuleDirective):
         return f"OpensDirective({self.name!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield self.name
+        yield "name", self.name
         if self.to:
-            yield self.to
+            yield "to", self.to
 
 
 class UsesDirective(ModuleDirective):
@@ -2247,7 +2259,7 @@ class UsesDirective(ModuleDirective):
         return f"UsesDirective({self.name!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield self.name
+        yield "name", self.name
 
 
 class ProvidesDirective(ModuleDirective):
@@ -2269,8 +2281,8 @@ class ProvidesDirective(ModuleDirective):
         return f"ProvidesDirective({self.name!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield self.name
-        yield self.with_
+        yield "name", self.name
+        yield "with", self.with_
 
 
 class ModuleDeclaration(Declaration):
@@ -2292,9 +2304,9 @@ class ModuleDeclaration(Declaration):
         return "ModuleDeclaration()"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield self.name
+        yield "open_", self.open_
         if self.directives:
-            yield self.directives
+            yield "directives", self.directives
 
 
 # Field Declarations
@@ -2317,9 +2329,9 @@ class VariableDeclarator(_JAST):
         return f"VariableDeclarator({self.id!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield self.id
+        yield "id", self.id
         if self.initializer:
-            yield self.initializer
+            yield "initializer", self.initializer
 
 
 class FieldDeclaration(Declaration):
@@ -2348,9 +2360,9 @@ class FieldDeclaration(Declaration):
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
-            yield self.modifiers
-        yield self.type
-        yield self.declarators
+            yield "modifiers", self.modifiers
+        yield "type", self.type
+        yield "declarators", self.declarators
 
 
 # Method Declarations
@@ -2468,7 +2480,7 @@ class Initializer(Declaration):
         return "Initializer()"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield self.body
+        yield "body", self.body
 
 
 class StaticInitializer(Declaration):
@@ -2482,7 +2494,7 @@ class StaticInitializer(Declaration):
         return "StaticInitializer()"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield self.body
+        yield "body", self.body
 
 
 # Constructor Declaration
@@ -2512,14 +2524,14 @@ class ConstructorDeclaration(Declaration):
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
-            yield self.modifiers
+            yield "modifiers", self.modifiers
         if self.type_parameters:
-            yield self.type_parameters
-        yield self.identifier
+            yield "type_parameters", self.type_parameters
+        yield "identifier", self.identifier
         if self.parameters:
-            yield self.parameters
+            yield "parameters", self.parameters
         if self.body:
-            yield self.body
+            yield "body", self.body
 
 
 class CompactConstructorDeclaration(Declaration):
@@ -2542,10 +2554,10 @@ class CompactConstructorDeclaration(Declaration):
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
-            yield self.modifiers
-        yield self.identifier
+            yield "modifiers", self.modifiers
+        yield "identifier", self.identifier
         if self.body:
-            yield self.body
+            yield "body", self.body
 
 
 # Constant Declarations
@@ -2573,9 +2585,9 @@ class ConstantDeclaration(Declaration):
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
-            yield self.modifiers
-        yield self.type
-        yield self.declarators
+            yield "modifiers", self.modifiers
+        yield "type", self.type
+        yield "declarators", self.declarators
 
 
 # InterfaceDeclaration
@@ -2607,16 +2619,16 @@ class InterfaceDeclaration(Declaration):
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
-            yield self.modifiers
-        yield self.identifier
+            yield "modifiers", self.modifiers
+        yield "identifier", self.identifier
         if self.type_parameters:
-            yield self.type_parameters
+            yield "type_parameters", self.type_parameters
         if self.extends:
-            yield self.extends
+            yield "extends", self.extends
         if self.permits:
-            yield self.permits
+            yield "permits", self.permits
         if self.body:
-            yield self.body
+            yield "body", self.body
 
 
 class AnnotationMethodDeclaration(Declaration):
@@ -2639,19 +2651,19 @@ class AnnotationMethodDeclaration(Declaration):
             )
         self.modifiers = modifiers or []
         self.type = type_
-        self.name = identifier
+        self.identifier = identifier
         self.default = default
 
     def __repr__(self):
-        return f"AnnotationMethodDeclaration({self.name!r})"
+        return f"AnnotationMethodDeclaration({self.identifier!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
-            yield self.modifiers
-        yield self.type
-        yield self.name
+            yield "modifiers", self.modifiers
+        yield "type", self.type
+        yield "identifier", self.identifier
         if self.default:
-            yield self.default
+            yield "default", self.default
 
 
 class AnnotationConstantDeclaration(Declaration):
@@ -2678,9 +2690,9 @@ class AnnotationConstantDeclaration(Declaration):
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
-            yield self.modifiers
-        yield self.type
-        yield self.declarators
+            yield "modifiers", self.modifiers
+        yield "type", self.type
+        yield "declarators", self.declarators
 
 
 class AnnotationDeclaration(Declaration):
@@ -2707,14 +2719,14 @@ class AnnotationDeclaration(Declaration):
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
-            yield self.modifiers
-        yield self.name
+            yield "modifiers", self.modifiers
+        yield "name", self.name
         if self.extends:
-            yield self.extends
+            yield "extends", self.extends
         if self.permits:
-            yield self.permits
+            yield "permits", self.permits
         if self.body:
-            yield self.body
+            yield "body", self.body
 
 
 # Class Declarations
@@ -2784,12 +2796,12 @@ class EnumConstant(_JAST):
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
-            yield self.annotations
-        yield self.name
+            yield "annotations", self.annotations
+        yield "name", self.name
         if self.arguments:
-            yield self.arguments
+            yield "arguments", self.arguments
         if self.body:
-            yield self.body
+            yield "body", self.body
 
 
 class EnumDeclaration(Declaration):
@@ -2816,12 +2828,14 @@ class EnumDeclaration(Declaration):
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
-            yield self.modifiers
-        yield self.name
+            yield "modifiers", self.modifiers
+        yield "name", self.name
         if self.implements:
-            yield self.implements
+            yield "implements", self.implements
+        if self.constants:
+            yield "constants", self.constants
         if self.body:
-            yield self.body
+            yield "body", self.body
 
 
 class RecordComponent(_JAST):
@@ -2838,8 +2852,8 @@ class RecordComponent(_JAST):
         return f"RecordComponent({self.identifier!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield self.type
-        yield self.identifier
+        yield "type", self.type
+        yield "identifier", self.identifier
 
 
 class RecordDeclaration(ClassDeclaration):
@@ -2868,12 +2882,16 @@ class RecordDeclaration(ClassDeclaration):
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
-            yield self.modifiers
-        yield self.name
+            yield "modifiers", self.modifiers
+        yield "name", self.name
+        if self.type_parameters:
+            yield "type_parameters", self.type_parameters
         if self.components:
-            yield self.components
+            yield "components", self.components
+        if self.implements:
+            yield "implements", self.implements
         if self.body:
-            yield self.body
+            yield "body", self.body
 
 
 # Compilation Unit
@@ -2888,7 +2906,7 @@ class OrdinaryCompilationUnit(CompilationUnit):
         self,
         package: PackageDeclaration = None,
         imports: List[ImportDeclaration] = None,
-        declarations: List[TopLevelDeclaration] = None,
+        declarations: List[Declaration] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -2901,11 +2919,10 @@ class OrdinaryCompilationUnit(CompilationUnit):
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.package:
-            yield self.package
+            yield "package", self.package
         if self.imports:
-            yield self.imports
-        if self.declarations:
-            yield self.declarations
+            yield "imports", self.imports
+        yield "declarations", self.declarations
 
 
 class ModularCompilationUnit(CompilationUnit):
@@ -2926,5 +2943,5 @@ class ModularCompilationUnit(CompilationUnit):
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.imports:
-            yield self.imports
-        yield self.module
+            yield "imports", self.imports
+        yield "module", self.module

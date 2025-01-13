@@ -64,6 +64,14 @@ declarationStart
     | recordDeclaration EOF
     ;
 
+statementStart
+    : blockStatement EOF
+    ;
+
+expressionStart
+    : expression EOF
+    ;
+
 ordinaryCompilationUnit
     : packageDeclaration? (importDeclaration | ';')* (typeDeclaration | ';')*
     ;
