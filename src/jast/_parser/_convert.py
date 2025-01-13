@@ -3,6 +3,7 @@ from typing import List, Dict, Optional
 from antlr4.ParserRuleContext import ParserRuleContext
 
 import jast._jast as jast
+from jast import TypeArguments
 from jast._parser.JavaParser import JavaParser
 from jast._parser.JavaParserVisitor import JavaParserVisitor
 
@@ -199,19 +200,15 @@ class JASTConverter(JavaParserVisitor):
             **self._get_location_rule(ctx),
         )
 
-    def visitClassExtends(
-        self, ctx: JavaParser.ClassExtendsContext
-    ) -> jast.ReferenceType:
+    def visitClassExtends(self, ctx: JavaParser.ClassExtendsContext) -> jast.Type:
         return self.visitTypeType(ctx.typeType())
 
     def visitClassImplements(
         self, ctx: JavaParser.ClassImplementsContext
-    ) -> List[jast.ReferenceType]:
+    ) -> List[jast.Type]:
         return self.visitTypeList(ctx.typeList())
 
-    def visitClassPermits(
-        self, ctx: JavaParser.ClassPermitsContext
-    ) -> List[jast.ReferenceType]:
+    def visitClassPermits(self, ctx: JavaParser.ClassPermitsContext) -> List[jast.Type]:
         return self.visitTypeList(ctx.typeList())
 
     def visitTypeParameters(
@@ -887,6 +884,17 @@ class JASTConverter(JavaParserVisitor):
                 ctx.elementValueArrayInitializer()
             )
 
+    def visitElementValueArrayInitializer(
+        self, ctx: JavaParser.ElementValueArrayInitializerContext
+    ) -> jast.ElementValueArrayInitializer:
+        return jast.ElementValueArrayInitializer(
+            values=[
+                self.visitElementValue(elementValue)
+                for elementValue in ctx.elementValue()
+            ],
+            **self._get_location_rule(ctx),
+        )
+
     def visitAnnotationTypeDeclaration(
         self, ctx: JavaParser.AnnotationTypeDeclarationContext
     ) -> jast.AnnotationDeclaration:
@@ -897,6 +905,28 @@ class JASTConverter(JavaParserVisitor):
             body=body,
             **self._get_location_rule(ctx),
         )
+
+    def visitAnnotationTypeBody(
+        self, ctx: JavaParser.AnnotationTypeBodyContext
+    ) -> List[jast.Declaration]:
+        return [
+            self.visitAnnotationTypeElementDeclaration(annotationTypeElementDeclaration)
+            for annotationTypeElementDeclaration in ctx.annotationTypeElementDeclaration()
+        ]
+
+    def visitAnnotationTypeElementDeclaration(
+        self, ctx: JavaParser.AnnotationTypeElementDeclarationContext
+    ) -> jast.Declaration:
+        if ctx.SEMI():
+            return jast.EmptyDeclaration(**self._get_location_rule(ctx))
+        else:
+            declaration = self.visitAnnotationTypeElementRest(
+                ctx.annotationTypeElementRest()
+            )
+            modifiers = [self.visitModifier(modifier) for modifier in ctx.modifier()]
+            setattr(declaration, "modifiers", modifiers)
+            self._set_location_rule(declaration, ctx)
+            return declaration
 
     def visitAnnotationTypeElementRest(
         self, ctx: JavaParser.AnnotationTypeElementRestContext
@@ -1348,6 +1378,11 @@ class JASTConverter(JavaParserVisitor):
 
     def visitFinallyBlock(self, ctx: JavaParser.FinallyBlockContext) -> jast.Block:
         return self.visitBlock(ctx.block())
+
+    def visitResourceSpecification(
+        self, ctx: JavaParser.ResourceSpecificationContext
+    ) -> List[jast.Resource | jast.QualifiedName]:
+        return self.visitResources(ctx.resources())
 
     def visitResources(
         self, ctx: JavaParser.ResourcesContext
@@ -1838,8 +1873,8 @@ class JASTConverter(JavaParserVisitor):
                 **self._get_location_rule(ctx.THIS()),
             )
         else:
-            expression = self.visitExplicitGenericInvocation(
-                ctx.explicitGenericInvocation()
+            expression = self.visitExplicitGenericInvocationSuffix(
+                ctx.explicitGenericInvocationSuffix()
             )
         return jast.ExplictGenericInvocation(
             type_arguments=self.visitNonWildcardTypeArguments(
@@ -2090,3 +2125,125 @@ class JASTConverter(JavaParserVisitor):
             else None,
             **self._get_location_rule(ctx),
         )
+
+    def visitExplicitGenericInvocation(
+        self, ctx: JavaParser.ExplicitGenericInvocationContext
+    ) -> jast.ExplictGenericInvocation:
+        return jast.ExplictGenericInvocation(
+            type_arguments=self.visitNonWildcardTypeArguments(
+                ctx.nonWildcardTypeArguments()
+            ),
+            expression=self.visitExplicitGenericInvocationSuffix(
+                ctx.explicitGenericInvocationSuffix()
+            ),
+            **self._get_location_rule(ctx),
+        )
+
+    def visitTypeArgumentsOrDiamond(
+        self, ctx: JavaParser.TypeArgumentsOrDiamondContext
+    ) -> TypeArguments:
+        if ctx.LT():
+            return jast.TypeArguments(
+                types=[],
+                **self._get_location_rule(ctx),
+            )
+        else:
+            return self.visitTypeArguments(ctx.typeArguments())
+
+    def visitNonWildcardTypeArgumentsOrDiamond(
+        self, ctx: JavaParser.NonWildcardTypeArgumentsOrDiamondContext
+    ) -> TypeArguments:
+        if ctx.LT():
+            return jast.TypeArguments(
+                types=[],
+                **self._get_location_rule(ctx),
+            )
+        else:
+            return self.visitNonWildcardTypeArguments(ctx.nonWildcardTypeArguments())
+
+    def visitNonWildcardTypeArguments(
+        self, ctx: JavaParser.NonWildcardTypeArgumentsContext
+    ):
+        return jast.TypeArguments(
+            types=self.visitTypeList(ctx.typeList()),
+            **self._get_location_rule(ctx),
+        )
+
+    def visitTypeList(self, ctx: JavaParser.TypeListContext):
+        return [self.visitTypeType(typeType) for typeType in ctx.typeType()]
+
+    def visitTypeType(self, ctx: JavaParser.TypeTypeContext) -> jast.Type:
+        if ctx.classOrInterfaceType():
+            type_ = self.visitClassOrInterfaceType(ctx.classOrInterfaceType())
+        else:
+            type_ = self.visitPrimitiveType(ctx.primitiveType())
+        if ctx.dims():
+            type_ = jast.ArrayType(
+                type_=type_,
+                dims=self.visitDims(ctx.dims()),
+                **self._get_location_rule(ctx),
+            )
+        setattr(
+            type_,
+            "annotations",
+            [self.visitAnnotation(annotation) for annotation in ctx.annotation()],
+        )
+        self._set_location_rule(type_, ctx)
+        return type_
+
+    def visitPrimitiveType(self, ctx: JavaParser.PrimitiveTypeContext):
+        if ctx.BOOLEAN():
+            return jast.Boolean(**self._get_location_rule(ctx))
+        elif ctx.CHAR():
+            return jast.Char(**self._get_location_rule(ctx))
+        elif ctx.BYTE():
+            return jast.Byte(**self._get_location_rule(ctx))
+        elif ctx.SHORT():
+            return jast.Short(**self._get_location_rule(ctx))
+        elif ctx.INT():
+            return jast.Int(**self._get_location_rule(ctx))
+        elif ctx.LONG():
+            return jast.Long(**self._get_location_rule(ctx))
+        elif ctx.FLOAT():
+            return jast.Float(**self._get_location_rule(ctx))
+        else:
+            return jast.Double(**self._get_location_rule(ctx))
+
+    def visitTypeArguments(self, ctx: JavaParser.TypeArgumentsContext) -> TypeArguments:
+        return jast.TypeArguments(
+            types=[
+                self.visitTypeArgument(typeArgument)
+                for typeArgument in ctx.typeArgument()
+            ],
+            **self._get_location_rule(ctx),
+        )
+
+    def visitSuperSuffix(self, ctx: JavaParser.SuperSuffixContext) -> jast.Super:
+        return jast.Super(
+            type_arguments=self.visitTypeArguments(ctx.typeArguments())
+            if ctx.typeArguments()
+            else None,
+            identifier=self.visitIdentifier(ctx.identifier())
+            if ctx.identifier()
+            else None,
+            arguments=self.visitArguments(ctx.arguments()) if ctx.arguments() else None,
+            **self._get_location_rule(ctx),
+        )
+
+    def visitExplicitGenericInvocationSuffix(
+        self, ctx: JavaParser.ExplicitGenericInvocationSuffixContext
+    ) -> jast.Expr:
+        if ctx.superSuffix():
+            return self.visitSuperSuffix(ctx.superSuffix())
+        else:
+            return jast.Call(
+                function=jast.Name(
+                    identifier=self.visitIdentifier(ctx.identifier()),
+                    **self._get_location_rule(ctx.identifier()),
+                ),
+                arguments=self.visitArguments(ctx.arguments()),
+                **self._get_location_rule(ctx),
+            )
+
+    def visitArguments(self, ctx: JavaParser.ArgumentsContext) -> List[jast.Expr]:
+        return self.visitExpressionList(ctx.expressionList())

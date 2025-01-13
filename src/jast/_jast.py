@@ -281,77 +281,49 @@ class PrimitiveType(Type, abc.ABC):
 
 
 class Boolean(PrimitiveType):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def __repr__(self):
         return "boolean"
 
 
 class Byte(PrimitiveType):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def __repr__(self):
         return "byte"
 
 
 class Short(PrimitiveType):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def __repr__(self):
         return "short"
 
 
 class Int(PrimitiveType):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def __repr__(self):
         return "int"
 
 
 class Long(PrimitiveType):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def __repr__(self):
         return "long"
 
 
 class Char(PrimitiveType):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def __repr__(self):
         return "char"
 
 
 class Float(PrimitiveType):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def __repr__(self):
         return "float"
 
 
 class Double(PrimitiveType):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def __repr__(self):
         return "double"
-
-
-class ReferenceType(Type, abc.ABC):
-    pass
 
 
 class WildcardBound(_JAST):
     def __init__(
         self,
-        type_: ReferenceType = None,
+        type_: Type = None,
         extends: bool = False,
         super_: bool = False,
         **kwargs,
@@ -374,7 +346,7 @@ class WildcardBound(_JAST):
         yield "type", self.type
 
 
-class Wildcard(_JAST):
+class Wildcard(Type):
     def __init__(
         self,
         annotations: List[Annotation] = None,
@@ -396,7 +368,7 @@ class Wildcard(_JAST):
 
 
 class TypeArguments(_JAST):
-    def __init__(self, types: List[ReferenceType | Wildcard] = None, **kwargs):
+    def __init__(self, types: List[Type] = None, **kwargs):
         super().__init__(**kwargs)
         if types is None:
             raise ValueError("types is required for TypeArguments")
@@ -435,21 +407,25 @@ class Coit(Type):
             yield "type_arguments", self.type_arguments
 
 
-class ClassType(ReferenceType):
+class ClassType(Type):
     def __init__(
         self,
+        annotations: List[Annotation] = None,
         coits: List[Coit] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if not coits:
             raise ValueError("coits is required")
+        self.annotations = annotations or []
         self.coits = coits
 
     def __repr__(self):
         return f"ClassType({self.coits!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.annotations:
+            yield "annotations", self.annotations
         yield "coits", self.coits
 
 
@@ -516,7 +492,7 @@ class TypeBound(_JAST):
     def __init__(
         self,
         annotations: List[Annotation] = None,
-        types: List[ReferenceType] = None,
+        types: List[Type] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -986,9 +962,7 @@ class BinOp(Expr):
 
 
 class InstanceOf(Expr):
-    def __init__(
-        self, expr: Expr = None, type_: ReferenceType | Pattern = None, **kwargs
-    ):
+    def __init__(self, expr: Expr = None, type_: Type | Pattern = None, **kwargs):
         super().__init__(**kwargs)
         if expr is None:
             raise ValueError("expr is required for InstanceOf")
@@ -2609,8 +2583,8 @@ class InterfaceDeclaration(Declaration):
         modifiers: List[Modifier] = None,
         identifier: Identifier = None,
         type_parameters: TypeParameters = None,
-        extends: List[ReferenceType] = None,
-        permits: List[ReferenceType] = None,
+        extends: List[Type] = None,
+        permits: List[Type] = None,
         body: List[Declaration] = None,
         **kwargs,
     ):
@@ -2710,8 +2684,8 @@ class AnnotationDeclaration(Declaration):
         self,
         modifiers: List[Modifier] = None,
         identifier: Identifier = None,
-        extends: List[ReferenceType] = None,
-        permits: List[ReferenceType] = None,
+        extends: List[Type] = None,
+        permits: List[Type] = None,
         body: List[Declaration] = None,
         **kwargs,
     ):
@@ -2748,9 +2722,9 @@ class ClassDeclaration(Declaration):
         modifiers: List[Modifier] = None,
         identifier: Identifier = None,
         type_parameters: TypeParameters = None,
-        extends: ReferenceType = None,
-        implements: List[ReferenceType] = None,
-        permits: List[ReferenceType] = None,
+        extends: Type = None,
+        implements: List[Type] = None,
+        permits: List[Type] = None,
         body: List[Declaration] = None,
         **kwargs,
     ):
