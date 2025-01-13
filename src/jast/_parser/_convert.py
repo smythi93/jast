@@ -553,7 +553,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitInterfaceMethodDeclaration(
         self, ctx: JavaParser.InterfaceMethodDeclarationContext
-    ) -> jast.InterfaceMethodDeclaration:
+    ) -> jast.MethodDeclaration:
         modifiers = [
             self.visitInterfaceMethodModifier(modifier)
             for modifier in ctx.interfaceMethodModifier()
@@ -572,7 +572,7 @@ class JASTConverter(JavaParserVisitor):
         dims = self.visitDims(ctx.dims()) if ctx.dims() else None
         throws = self.visitThrows_(ctx.throws_()) if ctx.throws_() else None
         body = self.visitMethodBody(ctx.methodBody())
-        return jast.InterfaceMethodDeclaration(
+        return jast.MethodDeclaration(
             modifiers=modifiers,
             type_parameters=type_parameters,
             annotations=annotations,
@@ -2247,3 +2247,54 @@ class JASTConverter(JavaParserVisitor):
 
     def visitArguments(self, ctx: JavaParser.ArgumentsContext) -> List[jast.Expr]:
         return self.visitExpressionList(ctx.expressionList())
+
+    def visitDeclarationStart(
+        self, ctx: JavaParser.DeclarationStartContext
+    ) -> jast.Declaration:
+        if ctx.packageDeclaration():
+            return self.visitPackageDeclaration(ctx.packageDeclaration())
+        elif ctx.importDeclaration():
+            return self.visitImportDeclaration(ctx.importDeclaration())
+        elif ctx.moduleDeclaration():
+            return self.visitModuleDeclaration(ctx.moduleDeclaration())
+        elif ctx.fieldDeclaration():
+            return self.visitFieldDeclaration(ctx.fieldDeclaration())
+        elif ctx.methodDeclaration():
+            return self.visitMethodDeclaration(ctx.methodDeclaration())
+        elif ctx.interfaceMethodDeclaration():
+            return self.visitInterfaceMethodDeclaration(
+                ctx.interfaceMethodDeclaration()
+            )
+        elif ctx.block():
+            if ctx.STATIC():
+                return jast.StaticInitializer(
+                    body=self.visitBlock(ctx.block()), **self._get_location_rule(ctx)
+                )
+            else:
+                return jast.Initializer(
+                    body=self.visitBlock(ctx.block()), **self._get_location_rule(ctx)
+                )
+        elif ctx.constructorDeclaration():
+            return self.visitConstructorDeclaration(ctx.constructorDeclaration())
+        elif ctx.compactConstructorDeclaration():
+            return self.visitCompactConstructorDeclaration(
+                ctx.compactConstructorDeclaration()
+            )
+        elif ctx.interfaceDeclaration():
+            return self.visitInterfaceDeclaration(ctx.interfaceDeclaration())
+        elif ctx.annotationMethodDeclaration():
+            return self.visitAnnotationMethodDeclaration(
+                ctx.annotationMethodDeclaration()
+            )
+        elif ctx.annotationConstantDeclaration():
+            return self.visitAnnotationConstantDeclaration(
+                ctx.annotationConstantDeclaration()
+            )
+        elif ctx.annotationTypeDeclaration():
+            return self.visitAnnotationTypeDeclaration(ctx.annotationTypeDeclaration())
+        elif ctx.classDeclaration():
+            return self.visitClassDeclaration(ctx.classDeclaration())
+        elif ctx.enumDeclaration():
+            return self.visitEnumDeclaration(ctx.enumDeclaration())
+        else:
+            return self.visitRecordDeclaration(ctx.recordDeclaration())

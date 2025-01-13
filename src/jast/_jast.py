@@ -2151,11 +2151,7 @@ class ImportDeclaration(Declaration):
 # Top Level Declarations
 
 
-class TopLevelDeclaration(Declaration, abc.ABC):
-    pass
-
-
-class EmptyDeclaration(TopLevelDeclaration):
+class EmptyDeclaration(Declaration):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -2365,7 +2361,7 @@ class MethodDeclaration(Declaration):
         self,
         modifiers: List[Modifier] = None,
         type_parameters: TypeParameters = None,
-        type_: Type = None,
+        return_type: Type = None,
         identifier: Identifier = None,
         parameters: FormalParameters = None,
         dims: List[Dim] = None,
@@ -2374,37 +2370,37 @@ class MethodDeclaration(Declaration):
         **kwargs,
     ):
         super().__init__(**kwargs)
-        if type_ is None:
-            raise ValueError("type_ is required for MethodDeclaration")
+        if return_type is None:
+            raise ValueError("return_type is required for MethodDeclaration")
         if identifier is None:
             raise ValueError("name is required for MethodDeclaration")
         self.modifiers = modifiers or []
         self.type_parameters = type_parameters or []
-        self.type = type_
-        self.name = identifier
+        self.return_type = return_type
+        self.identifier = identifier
         self.parameters = parameters
         self.dims = dims or []
         self.throws = throws or []
         self.body = body or []
 
     def __repr__(self):
-        return f"MethodDeclaration({self.name!r})"
+        return f"MethodDeclaration({self.identifier!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
-            yield self.modifiers
+            yield "modifiers", self.modifiers
         if self.type_parameters:
-            yield self.type_parameters
-        yield self.type
-        yield self.name
+            yield "type_parameters", self.type_parameters
+        yield "return_type", self.return_type
+        yield "identifier", self.identifier
         if self.parameters:
-            yield self.parameters
+            yield "parameters", self.parameters
         if self.dims:
-            yield self.dims
+            yield "dims", self.dims
         if self.throws:
-            yield self.throws
+            yield "throws", self.throws
         if self.body:
-            yield self.body
+            yield "body", self.body
 
 
 class InterfaceMethodDeclaration(Declaration):
@@ -2430,14 +2426,14 @@ class InterfaceMethodDeclaration(Declaration):
         self.type_parameters = type_parameters
         self.annotations = annotations or []
         self.return_type = return_type
-        self.name = identifier
+        self.identifier = identifier
         self.parameters = parameters
         self.dims = dims or []
         self.throws = throws or []
         self.body = body or []
 
     def __repr__(self):
-        return f"InterfaceMethodDeclaration({self.name!r})"
+        return f"InterfaceMethodDeclaration({self.identifier!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
@@ -2447,7 +2443,15 @@ class InterfaceMethodDeclaration(Declaration):
         if self.annotations:
             yield "annotations", self.annotations
         yield "return_type", self.return_type
-        yield "name", self.name
+        yield "name", self.identifier
+        if self.parameters:
+            yield "parameters", self.parameters
+        if self.dims:
+            yield "dims", self.dims
+        if self.throws:
+            yield "throws", self.throws
+        if self.body:
+            yield "body", self.body
 
 
 # Initializers
@@ -2730,7 +2734,7 @@ class ClassDeclaration(Declaration):
     ):
         super().__init__(**kwargs)
         if identifier is None:
-            raise ValueError("name is required for NormalClassDeclaration")
+            raise ValueError("name is required for ClassDeclaration")
         self.modifiers = modifiers or []
         self.identifier = identifier
         self.type_parameters = type_parameters or []
@@ -2740,7 +2744,7 @@ class ClassDeclaration(Declaration):
         self.body = body or []
 
     def __repr__(self):
-        return f"NormalClassDeclaration({self.identifier!r})"
+        return f"ClassDeclaration({self.identifier!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
@@ -2788,7 +2792,7 @@ class EnumConstant(_JAST):
             yield self.body
 
 
-class EnumDeclaration(ClassDeclaration):
+class EnumDeclaration(Declaration):
     def __init__(
         self,
         modifiers: List[Modifier] = None,

@@ -45,6 +45,25 @@ compilationUnit
     | modularCompilationUnit EOF
     ;
 
+declarationStart
+    : packageDeclaration EOF
+    | importDeclaration EOF
+    | moduleDeclaration EOF
+    | fieldDeclaration EOF
+    | methodDeclaration EOF
+    | interfaceMethodDeclaration EOF
+    | STATIC? block EOF
+    | constructorDeclaration EOF
+    | compactConstructorDeclaration EOF
+    | interfaceDeclaration EOF
+    | annotationMethodDeclaration EOF
+    | annotationConstantDeclaration EOF
+    | annotationTypeDeclaration EOF
+    | classDeclaration EOF
+    | enumDeclaration EOF
+    | recordDeclaration EOF
+    ;
+
 ordinaryCompilationUnit
     : packageDeclaration? (importDeclaration | ';')* (typeDeclaration | ';')*
     ;
