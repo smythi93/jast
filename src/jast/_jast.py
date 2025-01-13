@@ -427,41 +427,23 @@ class Coit(Type):
 class ClassType(ReferenceType):
     def __init__(
         self,
+        annotations: List[Annotation] = None,
         coits: List[Coit] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if not coits:
             raise ValueError("coits is required")
+        self.annotations = annotations or []
         self.coits = coits
 
     def __repr__(self):
         return f"ClassType({self.coits!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "coits", self.coits
-
-
-class TypeVariable(Type):
-    def __init__(
-        self,
-        annotations: List[Annotation] = None,
-        identifier: Identifier = None,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        if identifier is None:
-            raise ValueError("identifier is required")
-        self.annotations = annotations or []
-        self.identifier = identifier
-
-    def __repr__(self):
-        return f"TypeVariable({self.identifier!r})"
-
-    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
             yield "annotations", self.annotations
-        yield "identifier", self.identifier
+        yield "coits", self.coits
 
 
 class Dim(_JAST):
@@ -478,10 +460,17 @@ class Dim(_JAST):
 
 
 class ArrayType(Type):
-    def __init__(self, type_: Type = None, dims: List[Dim] = None, **kwargs):
+    def __init__(
+        self,
+        annotations: List[Annotation] = None,
+        type_: Type = None,
+        dims: List[Dim] = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         if type_ is None:
             raise ValueError("type_ is required")
+        self.annotations = annotations or []
         self.type = type_
         self.dims = dims or []
 
@@ -489,8 +478,11 @@ class ArrayType(Type):
         return f"ArrayType({self.type!r}{'[]' * len(self.dims)})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.annotations:
+            yield "annotations", self.annotations
         yield "type", self.type
-        yield "dims", self.dims
+        if self.dims:
+            yield "dims", self.dims
 
 
 class VariableDeclaratorId(_JAST):
@@ -581,25 +573,53 @@ class Pattern(_JAST):
         self,
         modifiers: List[Modifier] = None,
         type_: Type = None,
-        declarators: List["VariableDeclarator"] = None,
+        annotations: List[Annotation] = None,
+        identifier: Identifier = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if type_ is None:
-            raise ValueError("type_ is required for LocalVariableDecl")
+            raise ValueError("type_ is required for Pattern")
+        if identifier is None:
+            raise ValueError("identifier is required for Pattern")
         self.modifiers = modifiers or []
         self.type = type_
-        self.declarators = declarators or []
+        self.annotations = annotations or []
+        self.identifier = identifier
 
     def __repr__(self):
-        return f"VariableDecl({self.type!r})"
+        return f"Pattern({self.type!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
         yield "type", self.type
-        if self.declarators:
-            yield "declarators", self.declarators
+        if self.annotations:
+            yield "annotations", self.annotations
+        yield "identifier", self.identifier
+
+
+class GuardedPattern(_JAST):
+    def __init__(
+        self,
+        pattern: Pattern = None,
+        conditions: List["Expr"] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if pattern is None:
+            raise ValueError("pattern is required for GuardedPattern")
+        if conditions is None:
+            raise ValueError("condition is required for GuardedPattern")
+        self.pattern = pattern
+        self.conditions = conditions
+
+    def __repr__(self):
+        return f"GuardedPattern({self.pattern!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "pattern", self.pattern
+        yield "conditions", self.conditions
 
 
 # Operators
@@ -899,6 +919,34 @@ class Assignment(Expr):
         yield "value", self.value
 
 
+class IfExp(Expr):
+    def __init__(
+        self,
+        test: Expr = None,
+        body: Expr = None,
+        orelse: Expr = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if test is None:
+            raise ValueError("test is required for IfExp")
+        if body is None:
+            raise ValueError("body is required for IfExp")
+        if orelse is None:
+            raise ValueError("orelse is required for IfExp")
+        self.test = test
+        self.body = body
+        self.orelse = orelse
+
+    def __repr__(self):
+        return "IfExp()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "test", self.test
+        yield "body", self.body
+        yield "orelse", self.orelse
+
+
 class Conditional(Expr):
     def __init__(
         self,
@@ -1034,33 +1082,11 @@ class Cast(Expr):
         yield "expr", self.expr
 
 
-class SwitchExpr(Expr):
-    def __init__(
-        self,
-        expr: Expr = None,
-        block: "SwitchBlock" = None,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        if expr is None:
-            raise ValueError("expr is required for SwitchExpr")
-        if block is None:
-            raise ValueError("block is required for SwitchExpr")
-        self.expr = expr
-        self.block = block
-
-    def __repr__(self):
-        return "SwitchExpr()"
-
-    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "expr", self.expr
-        yield "block", self.block
-
 class ObjectCreation(Expr):
     def __init__(
         self,
         type_arguments: TypeArguments = None,
-        type_: List[AnnotatedIdentifier] = None,
+        type_: Type = None,
         arguments: List[Expr] = None,
         body: List["Declaration"] = None,
         **kwargs,
@@ -1139,23 +1165,217 @@ class ArrayCreation(Expr):
             yield "initializer", self.initializer
 
 
-class Reference(Expr):
+class SwitchExprRule(_JAST):
+    def __init__(
+        self,
+        label: "SwitchLabel" = None,
+        cases: List[Expr | GuardedPattern] = None,
+        arrow: bool = False,
+        body: List["Statement"] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if label is None:
+            raise ValueError("label is required for SwitchExprRule")
+        if not cases:
+            raise ValueError("cases is required for SwitchExprRule")
+        if not body:
+            raise ValueError("body is required for SwitchExprRule")
+        self.label = label
+        self.cases = cases
+        self.arrow = arrow
+        self.body = body
+
+    def __repr__(self):
+        return "SwitchExprRule()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "label", self.label
+        yield "cases", self.cases
+        yield "body", self.body
+
+
+class SwitchExpr(Expr):
     def __init__(
         self,
         expr: Expr = None,
+        rules: List[SwitchExprRule] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if expr is None:
+            raise ValueError("expr is required for SwitchExpr")
+        self.expr = expr
+        self.rules = rules or []
+
+    def __repr__(self):
+        return "SwitchExpr()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "expr", self.expr
+        if self.rules:
+            yield "rules", self.rules
+
+
+class This(Expr):
+    def __init__(
+        self,
+        arguments: List[Expr] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.arguments = arguments
+
+    def __repr__(self):
+        return "This()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.arguments:
+            yield "arguments", self.arguments
+
+
+class Super(Expr):
+    def __init__(
+        self,
+        type_arguments: TypeArguments = None,
+        identifier: Identifier = None,
+        arguments: List[Expr] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.type_arguments = type_arguments
+        self.identifier = identifier
+        self.arguments = arguments
+
+    def __repr__(self):
+        return "Super()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.type_arguments:
+            yield "type_arguments", self.type_arguments
+        if self.identifier:
+            yield "identifier", self.identifier
+        if self.arguments:
+            yield "arguments", self.arguments
+
+
+class Constant(Expr):
+    def __init__(self, value: Literal = None, **kwargs):
+        super().__init__(**kwargs)
+        if value is None:
+            raise ValueError("literal is required for Constant")
+        self.literal = value
+
+    def __repr__(self):
+        return "Constant()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "literal", self.literal
+
+
+class Name(Expr):
+    def __init__(self, identifier: Identifier = None, **kwargs):
+        super().__init__(**kwargs)
+        if identifier is None:
+            raise ValueError("identifier is required for Name")
+        self.identifier = identifier
+
+    def __repr__(self):
+        return "Name()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "identifier", self.identifier
+
+
+class Class(Expr):
+    def __init__(self, type_: Type = None, **kwargs):
+        super().__init__(**kwargs)
+        if type_ is None:
+            raise ValueError("type_ is required for Class")
+        self.type = type_
+
+    def __repr__(self):
+        return "Class()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "type", self.type
+
+
+class ExplictGenericInvocation(Expr):
+    def __init__(
+        self,
+        type_arguments: TypeArguments = None,
+        expr: Expr = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if expr is None:
+            raise ValueError("expr is required for ExplicitGenericInvocation")
+        self.type_arguments = type_arguments
+        self.expr = expr
+
+    def __repr__(self):
+        return "ExplicitGenericInvocation()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.type_arguments:
+            yield "type_arguments", self.type_arguments
+        yield "expr", self.expr
+
+
+class ArrayAccess(Expr):
+    def __init__(self, expr: Expr = None, index: Expr = None, **kwargs):
+        super().__init__(**kwargs)
+        if expr is None:
+            raise ValueError("expr is required for ArrayAccess")
+        if index is None:
+            raise ValueError("index is required for ArrayAccess")
+        self.expr = expr
+        self.index = index
+
+    def __repr__(self):
+        return "ArrayAccess()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "expr", self.expr
+        yield "index", self.index
+
+
+class Member(Expr):
+    def __init__(self, expr: Expr = None, member: Expr = None, **kwargs):
+        super().__init__(**kwargs)
+        if expr is None:
+            raise ValueError("expr is required for Member")
+        if member is None:
+            raise ValueError("member is required for Member")
+        self.expr = expr
+        self.member = member
+
+    def __repr__(self):
+        return "Member()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "expr", self.expr
+        yield "member", self.member
+
+
+class Reference(Expr):
+    def __init__(
+        self,
+        type_: Expr | Type = None,
         type_arguments: TypeArguments = None,
         identifier: Identifier = None,
         new: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        if expr is None:
-            raise ValueError("expr is required for Reference")
+        if type_ is None:
+            raise ValueError("type_ is required for Reference")
         if new and Identifier:
             raise ValueError("new and identifier are mutually exclusive for Reference")
-        if not new and not identifier:
-            raise ValueError("identifier or new is required for Reference")
-        self.expr = expr
+        if new == bool(identifier):
+            raise ValueError("new and identifier are mutually exclusive for Reference")
+        self.type = type_
         self.type_arguments = type_arguments
         self.identifier = identifier
         self.new = new
@@ -1164,13 +1384,11 @@ class Reference(Expr):
         return "Reference()"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "expr", self.expr
+        yield "type", self.type
         if self.type_arguments:
             yield "type_arguments", self.type_arguments
         if self.identifier:
             yield "identifier", self.identifier
-        if self.new:
-            yield "new", self.new
 
 
 # Arrays

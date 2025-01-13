@@ -184,7 +184,7 @@ dims
     ;
 
 dim
-    : '[' ']'
+    : annotation* '[' ']'
     ;
 
 throws_
@@ -670,6 +670,7 @@ logicalOrExpression
 
 ternaryExpression
     : logicalOrExpression bop = '?' expression ':' ternaryExpression // Level 2
+    | logicalOrExpression bop = '?' expression ':' lambdaExpression // Level 2
     | logicalOrExpression
     ;
 
@@ -823,7 +824,7 @@ typeList
     ;
 
 typeType
-    : annotation* (classOrInterfaceType | primitiveType) (annotation* '[' ']')*
+    : annotation* (classOrInterfaceType | primitiveType) dims?
     ;
 
 primitiveType
