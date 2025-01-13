@@ -651,14 +651,6 @@ class JavaParserListener(ParseTreeListener):
     def exitUnannClassType(self, ctx: JavaParser.UnannClassTypeContext):
         pass
 
-    # Enter a parse tree produced by JavaParser#unannInterfaceType.
-    def enterUnannInterfaceType(self, ctx: JavaParser.UnannInterfaceTypeContext):
-        pass
-
-    # Exit a parse tree produced by JavaParser#unannInterfaceType.
-    def exitUnannInterfaceType(self, ctx: JavaParser.UnannInterfaceTypeContext):
-        pass
-
     # Enter a parse tree produced by JavaParser#unannTypeVariable.
     def enterUnannTypeVariable(self, ctx: JavaParser.UnannTypeVariableContext):
         pass
@@ -1775,22 +1767,6 @@ class JavaParserListener(ParseTreeListener):
     def exitPrimary(self, ctx: JavaParser.PrimaryContext):
         pass
 
-    # Enter a parse tree produced by JavaParser#primaryNoNewArray.
-    def enterPrimaryNoNewArray(self, ctx: JavaParser.PrimaryNoNewArrayContext):
-        pass
-
-    # Exit a parse tree produced by JavaParser#primaryNoNewArray.
-    def exitPrimaryNoNewArray(self, ctx: JavaParser.PrimaryNoNewArrayContext):
-        pass
-
-    # Enter a parse tree produced by JavaParser#pNNA.
-    def enterPNNA(self, ctx: JavaParser.PNNAContext):
-        pass
-
-    # Exit a parse tree produced by JavaParser#pNNA.
-    def exitPNNA(self, ctx: JavaParser.PNNAContext):
-        pass
-
     # Enter a parse tree produced by JavaParser#classLiteral.
     def enterClassLiteral(self, ctx: JavaParser.ClassLiteralContext):
         pass
@@ -1929,28 +1905,12 @@ class JavaParserListener(ParseTreeListener):
     def exitArgumentList(self, ctx: JavaParser.ArgumentListContext):
         pass
 
-    # Enter a parse tree produced by JavaParser#methodReference.
-    def enterMethodReference(self, ctx: JavaParser.MethodReferenceContext):
-        pass
-
-    # Exit a parse tree produced by JavaParser#methodReference.
-    def exitMethodReference(self, ctx: JavaParser.MethodReferenceContext):
-        pass
-
     # Enter a parse tree produced by JavaParser#postfixExpression.
     def enterPostfixExpression(self, ctx: JavaParser.PostfixExpressionContext):
         pass
 
     # Exit a parse tree produced by JavaParser#postfixExpression.
     def exitPostfixExpression(self, ctx: JavaParser.PostfixExpressionContext):
-        pass
-
-    # Enter a parse tree produced by JavaParser#pfE.
-    def enterPfE(self, ctx: JavaParser.PfEContext):
-        pass
-
-    # Exit a parse tree produced by JavaParser#pfE.
-    def exitPfE(self, ctx: JavaParser.PfEContext):
         pass
 
     # Enter a parse tree produced by JavaParser#postIncrementExpression.
@@ -2211,14 +2171,6 @@ class JavaParserListener(ParseTreeListener):
 
     # Exit a parse tree produced by JavaParser#switchExpression.
     def exitSwitchExpression(self, ctx: JavaParser.SwitchExpressionContext):
-        pass
-
-    # Enter a parse tree produced by JavaParser#constantExpression.
-    def enterConstantExpression(self, ctx: JavaParser.ConstantExpressionContext):
-        pass
-
-    # Exit a parse tree produced by JavaParser#constantExpression.
-    def exitConstantExpression(self, ctx: JavaParser.ConstantExpressionContext):
         pass
 
 

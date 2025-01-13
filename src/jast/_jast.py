@@ -1,5 +1,5 @@
 import abc
-from typing import List, Any
+from typing import List, Any, Iterator, Tuple
 
 
 class JAST(abc.ABC):
@@ -13,7 +13,7 @@ class JAST(abc.ABC):
     def __repr__(self):
         pass
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, "JAST" | List["JAST"]]]:
         pass
 
 
@@ -43,120 +43,21 @@ class Identifier(_JAST):
         return f"Identifier({self.name!r})"
 
 
-class TypeIdentifier(_JAST):
-    def __init__(self, name: str, **kwargs):
-        super().__init__(**kwargs)
-        self.name = name
-
-    def __repr__(self):
-        return f"TypeIdentifier({self.name!r})"
-
-
-class MethodIdentifier(_JAST):
-    def __init__(self, name: str, **kwargs):
-        super().__init__(**kwargs)
-        self.name = name
-
-    def __repr__(self):
-        return f"MethodIdentifier({self.name!r})"
-
-
 # Names
 
 
-class ModuleName(_JAST):
-    def __init__(
-        self, identifier: Identifier = None, attr: "ModuleName" = None, **kwargs
-    ):
+class QualifiedName(_JAST):
+    def __init__(self, identifiers: List[Identifier] = None, **kwargs):
         super().__init__(**kwargs)
-        if identifier is None:
-            raise ValueError("identifier is required for ModuleName")
-        self.identifier = identifier
-        self.attr = attr
+        if not identifiers:
+            raise ValueError("identifier is required for QualifiedName")
+        self.identifiers = identifiers
 
     def __repr__(self):
-        return f"ModuleName({self.identifier!r})"
+        return f"QualifiedName({self.identifiers!r})"
 
-    def __iter__(self):
-        yield self.identifier
-        if self.attr:
-            yield self.attr
-
-
-class PackageName(_JAST):
-    def __init__(
-        self, identifier: Identifier = None, attr: "PackageName" = None, **kwargs
-    ):
-        super().__init__(**kwargs)
-        if identifier is None:
-            raise ValueError("identifier is required for PackageName")
-        self.identifier = identifier
-        self.attr = attr
-
-    def __repr__(self):
-        return f"PackageName({self.identifier!r})"
-
-    def __iter__(self):
-        yield self.identifier
-        if self.attr:
-            yield self.attr
-
-
-class TypeName(_JAST):
-    def __init__(
-        self, package: PackageName = None, identifier: TypeIdentifier = None, **kwargs
-    ):
-        super().__init__(**kwargs)
-        if package is None:
-            raise ValueError("package is required for TypeName")
-        self.package = package
-        self.identifier = identifier
-
-    def __repr__(self):
-        return f"TypeName({self.package!r})"
-
-    def __iter__(self):
-        yield self.package
-        if self.identifier:
-            yield self.identifier
-
-
-class AmbigousName(_JAST):
-    def __init__(
-        self, identifier: Identifier = None, attr: "AmbigousName" = None, **kwargs
-    ):
-        super().__init__(**kwargs)
-        if identifier is None:
-            raise ValueError("identifier is required for AmbigousName")
-        self.identifier = identifier
-        self.attr = attr
-
-    def __repr__(self):
-        return f"AmbigousName({self.identifier!r})"
-
-    def __iter__(self):
-        yield self.identifier
-        if self.attr:
-            yield self.attr
-
-
-class ExpressionName(_JAST):
-    def __init__(
-        self, attr: AmbigousName = None, identifier: Identifier = None, **kwargs
-    ):
-        super().__init__(**kwargs)
-        if identifier is None:
-            raise ValueError("identifier is required for ExpressionName")
-        self.attr = attr
-        self.identifier = identifier
-
-    def __repr__(self):
-        return f"ExpressionName({self.identifier!r})"
-
-    def __iter__(self):
-        if self.attr:
-            yield self.attr
-        yield self.identifier
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "identifiers", self.identifiers
 
 
 # Literals
@@ -176,17 +77,17 @@ class IntegerLiteral(Literal):
         super().__init__(value, **kwargs)
 
 
-class FloatingPointLiteral(Literal):
+class FloatLiteral(Literal):
     def __init__(self, value: float, **kwargs):
         super().__init__(value, **kwargs)
 
 
-class BooleanLiteral(Literal):
+class BoolLiteral(Literal):
     def __init__(self, value: bool, **kwargs):
         super().__init__(value, **kwargs)
 
 
-class CharacterLiteral(Literal):
+class CharLiteral(Literal):
     def __init__(self, value: str, **kwargs):
         super().__init__(value, **kwargs)
 
@@ -283,40 +184,67 @@ class Native(Modifier):
         return "Native()"
 
 
-VariableModifier = Final | Annotation
-
-FieldModifier = (
-    Annotation | Public | Protected | Private | Static | Final | Transient | Volatile
-)
+class Default(Modifier):
+    def __repr__(self):
+        return "Default()"
 
 
-RequiresModifier = Transitive | Static
+class ElementValuePair(_JAST):
+    def __init__(
+        self, identifier: Identifier = None, value: "ElementValue" = None, **kwargs
+    ):
+        super().__init__(**kwargs)
+        if identifier is None:
+            raise ValueError("identifier is required for ElementValuePair")
+        if value is None:
+            raise ValueError("value is required for ElementValuePair")
+        self.identifier = identifier
+        self.value = value
 
-MethodModifier = (
-    Annotation
-    | Public
-    | Protected
-    | Private
-    | Abstract
-    | Static
-    | Final
-    | Synchronized
-    | Native
-    | Strictfp
-)
+    def __repr__(self):
+        return f"ElementValuePair({self.identifier!r})"
 
-ClassModifier = (
-    Annotation
-    | Public
-    | Protected
-    | Private
-    | Abstract
-    | Static
-    | Final
-    | Sealed
-    | NonSealed
-    | Strictfp
-)
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "identifier", self.identifier
+        yield "value", self.value
+
+
+class ElementValueArrayInitializer(_JAST):
+    def __init__(self, values: List["ElementValue"] = None, **kwargs):
+        super().__init__(**kwargs)
+        self.values = values or []
+
+    def __repr__(self):
+        return f"ElementValueArrayInitializer({self.values!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "values", self.values
+
+
+class Annotation(Modifier):
+    def __init__(
+        self,
+        name: QualifiedName = None,
+        elements: List[ElementValuePair] | "ElementValue" = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if name is None:
+            raise ValueError("name is required for Annotation")
+        self.name = name
+        self.elements = elements
+
+    def __repr__(self):
+        return f"Annotation({self.name!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "name", self.name
+        if self.elements:
+            yield "elements", self.elements
+
+
+ElementValue = ElementValueArrayInitializer | Annotation | "Expr"
+
 
 # Types
 
@@ -330,14 +258,19 @@ class Void(Type):
         return "void"
 
 
+class Var(Type):
+    def __repr__(self):
+        return "var"
+
+
 class PrimitiveType(Type, abc.ABC):
     def __init__(self, annotations: List[Annotation] = None, **kwargs):
         super().__init__(**kwargs)
         self.annotations = annotations or []
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
-            yield self.annotations
+            yield "annotations", self.annotations
 
 
 class Boolean(PrimitiveType):
@@ -404,25 +337,34 @@ class Double(PrimitiveType):
         return "double"
 
 
-class ReferenceType(Type):
+class ReferenceType(Type, abc.ABC):
     pass
 
 
 class WildcardBound(_JAST):
-    def __init__(self, type_: ReferenceType = None, extends: bool = None, **kwargs):
+    def __init__(
+        self,
+        type_: ReferenceType = None,
+        extends: bool = False,
+        super_: bool = False,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         if type_ is None:
             raise ValueError("type_ is required for WildcardBound")
-        if extends is None:
-            raise ValueError("extends is required for WildcardBound")
+        if extends == super_:
+            raise ValueError(
+                "extends and super_ are mutually exclusive for WildcardBound"
+            )
         self.type = type_
         self.extends = extends
+        self.super = super_
 
     def __repr__(self):
         return f"WildcardBound({self.type!r})"
 
-    def __iter__(self):
-        yield self.type
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "type", self.type
 
 
 class Wildcard(_JAST):
@@ -439,80 +381,72 @@ class Wildcard(_JAST):
     def __repr__(self):
         return "Wildcard()"
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
-            yield self.annotations
+            yield "annotations", self.annotations
         if self.bound:
-            yield self.bound
+            yield "bound", self.bound
 
 
 class TypeArguments(_JAST):
     def __init__(self, types: List[ReferenceType | Wildcard] = None, **kwargs):
         super().__init__(**kwargs)
-        if not types:
+        if types is None:
             raise ValueError("types is required for TypeArguments")
         self.types = types
 
     def __repr__(self):
         return f"TypeArguments({self.types!r})"
 
-    def __iter__(self):
-        yield self.types
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "types", self.types
 
 
 class Coit(Type):
     def __init__(
         self,
-        annotations: List[Annotation] = None,
-        identifier: TypeIdentifier = None,
+        identifier: Identifier = None,
         arguments: TypeArguments = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if identifier is None:
             raise ValueError("identifier is required")
-        self.annotations = annotations or []
         self.identifier = identifier
         self.arguments = arguments
 
     def __repr__(self):
         return f"Coit({self.identifier!r})"
 
-    def __iter__(self):
-        if self.annotations:
-            yield self.annotations
-        yield self.identifier
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "identifier", self.identifier
         if self.arguments:
-            yield self.arguments
+            yield "arguments", self.arguments
 
 
 class ClassType(ReferenceType):
     def __init__(
         self,
-        package: PackageName = None,
         coits: List[Coit] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if not coits:
             raise ValueError("coits is required")
-        self.package = package
         self.coits = coits
 
     def __repr__(self):
         return f"ClassType({self.coits!r})"
 
-    def __iter__(self):
-        if self.package:
-            yield self.package
-        yield self.coits
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "coits", self.coits
 
 
 class TypeVariable(Type):
     def __init__(
         self,
         annotations: List[Annotation] = None,
-        identifier: TypeIdentifier = None,
+        identifier: Identifier = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -524,10 +458,10 @@ class TypeVariable(Type):
     def __repr__(self):
         return f"TypeVariable({self.identifier!r})"
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
-            yield self.annotations
-        yield self.identifier
+            yield "annotations", self.annotations
+        yield "identifier", self.identifier
 
 
 class Dim(_JAST):
@@ -535,9 +469,12 @@ class Dim(_JAST):
         super().__init__(**kwargs)
         self.annotations = annotations or []
 
-    def __iter__(self):
+    def __repr__(self):
+        return "Dim()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
-            yield self.annotations
+            yield "annotations", self.annotations
 
 
 class ArrayType(Type):
@@ -551,9 +488,9 @@ class ArrayType(Type):
     def __repr__(self):
         return f"ArrayType({self.type!r}{'[]' * len(self.dims)})"
 
-    def __iter__(self):
-        yield self.type
-        yield self.dims
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "type", self.type
+        yield "dims", self.dims
 
 
 class VariableDeclaratorId(_JAST):
@@ -567,35 +504,41 @@ class VariableDeclaratorId(_JAST):
     def __repr__(self):
         return f"VariableDeclaratorId({self.identifier!r})"
 
-    def __iter__(self):
-        yield self.identifier
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "identifier", self.identifier
         if self.dims:
-            yield self.dims
+            yield "dims", self.dims
 
 
 # Type Parameters
 
 
 class TypeBound(_JAST):
-    def __init__(self, types: List[ClassType] = None, **kwargs):
+    def __init__(
+        self,
+        annotations: List[Annotation] = None,
+        types: List[ReferenceType] = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         if not types:
             raise ValueError("types is required for TypeBound")
+        self.annotations = annotations or []
         self.types = types
 
     def __repr__(self):
         return f"TypeBound({self.types!r})"
 
-    def __iter__(self):
-        yield self.types
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "types", self.types
 
 
 class TypeParameter(_JAST):
     def __init__(
         self,
         annotations: List[Annotation] = None,
-        identifier: TypeIdentifier = None,
-        bound: TypeBound | TypeVariable = None,
+        identifier: Identifier = None,
+        bound: TypeBound = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -608,12 +551,641 @@ class TypeParameter(_JAST):
     def __repr__(self):
         return f"TypeParameter({self.identifier!r})"
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
-            yield self.annotations
-        yield self.identifier
+            yield "annotations", self.annotations
+        yield "identifier", self.identifier
         if self.bound:
-            yield self.bound
+            yield "bound", self.bound
+
+
+class TypeParameters(_JAST):
+    def __init__(self, parameters: List[TypeParameter] = None, **kwargs):
+        super().__init__(**kwargs)
+        if not parameters:
+            raise ValueError("parameters is required for TypeParameters")
+        self.parameters = parameters
+
+    def __repr__(self):
+        return f"TypeParameters({self.parameters!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "parameters", self.parameters
+
+
+# Pattern
+
+
+class Pattern(_JAST):
+    def __init__(
+        self,
+        modifiers: List[Modifier] = None,
+        type_: Type = None,
+        declarators: List["VariableDeclarator"] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if type_ is None:
+            raise ValueError("type_ is required for LocalVariableDecl")
+        self.modifiers = modifiers or []
+        self.type = type_
+        self.declarators = declarators or []
+
+    def __repr__(self):
+        return f"VariableDecl({self.type!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.modifiers:
+            yield "modifiers", self.modifiers
+        yield "type", self.type
+        if self.declarators:
+            yield "declarators", self.declarators
+
+
+# Operators
+
+
+class OP(JAST, abc.ABC):
+    pass
+
+
+class AssignmentOP(JAST, abc.ABC):
+    pass
+
+
+class Assign(AssignmentOP):
+    def __repr__(self):
+        return "Assign()"
+
+
+class AddAssign(AssignmentOP):
+    def __repr__(self):
+        return "AddAssign()"
+
+
+class SubAssign(AssignmentOP):
+    def __repr__(self):
+        return "SubAssign()"
+
+
+class MulAssign(AssignmentOP):
+    def __repr__(self):
+        return "MulAssign()"
+
+
+class DivAssign(AssignmentOP):
+    def __repr__(self):
+        return "DivAssign()"
+
+
+class ModAssign(AssignmentOP):
+    def __repr__(self):
+        return "ModAssign()"
+
+
+class AndAssign(AssignmentOP):
+    def __repr__(self):
+        return "AndAssign()"
+
+
+class OrAssign(AssignmentOP):
+    def __repr__(self):
+        return "OrAssign()"
+
+
+class XorAssign(AssignmentOP):
+    def __repr__(self):
+        return "XorAssign()"
+
+
+class LShiftAssign(AssignmentOP):
+    def __repr__(self):
+        return "LShiftAssign()"
+
+
+class RShiftAssign(AssignmentOP):
+    def __repr__(self):
+        return "RShiftAssign()"
+
+
+class Operator(OP, abc.ABC):
+    pass
+
+
+class Or(Operator):
+    def __repr__(self):
+        return "Or()"
+
+
+class And(Operator):
+    def __repr__(self):
+        return "And()"
+
+
+class BitOr(Operator):
+    def __repr__(self):
+        return "BinOr()"
+
+
+class BitXor(Operator):
+    def __repr__(self):
+        return "ExclusiveOr()"
+
+
+class BitAnd(Operator):
+    def __repr__(self):
+        return "And()"
+
+
+class Eq(Operator):
+    def __repr__(self):
+        return "Eq()"
+
+
+class NotEq(Operator):
+    def __repr__(self):
+        return "NotEq()"
+
+
+class Lt(Operator):
+    def __repr__(self):
+        return "Lt()"
+
+
+class LtE(Operator):
+    def __repr__(self):
+        return "LtE()"
+
+
+class Gt(Operator):
+    def __repr__(self):
+        return "Gt()"
+
+
+class GtE(Operator):
+    def __repr__(self):
+        return "GtE()"
+
+
+class LShift(Operator):
+    def __repr__(self):
+        return "LShift()"
+
+
+class RShift(Operator):
+    def __repr__(self):
+        return "RShift()"
+
+
+class URShift(Operator):
+    def __repr__(self):
+        return "URShift()"
+
+
+class Add(Operator):
+    def __repr__(self):
+        return "Add()"
+
+
+class Sub(Operator):
+    def __repr__(self):
+        return "Sub()"
+
+
+class Mul(Operator):
+    def __repr__(self):
+        return "Mul()"
+
+
+class Div(Operator):
+    def __repr__(self):
+        return "Div()"
+
+
+class Mod(Operator):
+    def __repr__(self):
+        return "Mod()"
+
+
+class UnaryOperator(OP, abc.ABC):
+    pass
+
+
+class PreInc(UnaryOperator):
+    def __repr__(self):
+        return "PreInc()"
+
+
+class PreDec(UnaryOperator):
+    def __repr__(self):
+        return "PreDec()"
+
+
+class UAdd(UnaryOperator):
+    def __repr__(self):
+        return "UAdd()"
+
+
+class USub(UnaryOperator):
+    def __repr__(self):
+        return "USub()"
+
+
+class Invert(UnaryOperator):
+    def __repr__(self):
+        return "Invert()"
+
+
+class Not(UnaryOperator):
+    def __repr__(self):
+        return "Not()"
+
+
+class PostOperator(OP, abc.ABC):
+    pass
+
+
+class PostInc(PostOperator):
+    def __repr__(self):
+        return "PostInc()"
+
+
+class PostDec(PostOperator):
+    def __repr__(self):
+        return "PostDec()"
+
+
+# Expressions
+
+
+class Expr(_JAST, abc.ABC):
+    def __init__(self, level: int = 0, **kwargs):
+        super().__init__(**kwargs)
+        self.level = level
+
+
+class Call(Expr):
+    def __init__(
+        self,
+        function: Expr = None,
+        arguments: List[Expr] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if function is None:
+            raise ValueError("expr is required for Call")
+        self.function = function
+        self.arguments = arguments or []
+
+    def __repr__(self):
+        return "Call()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "function", self.function
+        if self.arguments:
+            yield "arguments", self.arguments
+
+
+class Lamda(Expr):
+    def __init__(
+        self,
+        parameters: Identifier | List[Identifier] | "FormalParameters" = None,
+        body: Expr | "Block" = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if parameters is None:
+            raise ValueError("parameters is required for Lambda")
+        if body is None:
+            raise ValueError("body is required for Lambda")
+        if isinstance(parameters, FormalParameters) and parameters.receiver_parameter:
+            raise ValueError("receiver_parameter is not allowed for Lambda")
+        self.parameters = parameters
+        self.body = body
+
+    def __repr__(self):
+        return "Lambda()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "parameters", self.parameters
+        yield "body", self.body
+
+
+class Assignment(Expr):
+    def __init__(
+        self,
+        target: Expr = None,
+        op: AssignmentOP = None,
+        value: Expr = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if target is None:
+            raise ValueError("target is required for Assignment")
+        if op is None:
+            raise ValueError("op is required for Assignment")
+        if value is None:
+            raise ValueError("value is required for Assignment")
+        self.target = target
+        self.op = op
+        self.value = value
+
+    def __repr__(self):
+        return "Assignment()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "target", self.target
+        yield "op", self.op
+        yield "value", self.value
+
+
+class Conditional(Expr):
+    def __init__(
+        self,
+        condition: Expr = None,
+        body: Expr = None,
+        orelse: Expr = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if condition is None:
+            raise ValueError("condition is required for Conditional")
+        if body is None:
+            raise ValueError("true_expr is required for Conditional")
+        if orelse is None:
+            raise ValueError("false_expr is required for Conditional")
+        self.condition = condition
+        self.body = body
+        self.orelse = orelse
+
+    def __repr__(self):
+        return "Conditional()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "condition", self.condition
+        yield "body", self.body
+        yield "orelse", self.orelse
+
+
+class BinOp(Expr):
+    def __init__(
+        self, left: Expr = None, op: Operator = None, right: Expr = None, **kwargs
+    ):
+        super().__init__(**kwargs)
+        if left is None:
+            raise ValueError("left is required for BinOp")
+        if op is None:
+            raise ValueError("op is required for BinOp")
+        if right is None:
+            raise ValueError("right is required for BinOp")
+        self.left = left
+        self.op = op
+        self.right = right
+
+    def __repr__(self):
+        return "BinOp()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "left", self.left
+        yield "op", self.op
+        yield "right", self.right
+
+
+class InstanceOf(Expr):
+    def __init__(
+        self, expr: Expr = None, type_: ReferenceType | Pattern = None, **kwargs
+    ):
+        super().__init__(**kwargs)
+        if expr is None:
+            raise ValueError("expr is required for InstanceOf")
+        if type_ is None:
+            raise ValueError("type_ is required for InstanceOf")
+        self.expr = expr
+        self.type = type_
+
+    def __repr__(self):
+        return "InstanceOf()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "expr", self.expr
+        yield "type", self.type
+
+
+class UnaryOp(Expr):
+    def __init__(self, op: UnaryOperator = None, expr: Expr = None, **kwargs):
+        super().__init__(**kwargs)
+        if op is None:
+            raise ValueError("op is required for UnaryOp")
+        if expr is None:
+            raise ValueError("expr is required for UnaryOp")
+        self.op = op
+        self.expr = expr
+
+    def __repr__(self):
+        return "UnaryOp()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "op", self.op
+        yield "expr", self.expr
+
+
+class PostUnaryOp(Expr):
+    def __init__(self, expr: Expr = None, op: PostOperator = None, **kwargs):
+        super().__init__(**kwargs)
+        if expr is None:
+            raise ValueError("expr is required for PostUnaryOp")
+        if op is None:
+            raise ValueError("op is required for PostUnaryOp")
+        self.expr = expr
+        self.op = op
+
+    def __repr__(self):
+        return "PostUnaryOp()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "expr", self.expr
+        yield "op", self.op
+
+
+class Cast(Expr):
+    def __init__(
+        self,
+        annotations: List[Annotation] = None,
+        type_: TypeBound = None,
+        expr: Expr = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if type_ is None:
+            raise ValueError("type_ is required for Cast")
+        if expr is None:
+            raise ValueError("expr is required for Cast")
+        self.annotations = annotations or []
+        self.type = type_
+        self.expr = expr
+
+    def __repr__(self):
+        return "Cast()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.annotations:
+            yield "annotations", self.annotations
+        yield "type", self.type
+        yield "expr", self.expr
+
+
+class SwitchExpr(Expr):
+    def __init__(
+        self,
+        expr: Expr = None,
+        block: "SwitchBlock" = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if expr is None:
+            raise ValueError("expr is required for SwitchExpr")
+        if block is None:
+            raise ValueError("block is required for SwitchExpr")
+        self.expr = expr
+        self.block = block
+
+    def __repr__(self):
+        return "SwitchExpr()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "expr", self.expr
+        yield "block", self.block
+
+class ObjectCreation(Expr):
+    def __init__(
+        self,
+        type_arguments: TypeArguments = None,
+        type_: List[AnnotatedIdentifier] = None,
+        arguments: List[Expr] = None,
+        body: List["Declaration"] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if not type_:
+            raise ValueError("type_ is required for ObjectCreation")
+        self.type_arguments = type_arguments
+        self.type = type_
+        self.arguments = arguments or []
+        self.body = body
+
+    def __repr__(self):
+        return "ObjectCreation()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.type_arguments:
+            yield "type_arguments", self.type_arguments
+        yield "type", self.type
+        if self.arguments:
+            yield "arguments", self.arguments
+        if self.body:
+            yield "body", self.body
+
+
+class DimExpr(_JAST):
+    def __init__(
+        self, annotations: List[Annotation] = None, expr: Expr = None, **kwargs
+    ):
+        super().__init__(**kwargs)
+        if expr is None:
+            raise ValueError("expr is required for DimExpr")
+        self.annotations = annotations or []
+        self.expr = expr
+
+    def __repr__(self):
+        return "DimExpr()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.annotations:
+            yield "annotations", self.annotations
+        yield "expr", self.expr
+
+
+class ArrayCreation(Expr):
+    def __init__(
+        self,
+        type_: Type = None,
+        expr_dims: List[DimExpr] = None,
+        dims: List[Dim] = None,
+        initializer: "ArrayInitializer" = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if type_ is None:
+            raise ValueError("type_ is required for ArrayCreation")
+        if expr_dims and initializer:
+            raise ValueError(
+                "expr_dims and initializer are mutually exclusive for ArrayCreation"
+            )
+        self.type = type_
+        self.expr_dims = expr_dims
+        self.dims = dims
+        self.initializer = initializer
+
+    def __repr__(self):
+        return "ArrayCreation()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "type", self.type
+        if self.expr_dims:
+            yield "expr_dims", self.expr_dims
+        if self.dims:
+            yield "dims", self.dims
+        if self.initializer:
+            yield "initializer", self.initializer
+
+
+class Reference(Expr):
+    def __init__(
+        self,
+        expr: Expr = None,
+        type_arguments: TypeArguments = None,
+        identifier: Identifier = None,
+        new: bool = False,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if expr is None:
+            raise ValueError("expr is required for Reference")
+        if new and Identifier:
+            raise ValueError("new and identifier are mutually exclusive for Reference")
+        if not new and not identifier:
+            raise ValueError("identifier or new is required for Reference")
+        self.expr = expr
+        self.type_arguments = type_arguments
+        self.identifier = identifier
+        self.new = new
+
+    def __repr__(self):
+        return "Reference()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "expr", self.expr
+        if self.type_arguments:
+            yield "type_arguments", self.type_arguments
+        if self.identifier:
+            yield "identifier", self.identifier
+        if self.new:
+            yield "new", self.new
+
+
+# Arrays
+
+
+class ArrayInitializer(_JAST):
+    def __init__(self, values: List[Expr | "ArrayInitializer"] = None, **kwargs):
+        super().__init__(**kwargs)
+        self.values = values or []
+
+    def __repr__(self):
+        return f"ArrayInitializer({self.values!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "values", self.values
 
 
 # Parameters
@@ -622,33 +1194,29 @@ class TypeParameter(_JAST):
 class ReceiverParameter(_JAST):
     def __init__(
         self,
-        annotations: List[Annotation] = None,
         type_: Type = None,
-        identifier: Identifier = None,
+        identifiers: List[Identifier] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if type_ is None:
             raise ValueError("type_ is required for ReceiverParameter")
-        self.annotations = annotations or []
         self.type = type_
-        self.identifier = identifier
+        self.identifiers = identifiers
 
     def __repr__(self):
         return f"ReceiverParameter({self.type!r})"
 
-    def __iter__(self):
-        if self.annotations:
-            yield self.annotations
-        yield self.type
-        if self.identifier:
-            yield self.identifier
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "type", self.type
+        if self.identifiers:
+            yield "identifier", self.identifiers
 
 
 class Parameter(_JAST):
     def __init__(
         self,
-        modifiers: List[VariableModifier] = None,
+        modifiers: List[Modifier] = None,
         type_: Type = None,
         identifier: VariableDeclaratorId = None,
         **kwargs,
@@ -665,17 +1233,17 @@ class Parameter(_JAST):
     def __repr__(self):
         return f"Parameter({self.type!r})"
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
-            yield self.modifiers
-        yield self.type
-        yield self.identifier
+            yield "modifiers", self.modifiers
+        yield "type", self.type
+        yield "identifier", self.identifier
 
 
 class VariableArityParameter(_JAST):
     def __init__(
         self,
-        modifiers: List[VariableModifier] = None,
+        modifiers: List[Modifier] = None,
         type_: Type = None,
         annotations: List[Annotation] = None,
         identifier: VariableDeclaratorId = None,
@@ -694,20 +1262,20 @@ class VariableArityParameter(_JAST):
     def __repr__(self):
         return f"VariableArityParameter({self.type!r})"
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
-            yield self.modifiers
-        yield self.type
+            yield "modifiers", self.modifiers
+        yield "type", self.type
         if self.annotations:
-            yield self.annotations
-        yield self.identifier
+            yield "annotations", self.annotations
+        yield "identifier", self.identifier
 
 
 class FormalParameters(_JAST):
     def __init__(
         self,
         receiver_parameter: ReceiverParameter = None,
-        parameters: List[Parameter] = None,
+        parameters: List[Parameter | VariableArityParameter] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -717,11 +1285,569 @@ class FormalParameters(_JAST):
     def __repr__(self):
         return "FormalParameters()"
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.receiver_parameter:
-            yield self.receiver_parameter
+            yield "receiver_parameter", self.receiver_parameter
         if self.parameters:
-            yield self.parameters
+            yield "parameters", self.parameters
+
+
+# Statements
+
+
+class Statement(_JAST, abc.ABC):
+    pass
+
+
+class LocalClassDeclaration(Statement):
+    def __init__(self, declaration: "ClassDeclaration" = None, **kwargs):
+        super().__init__(**kwargs)
+        if declaration is None:
+            raise ValueError("declaration is required for LocalClassDeclaration")
+        self.declaration = declaration
+
+    def __repr__(self):
+        return "LocalClassDeclaration()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "declaration", self.declaration
+
+
+class LocalInterfaceDeclaration(Statement):
+    def __init__(self, declaration: "InterfaceDeclaration" = None, **kwargs):
+        super().__init__(**kwargs)
+        if declaration is None:
+            raise ValueError("declaration is required for LocalInterfaceDeclaration")
+        self.declaration = declaration
+
+    def __repr__(self):
+        return "LocalInterfaceDeclaration()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "declaration", self.declaration
+
+
+class LocalRecordDeclaration(Statement):
+    def __init__(self, declaration: "RecordDeclaration" = None, **kwargs):
+        super().__init__(**kwargs)
+        if declaration is None:
+            raise ValueError("declaration is required for LocalRecordDeclaration")
+        self.declaration = declaration
+
+    def __repr__(self):
+        return "LocalRecordDeclaration()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "declaration", self.declaration
+
+
+class LocalVariableDeclaration(Statement):
+    def __init__(
+        self,
+        modifiers: List[Modifier] = None,
+        type_: Type = None,
+        declarators: List["VariableDeclarator"] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if type_ is None:
+            raise ValueError("type_ is required for LocalVariableDeclaration")
+        if not declarators:
+            raise ValueError("daclarators is required for LocalVariableDeclaration")
+        self.modifiers = modifiers or []
+        self.type = type_
+        self.declarators = declarators
+
+    def __repr__(self):
+        return "LocalVariableDeclaration()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.modifiers:
+            yield "modifiers", self.modifiers
+        yield "type", self.type
+        yield "declarators", self.declarators
+
+
+class Block(Statement):
+    def __init__(self, statements: List[Statement] = None, **kwargs):
+        super().__init__(**kwargs)
+        self.statements = statements or []
+
+    def __repr__(self):
+        return "Block()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "statements", self.statements
+
+
+class Empty(Statement):
+    def __repr__(self):
+        return "EmptyStatement()"
+
+
+class Labeled(Statement):
+    def __init__(
+        self, identifier: Identifier = None, statement: Statement = None, **kwargs
+    ):
+        super().__init__(**kwargs)
+        if identifier is None:
+            raise ValueError("identifier is required for LabeledStatement")
+        if statement is None:
+            raise ValueError("statement is required for LabeledStatement")
+        self.identifier = identifier
+        self.statement = statement
+
+    def __repr__(self):
+        return f"LabeledStatement({self.identifier!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "identifier", self.identifier
+        yield "statement", self.statement
+
+
+class Expression(Statement):
+    def __init__(self, expression: Expr = None, **kwargs):
+        super().__init__(**kwargs)
+        if expression is None:
+            raise ValueError("expression is required for ExpressionStatement")
+        self.expression = expression
+
+    def __repr__(self):
+        return f"ExpressionStatement({self.expression!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "expression", self.expression
+
+
+class If(Statement):
+    def __init__(
+        self,
+        test: Expr = None,
+        then_statement: Statement = None,
+        else_statement: Statement = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if test is None:
+            raise ValueError("test is required for IfStatement")
+        if then_statement is None:
+            raise ValueError("then_statement is required for IfStatement")
+        self.test = test
+        self.then_statement = then_statement
+        self.else_statement = else_statement
+
+    def __repr__(self):
+        return "IfStatement()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "test", self.test
+        yield "then_statement", self.then_statement
+        if self.else_statement:
+            yield "else_statement", self.else_statement
+
+
+class Assert(Statement):
+    def __init__(self, test: Expr = None, message: Expr = None, **kwargs):
+        super().__init__(**kwargs)
+        if test is None:
+            raise ValueError("condition is required for AssertStatement")
+        self.test = test
+        self.message = message
+
+    def __repr__(self):
+        return "AssertStatement()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "test", self.test
+        if self.message:
+            yield "message", self.message
+
+
+class SwitchLabel(_JAST, abc.ABC):
+    pass
+
+
+class Case(SwitchLabel):
+    def __init__(self, expression: Expr = None, **kwargs):
+        super().__init__(**kwargs)
+        if not expression:
+            raise ValueError("constants is required for Case")
+        self.expression = expression
+
+    def __repr__(self):
+        return "Case()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "expression", self.expression
+
+
+class DefaultCase(SwitchLabel):
+    def __repr__(self):
+        return "DefaultCase()"
+
+
+class Throw(Statement):
+    def __init__(self, expression: Expr = None, **kwargs):
+        super().__init__(**kwargs)
+        if expression is None:
+            raise ValueError("expression is required for ThrowStatement")
+        self.expression = expression
+
+    def __repr__(self):
+        return f"ThrowStatement({self.expression!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "expression", self.expression
+
+
+class SwitchGroup(_JAST):
+    def __init__(
+        self,
+        labels: List[SwitchLabel] = None,
+        statements: List[Statement] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if not labels:
+            raise ValueError("labels is required for SwitchGroup")
+        if not statements:
+            raise ValueError("statements is required for SwitchGroup")
+        self.labels = labels
+        self.statements = statements
+
+    def __repr__(self):
+        return "SwitchGroup()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "labels", self.labels
+        yield "statements", self.statements
+
+
+class SwitchBlock(_JAST):
+    def __init__(
+        self,
+        groups: List[SwitchGroup] = None,
+        labels: List[SwitchLabel] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.groups = groups or []
+        self.labels = labels or []
+
+    def __repr__(self):
+        return "SwitchGroupBlock()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "groups", self.groups
+        yield "labels", self.labels
+
+
+class Switch(Statement):
+    def __init__(self, expression: Expr = None, block: SwitchBlock = None, **kwargs):
+        super().__init__(**kwargs)
+        if expression is None:
+            raise ValueError("expression is required for SwitchStatement")
+        if not block:
+            raise ValueError("blocks is required for SwitchStatement")
+        self.expression = expression
+        self.block = block
+
+    def __repr__(self):
+        return "SwitchStatement()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "expression", self.expression
+        yield "block", self.block
+
+
+class While(Statement):
+    def __init__(self, test: Expr = None, statement: Statement = None, **kwargs):
+        super().__init__(**kwargs)
+        if test is None:
+            raise ValueError("test is required for WhileStatement")
+        if statement is None:
+            raise ValueError("statement is required for WhileStatement")
+        self.test = test
+        self.statement = statement
+
+    def __repr__(self):
+        return "WhileStatement()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "test", self.test
+        yield "statement", self.statement
+
+
+class DoWhile(Statement):
+    def __init__(self, statement: Statement = None, test: Expr = None, **kwargs):
+        super().__init__(**kwargs)
+        if statement is None:
+            raise ValueError("statement is required for DoWhileStatement")
+        if test is None:
+            raise ValueError("test is required for DoWhileStatement")
+        self.statement = statement
+        self.test = test
+
+    def __repr__(self):
+        return "DoWhileStatement()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "statement", self.statement
+        yield "test", self.test
+
+
+class For(Statement):
+    def __init__(
+        self,
+        init: List[Expr] | LocalVariableDeclaration = None,
+        test: Expr = None,
+        update: List[Expr] = None,
+        statement: Statement = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.init = init or []
+        self.test = test
+        self.update = update or []
+        self.statement = statement
+
+    def __repr__(self):
+        return "ForStatement()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.init:
+            yield "init", self.init
+        if self.test:
+            yield "test", self.test
+        if self.update:
+            yield "update", self.update
+        yield "statement", self.statement
+
+
+class ForEach(Statement):
+    def __init__(
+        self,
+        modifiers: List[Modifier] = None,
+        type_: Type = None,
+        identifier: VariableDeclaratorId = None,
+        expression: Expr = None,
+        statement: Statement = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if type_ is None:
+            raise ValueError("type_ is required for ForEachStatement")
+        if identifier is None:
+            raise ValueError("identifier is required for ForEachStatement")
+        if expression is None:
+            raise ValueError("expression is required for ForEachStatement")
+        if statement is None:
+            raise ValueError("statement is required for ForEachStatement")
+        self.modifiers = modifiers or []
+        self.type = type_
+        self.identifier = identifier
+        self.expression = expression
+        self.statement = statement
+
+    def __repr__(self):
+        return "ForEachStatement()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.modifiers:
+            yield "modifiers", self.modifiers
+        yield "type", self.type
+        yield "identifier", self.identifier
+        yield "expression", self.expression
+        yield "statement", self.statement
+
+
+class Break(Statement):
+    def __init__(self, identifier: Identifier = None, **kwargs):
+        super().__init__(**kwargs)
+        self.identifier = identifier
+
+    def __repr__(self):
+        return f"BreakStatement({self.identifier!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.identifier:
+            yield "identifier", self.identifier
+
+
+class Continue(Statement):
+    def __init__(self, identifier: Identifier = None, **kwargs):
+        super().__init__(**kwargs)
+        self.identifier = identifier
+
+    def __repr__(self):
+        return f"ContinueStatement({self.identifier!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.identifier:
+            yield "identifier", self.identifier
+
+
+class Return(Statement):
+    def __init__(self, expression: Expr = None, **kwargs):
+        super().__init__(**kwargs)
+        self.expression = expression
+
+    def __repr__(self):
+        return f"ReturnStatement({self.expression!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.expression:
+            yield "expression", self.expression
+
+
+class Synch(Statement):
+    def __init__(self, expression: Expr = None, block: Block = None, **kwargs):
+        super().__init__(**kwargs)
+        if expression is None:
+            raise ValueError("expression is required for SynchronizedStatement")
+        if block is None:
+            raise ValueError("block is required for SynchronizedStatement")
+        self.expression = expression
+        self.block = block
+
+    def __repr__(self):
+        return "SynchronizedStatement()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "expression", self.expression
+        yield "block", self.block
+
+
+class CatchClause(_JAST):
+    def __init__(
+        self,
+        modifiers: List[Modifier] = None,
+        exceptions: List[QualifiedName] = None,
+        identifier: Identifier = None,
+        block: Block = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if not exceptions:
+            raise ValueError("exceptions is required for CatchClause")
+        if identifier is None:
+            raise ValueError("identifier is required for CatchClause")
+        if block is None:
+            raise ValueError("block is required for CatchClause")
+        self.modifiers = modifiers or []
+        self.exceptions = exceptions
+        self.identifier = identifier
+        self.block = block
+
+    def __repr__(self):
+        return f"CatchClause()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.modifiers:
+            yield "modifiers", self.modifiers
+        yield "exceptions", self.exceptions
+        yield "identifier", self.identifier
+        yield "block", self.block
+
+
+class Try(Statement):
+    def __init__(
+        self,
+        block: Block = None,
+        catches: List[CatchClause] = None,
+        final: Block = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if block is None:
+            raise ValueError("block is required for TryStatement")
+        if not catches and not final:
+            raise ValueError("catches or final is required for TryStatement")
+        self.block = block
+        self.catches = catches or []
+        self.final = final
+
+    def __repr__(self):
+        return "TryStatement()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "block", self.block
+        if self.catches:
+            yield "catches", self.catches
+        if self.final:
+            yield "final", self.final
+
+
+class Resource(_JAST):
+    def __init__(
+        self,
+        modifiers: List[Modifier] = None,
+        type_: Type = None,
+        declarator: "VariableDeclarator" = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if type_ is None:
+            raise ValueError("type_ is required for Resource")
+        if declarator is None:
+            raise ValueError("declarator is required for Resource")
+        self.modifiers = modifiers or []
+        self.type = type_
+        self.declarator = declarator
+
+    def __repr__(self):
+        return "Resource()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.modifiers:
+            yield "modifiers", self.modifiers
+        yield "type", self.type
+        yield "declarator", self.declarator
+
+
+class TryWithResources(Statement):
+    def __init__(
+        self,
+        resources: List[Resource | QualifiedName] = None,
+        block: Block = None,
+        catches: List[CatchClause] = None,
+        final: Block = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if not resources:
+            raise ValueError("resources is required for TryWithResourcesStatement")
+        if block is None:
+            raise ValueError("block is required for TryWithResourcesStatement")
+        self.resources = resources
+        self.block = block
+        self.catches = catches or []
+        self.final = final
+
+    def __repr__(self):
+        return "TryWithResourcesStatement()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "resources", self.resources
+        yield "block", self.block
+        if self.catches:
+            yield "catches", self.catches
+        if self.final:
+            yield "final", self.final
+
+
+class Yield(Statement):
+    def __init__(self, expression: Expr = None, **kwargs):
+        super().__init__(**kwargs)
+        if expression is None:
+            raise ValueError("expression is required for YieldStatement")
+        self.expression = expression
+
+    def __repr__(self):
+        return f"YieldStatement({self.expression!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "expression", self.expression
 
 
 # Declarations
@@ -736,7 +1862,7 @@ class Declaration(_JAST, abc.ABC):
 
 class PackageDeclaration(Declaration):
     def __init__(
-        self, annotations: List[Annotation] = None, name: PackageName = None, **kwargs
+        self, annotations: List[Annotation] = None, name: QualifiedName = None, **kwargs
     ):
         super().__init__(**kwargs)
         if name is None:
@@ -747,7 +1873,7 @@ class PackageDeclaration(Declaration):
     def __repr__(self):
         return f"PackageDeclaration({self.name!r})"
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
             yield self.annotations
         yield self.name
@@ -756,67 +1882,25 @@ class PackageDeclaration(Declaration):
 # Import Declarations
 
 
-class ImportDeclaration(Declaration, abc.ABC):
-    pass
-
-
-class SingleTypeImportDeclaration(ImportDeclaration):
-    def __init__(self, name: TypeName = None, **kwargs):
+class ImportDeclaration(Declaration):
+    def __init__(
+        self,
+        name: QualifiedName = None,
+        static: bool = False,
+        on_demand: bool = False,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         if name is None:
-            raise ValueError("name is required for SingleTypeImportDeclaration")
+            raise ValueError("name is required for ImportDeclaration")
         self.name = name
+        self.static = static
+        self.on_demand = on_demand
 
     def __repr__(self):
-        return f"SingleTypeImportDeclaration({self.name!r})"
+        return f"ImportDeclaration({self.name!r})"
 
-    def __iter__(self):
-        yield self.name
-
-
-class TypeImportOnDemandDeclaration(ImportDeclaration):
-    def __init__(self, name: PackageName = None, **kwargs):
-        super().__init__(**kwargs)
-        if name is None:
-            raise ValueError("name is required for TypeImportOnDemandDeclaration")
-        self.name = name
-
-    def __repr__(self):
-        return f"TypeImportOnDemandDeclaration({self.name!r})"
-
-    def __iter__(self):
-        yield self.name
-
-
-class SingleStaticImportDeclaration(ImportDeclaration):
-    def __init__(self, name: TypeName = None, identifier: Identifier = None, **kwargs):
-        super().__init__(**kwargs)
-        if name is None:
-            raise ValueError("name is required for SingleStaticImportDeclaration")
-        if identifier is None:
-            raise ValueError("identifier is required for SingleStaticImportDeclaration")
-        self.name = name
-        self.identifier = identifier
-
-    def __repr__(self):
-        return f"SingleStaticImportDeclaration({self.name!r}.{self.identifier!r})"
-
-    def __iter__(self):
-        yield self.name
-        yield self.identifier
-
-
-class StaticImportOnDemandDeclaration(ImportDeclaration):
-    def __init__(self, name: TypeName = None, **kwargs):
-        super().__init__(**kwargs)
-        if name is None:
-            raise ValueError("name is required for StaticImportOnDemandDeclaration")
-        self.name = name
-
-    def __repr__(self):
-        return f"StaticImportOnDemandDeclaration({self.name!r})"
-
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield self.name
 
 
@@ -845,8 +1929,8 @@ class ModuleDirective(_JAST, abc.ABC):
 class RequiresDirective(ModuleDirective):
     def __init__(
         self,
-        modifiers: List[RequiresModifier] = None,
-        name: ModuleName = None,
+        modifiers: List[Modifier] = None,
+        name: QualifiedName = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -858,7 +1942,7 @@ class RequiresDirective(ModuleDirective):
     def __repr__(self):
         return f"RequiresDirective({self.name!r})"
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield self.modifiers
         yield self.name
@@ -867,20 +1951,20 @@ class RequiresDirective(ModuleDirective):
 class ExportsDirective(ModuleDirective):
     def __init__(
         self,
-        name: PackageName = None,
-        to: List[ModuleName] = None,
+        name: QualifiedName = None,
+        to: QualifiedName = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if name is None:
             raise ValueError("name is required for ExportsDirective")
         self.name = name
-        self.to = to or []
+        self.to = to
 
     def __repr__(self):
         return f"ExportsDirective({self.name!r})"
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield self.name
         if self.to:
             yield self.to
@@ -889,20 +1973,20 @@ class ExportsDirective(ModuleDirective):
 class OpensDirective(ModuleDirective):
     def __init__(
         self,
-        name: PackageName = None,
-        to: List[ModuleName] = None,
+        name: QualifiedName = None,
+        to: QualifiedName = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if name is None:
             raise ValueError("name is required for OpensDirective")
         self.name = name
-        self.to = to or []
+        self.to = to
 
     def __repr__(self):
         return f"OpensDirective({self.name!r})"
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield self.name
         if self.to:
             yield self.to
@@ -911,68 +1995,64 @@ class OpensDirective(ModuleDirective):
 class UsesDirective(ModuleDirective):
     def __init__(
         self,
-        type_: TypeName = None,
+        name: QualifiedName = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        if type_ is None:
+        if name is None:
             raise ValueError("type_ is required for UsesDirective")
-        self.type = type_
+        self.name = name
 
     def __repr__(self):
-        return f"UsesDirective({self.type!r})"
+        return f"UsesDirective({self.name!r})"
 
-    def __iter__(self):
-        yield self.type
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield self.name
 
 
 class ProvidesDirective(ModuleDirective):
     def __init__(
         self,
-        type_: TypeName = None,
-        with_: List[TypeName] = None,
+        name: QualifiedName = None,
+        with_: QualifiedName = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        if type_ is None:
+        if name is None:
             raise ValueError("type_ is required for ProvidesDirective")
         if not with_:
             raise ValueError("with_ is required for ProvidesDirective")
-        self.type = type_
+        self.name = name
         self.with_ = with_
 
     def __repr__(self):
-        return f"ProvidesDirective({self.type!r})"
+        return f"ProvidesDirective({self.name!r})"
 
-    def __iter__(self):
-        yield self.type
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield self.name
         yield self.with_
 
 
 class ModuleDeclaration(Declaration):
     def __init__(
         self,
-        annotations: List[Annotation] = None,
         open_: bool = None,
-        identifiers: List[Identifier] = None,
+        name: List[QualifiedName] = None,
         directives: List[ModuleDirective] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        if not identifiers:
+        if not name:
             raise ValueError("identifiers is required for ModuleDeclaration")
-        self.annotations = annotations or []
         self.open_ = open_
-        self.identifiers = identifiers
+        self.name = name
         self.directives = directives or []
 
     def __repr__(self):
         return "ModuleDeclaration()"
 
-    def __iter__(self):
-        if self.annotations:
-            yield self.annotations
-        yield self.identifiers
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield self.name
         if self.directives:
             yield self.directives
 
@@ -984,7 +2064,7 @@ class VariableDeclarator(_JAST):
     def __init__(
         self,
         id_: VariableDeclaratorId = None,
-        initializer: Expression | ArrayInitializer = None,
+        initializer: Expr | ArrayInitializer = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -996,7 +2076,7 @@ class VariableDeclarator(_JAST):
     def __repr__(self):
         return f"VariableDeclarator({self.id!r})"
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield self.id
         if self.initializer:
             yield self.initializer
@@ -1005,7 +2085,7 @@ class VariableDeclarator(_JAST):
 class FieldDeclaration(Declaration):
     def __init__(
         self,
-        modifiers: List[FieldModifier] = None,
+        modifiers: List[Modifier] = None,
         type_: Type = None,
         declarators: List[VariableDeclarator] = None,
         **kwargs,
@@ -1015,6 +2095,10 @@ class FieldDeclaration(Declaration):
             raise ValueError("type_ is required for FieldDeclaration")
         if not declarators:
             raise ValueError("declarators is required for FieldDeclaration")
+        if hasattr(type_, "annotations") and type_.annotations:
+            raise ValueError(
+                "annotations are not allowed for type in VariableRecordComponent"
+            )
         self.modifiers = modifiers or []
         self.type = type_
         self.declarators = declarators
@@ -1022,7 +2106,7 @@ class FieldDeclaration(Declaration):
     def __repr__(self):
         return f"FieldDeclaration({self.type!r})"
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield self.modifiers
         yield self.type
@@ -1032,58 +2116,17 @@ class FieldDeclaration(Declaration):
 # Method Declarations
 
 
-class MethodHeader:
-    """
-    For carrying the header of a method declaration during AST construction.
-    """
-
-    def __init__(
-        self,
-        type_parameters: List[TypeParameter] = None,
-        annotations: List[Annotation] = None,
-        type_: Type = None,
-        name: MethodIdentifier = None,
-        parameters: FormalParameters = None,
-        dims: List[Dim] = None,
-        throws: List[ClassType | TypeVariable] = None,
-    ):
-        self.type_parameters = type_parameters
-        self.annotations = annotations
-        self.type = type_
-        self.name = name
-        self.parameters = parameters
-        self.dims = dims
-        self.throws = throws
-
-
-class MethodDeclarator:
-    """
-    For carrying the declarator of a method declaration during AST construction.
-    """
-
-    def __init__(
-        self,
-        id_: MethodIdentifier = None,
-        parameters: FormalParameters = None,
-        dims: List[Dim] = None,
-    ):
-        self.id = id_
-        self.parameters = parameters
-        self.dims = dims
-
-
 class MethodDeclaration(Declaration):
     def __init__(
         self,
-        modifiers: List[MethodModifier] = None,
-        type_parameters: List[TypeParameter] = None,
-        annotations: List[Annotation] = None,
+        modifiers: List[Modifier] = None,
+        type_parameters: TypeParameters = None,
         type_: Type = None,
-        name: MethodIdentifier = None,
+        name: Identifier = None,
         parameters: FormalParameters = None,
         dims: List[Dim] = None,
-        throws: List[ClassType | TypeVariable] = None,
-        body: List[BlockStatement] = None,
+        throws: List[QualifiedName] = None,
+        body: Block = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -1091,6 +2134,54 @@ class MethodDeclaration(Declaration):
             raise ValueError("type_ is required for MethodDeclaration")
         if name is None:
             raise ValueError("name is required for MethodDeclaration")
+        self.modifiers = modifiers or []
+        self.type_parameters = type_parameters or []
+        self.type = type_
+        self.name = name
+        self.parameters = parameters
+        self.dims = dims or []
+        self.throws = throws or []
+        self.body = body or []
+
+    def __repr__(self):
+        return f"MethodDeclaration({self.name!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.modifiers:
+            yield self.modifiers
+        if self.type_parameters:
+            yield self.type_parameters
+        yield self.type
+        yield self.name
+        if self.parameters:
+            yield self.parameters
+        if self.dims:
+            yield self.dims
+        if self.throws:
+            yield self.throws
+        if self.body:
+            yield self.body
+
+
+class InterfaceMethodDeclaration(Declaration):
+    def __init__(
+        self,
+        modifiers: List[Modifier] = None,
+        type_parameters: TypeParameters = None,
+        annotations: List[Annotation] = None,
+        type_: Type = None,
+        name: Identifier = None,
+        parameters: FormalParameters = None,
+        dims: List[Dim] = None,
+        throws: List[QualifiedName] = None,
+        body: Block = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if type_ is None:
+            raise ValueError("type_ is required for InterfaceMethodDeclaration")
+        if name is None:
+            raise ValueError("name is required for InterfaceMethodDeclaration")
         self.modifiers = modifiers or []
         self.type_parameters = type_parameters or []
         self.annotations = annotations or []
@@ -1102,9 +2193,9 @@ class MethodDeclaration(Declaration):
         self.body = body or []
 
     def __repr__(self):
-        return f"MethodDeclaration({self.name!r})"
+        return f"InterfaceMethodDeclaration({self.name!r})"
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield self.modifiers
         if self.type_parameters:
@@ -1123,38 +2214,25 @@ class MethodDeclaration(Declaration):
             yield self.body
 
 
-# Class Declarations
+# Initializers
 
 
-class ClassDeclaration(TopLevelDeclaration, abc.ABC):
-    pass
-
-
-ClassMemberDeclaration = (
-    FieldDeclaration
-    | MethodDeclaration
-    | ClassDeclaration
-    | InterfaceDeclaration
-    | EmptyDeclaration
-)
-
-
-class InstanceInitializer(Declaration):
-    def __init__(self, body: List[BlockStatement] = None, **kwargs):
+class Initializer(Declaration):
+    def __init__(self, body: Block = None, **kwargs):
         super().__init__(**kwargs)
-        if not body:
-            raise ValueError("body is required for InstanceInitializer")
+        if body is None:
+            raise ValueError("body is required for Initializer")
         self.body = body
 
     def __repr__(self):
-        return "InstanceInitializer()"
+        return "Initializer()"
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield self.body
 
 
 class StaticInitializer(Declaration):
-    def __init__(self, body: List[BlockStatement] = None, **kwargs):
+    def __init__(self, body: Block = None, **kwargs):
         super().__init__(**kwargs)
         if not body:
             raise ValueError("body is required for StaticInitializer")
@@ -1163,28 +2241,255 @@ class StaticInitializer(Declaration):
     def __repr__(self):
         return "StaticInitializer()"
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield self.body
 
 
-ClassBodyDeclaration = (
-    ClassMemberDeclaration
-    | InstanceInitializer
-    | StaticInitializer
-    | ConstructorDeclaration
-)
+# Constructor Declaration
 
 
-class NormalClassDeclaration(ClassDeclaration):
+class ConstructorDeclaration(Declaration):
     def __init__(
         self,
-        modifiers: List[ClassModifier] = None,
-        name: TypeIdentifier = None,
-        type_parameters: List[TypeParameter] = None,
-        extends: ClassType = None,
-        implements: List[ClassType] = None,
-        permits: List[TypeName] = None,
-        body: List[ClassBodyDeclaration] = None,
+        modifiers: List[Modifier] = None,
+        type_parameters: TypeParameters = None,
+        identifier: Identifier = None,
+        parameters: FormalParameters = None,
+        body: Block = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if identifier is None:
+            raise ValueError("identifier is required for ConstructorDeclaration")
+        self.modifiers = modifiers or []
+        self.type_parameters = type_parameters or []
+        self.identifier = identifier
+        self.parameters = parameters or []
+        self.body = body
+
+    def __repr__(self):
+        return f"ConstructorDeclaration({self.identifier!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.modifiers:
+            yield self.modifiers
+        if self.type_parameters:
+            yield self.type_parameters
+        yield self.identifier
+        if self.parameters:
+            yield self.parameters
+        if self.body:
+            yield self.body
+
+
+class CompactConstructorDeclaration(Declaration):
+    def __init__(
+        self,
+        modifiers: List[Modifier] = None,
+        identifier: Identifier = None,
+        body: Block = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if identifier is None:
+            raise ValueError("identifier is required for CompactConstructorDeclaration")
+        self.modifiers = modifiers or []
+        self.identifier = identifier
+        self.body = body
+
+    def __repr__(self):
+        return f"CompactConstructorDeclaration({self.identifier!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.modifiers:
+            yield self.modifiers
+        yield self.identifier
+        if self.body:
+            yield self.body
+
+
+# Constant Declarations
+
+
+class ConstantDeclaration(Declaration):
+    def __init__(
+        self,
+        modifiers: List[Modifier] = None,
+        type_: Type = None,
+        declarators: List[VariableDeclarator] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if type_ is None:
+            raise ValueError("type_ is required for ConstantDeclaration")
+        if not declarators:
+            raise ValueError("declarators is required for ConstantDeclaration")
+        self.modifiers = modifiers or []
+        self.type = type_
+        self.declarators = declarators
+
+    def __repr__(self):
+        return f"ConstantDeclaration({self.type!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.modifiers:
+            yield self.modifiers
+        yield self.type
+        yield self.declarators
+
+
+# InterfaceDeclaration
+
+
+class InterfaceDeclaration(Declaration):
+    def __init__(
+        self,
+        modifiers: List[Modifier] = None,
+        identifier: Identifier = None,
+        type_parameters: TypeParameters = None,
+        extends: List[ReferenceType] = None,
+        permits: List[ReferenceType] = None,
+        body: List[Declaration] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if identifier is None:
+            raise ValueError("name is required for NormalInterfaceDeclaration")
+        self.modifiers = modifiers or []
+        self.identifier = identifier
+        self.type_parameters = type_parameters or []
+        self.extends = extends or []
+        self.permits = permits or []
+        self.body = body or []
+
+    def __repr__(self):
+        return f"NormalInterfaceDeclaration({self.identifier!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.modifiers:
+            yield self.modifiers
+        yield self.identifier
+        if self.type_parameters:
+            yield self.type_parameters
+        if self.extends:
+            yield self.extends
+        if self.permits:
+            yield self.permits
+        if self.body:
+            yield self.body
+
+
+class AnnotationMethodDeclaration(Declaration):
+    def __init__(
+        self,
+        modifiers: List[Modifier] = None,
+        type_: Type = None,
+        name: Identifier = None,
+        default: ElementValue = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if type_ is None:
+            raise ValueError("type_ is required for AnnotationMethodDeclaration")
+        if name is None:
+            raise ValueError("name is required for AnnotationMethodDeclaration")
+        if hasattr(type_, "annotations") and type_.annotations:
+            raise ValueError(
+                "annotations are not allowed for type in AnnotationMethodDeclaration"
+            )
+        self.modifiers = modifiers or []
+        self.type = type_
+        self.name = name
+        self.default = default
+
+    def __repr__(self):
+        return f"AnnotationMethodDeclaration({self.name!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.modifiers:
+            yield self.modifiers
+        yield self.type
+        yield self.name
+        if self.default:
+            yield self.default
+
+
+class AnnotationConstantDeclaration(Declaration):
+    def __init__(
+        self,
+        modifiers: List[Modifier] = None,
+        type_: Type = None,
+        declarators: List[VariableDeclarator] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if type_ is None:
+            raise ValueError("type_ is required for AnnotationConstantDeclaration")
+        if not declarators:
+            raise ValueError(
+                "declarators is required for AnnotationConstantDeclaration"
+            )
+        self.modifiers = modifiers or []
+        self.type = type_
+        self.declarators = declarators
+
+    def __repr__(self):
+        return "AnnotationConstantDeclaration()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.modifiers:
+            yield self.modifiers
+        yield self.type
+        yield self.declarators
+
+
+class AnnotationDeclaration(Declaration):
+    def __init__(
+        self,
+        modifiers: List[Modifier] = None,
+        identifier: Identifier = None,
+        extends: List[ReferenceType] = None,
+        permits: List[ReferenceType] = None,
+        body: List[Declaration] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if identifier is None:
+            raise ValueError("name is required for AnnotationInterfaceDeclaration")
+        self.modifiers = modifiers or []
+        self.name = identifier
+        self.extends = extends or []
+        self.permits = permits or []
+        self.body = body or []
+
+    def __repr__(self):
+        return f"AnnotationInterfaceDeclaration({self.name!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.modifiers:
+            yield self.modifiers
+        yield self.name
+        if self.extends:
+            yield self.extends
+        if self.permits:
+            yield self.permits
+        if self.body:
+            yield self.body
+
+
+# Class Declarations
+
+
+class ClassDeclaration(Declaration):
+    def __init__(
+        self,
+        modifiers: List[Modifier] = None,
+        name: Identifier = None,
+        type_parameters: TypeParameters = None,
+        extends: ReferenceType = None,
+        implements: List[ReferenceType] = None,
+        permits: List[ReferenceType] = None,
+        body: List[Declaration] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -1201,7 +2506,7 @@ class NormalClassDeclaration(ClassDeclaration):
     def __repr__(self):
         return f"NormalClassDeclaration({self.name!r})"
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield self.modifiers
         yield self.name
@@ -1213,6 +2518,120 @@ class NormalClassDeclaration(ClassDeclaration):
             yield self.implements
         if self.permits:
             yield self.permits
+        if self.body:
+            yield self.body
+
+
+class EnumConstant(_JAST):
+    def __init__(
+        self,
+        annotations: List[Annotation] = None,
+        identifier: Identifier = None,
+        arguments: List[Expr] = None,
+        body: Block = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if identifier is None:
+            raise ValueError("name is required for EnumConstant")
+        self.annotations = annotations or []
+        self.name = identifier
+        self.arguments = arguments
+        self.body = body
+
+    def __repr__(self):
+        return f"EnumConstant({self.name!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.annotations:
+            yield self.annotations
+        yield self.name
+        if self.arguments:
+            yield self.arguments
+        if self.body:
+            yield self.body
+
+
+class EnumDeclaration(ClassDeclaration):
+    def __init__(
+        self,
+        modifiers: List[Modifier] = None,
+        identifier: Identifier = None,
+        implements: List[Type] = None,
+        constants: List[EnumConstant] = None,
+        body: List[Declaration] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if identifier is None:
+            raise ValueError("name is required for EnumDeclaration")
+        self.modifiers = modifiers or []
+        self.name = identifier
+        self.implements = implements or []
+        self.constants = constants or []
+        self.body = body or []
+
+    def __repr__(self):
+        return f"EnumDeclaration({self.name!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.modifiers:
+            yield self.modifiers
+        yield self.name
+        if self.implements:
+            yield self.implements
+        if self.body:
+            yield self.body
+
+
+class RecordComponent(_JAST):
+    def __init__(self, type_: Type = None, identifier: Identifier = None, **kwargs):
+        super().__init__(**kwargs)
+        if type_ is None:
+            raise ValueError("type_ is required for RecordComponent")
+        if identifier is None:
+            raise ValueError("name is required for RecordComponent")
+        self.type = type_
+        self.identifier = identifier
+
+    def __repr__(self):
+        return f"RecordComponent({self.identifier!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield self.type
+        yield self.identifier
+
+
+class RecordDeclaration(ClassDeclaration):
+    def __init__(
+        self,
+        modifiers: List[Modifier] = None,
+        name: Identifier = None,
+        type_parameters: TypeParameters = None,
+        components: List[RecordComponent] = None,
+        implements: List[ClassType] = None,
+        body: List[Declaration] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if name is None:
+            raise ValueError("name is required for RecordDeclaration")
+        self.modifiers = modifiers or []
+        self.name = name
+        self.type_parameters = type_parameters or []
+        self.components = components or []
+        self.implements = implements or []
+        self.body = body or []
+
+    def __repr__(self):
+        return f"RecordDeclaration({self.name!r})"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.modifiers:
+            yield self.modifiers
+        yield self.name
+        if self.components:
+            yield self.components
         if self.body:
             yield self.body
 
@@ -1240,7 +2659,7 @@ class OrdinaryCompilationUnit(CompilationUnit):
     def __repr__(self):
         return "OrdinaryCompilationUnit()"
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.package:
             yield self.package
         if self.imports:
@@ -1265,7 +2684,7 @@ class ModularCompilationUnit(CompilationUnit):
     def __repr__(self):
         return "ModularCompilationUnit()"
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.imports:
             yield self.imports
         yield self.module

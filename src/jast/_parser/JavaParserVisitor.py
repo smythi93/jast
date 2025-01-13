@@ -335,10 +335,6 @@ class JavaParserVisitor(ParseTreeVisitor):
     def visitUnannClassType(self, ctx: JavaParser.UnannClassTypeContext):
         return self.visitChildren(ctx)
 
-    # Visit a parse tree produced by JavaParser#unannInterfaceType.
-    def visitUnannInterfaceType(self, ctx: JavaParser.UnannInterfaceTypeContext):
-        return self.visitChildren(ctx)
-
     # Visit a parse tree produced by JavaParser#unannTypeVariable.
     def visitUnannTypeVariable(self, ctx: JavaParser.UnannTypeVariableContext):
         return self.visitChildren(ctx)
@@ -899,14 +895,6 @@ class JavaParserVisitor(ParseTreeVisitor):
     def visitPrimary(self, ctx: JavaParser.PrimaryContext):
         return self.visitChildren(ctx)
 
-    # Visit a parse tree produced by JavaParser#primaryNoNewArray.
-    def visitPrimaryNoNewArray(self, ctx: JavaParser.PrimaryNoNewArrayContext):
-        return self.visitChildren(ctx)
-
-    # Visit a parse tree produced by JavaParser#pNNA.
-    def visitPNNA(self, ctx: JavaParser.PNNAContext):
-        return self.visitChildren(ctx)
-
     # Visit a parse tree produced by JavaParser#classLiteral.
     def visitClassLiteral(self, ctx: JavaParser.ClassLiteralContext):
         return self.visitChildren(ctx)
@@ -977,16 +965,8 @@ class JavaParserVisitor(ParseTreeVisitor):
     def visitArgumentList(self, ctx: JavaParser.ArgumentListContext):
         return self.visitChildren(ctx)
 
-    # Visit a parse tree produced by JavaParser#methodReference.
-    def visitMethodReference(self, ctx: JavaParser.MethodReferenceContext):
-        return self.visitChildren(ctx)
-
     # Visit a parse tree produced by JavaParser#postfixExpression.
     def visitPostfixExpression(self, ctx: JavaParser.PostfixExpressionContext):
-        return self.visitChildren(ctx)
-
-    # Visit a parse tree produced by JavaParser#pfE.
-    def visitPfE(self, ctx: JavaParser.PfEContext):
         return self.visitChildren(ctx)
 
     # Visit a parse tree produced by JavaParser#postIncrementExpression.
@@ -1119,10 +1099,6 @@ class JavaParserVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by JavaParser#switchExpression.
     def visitSwitchExpression(self, ctx: JavaParser.SwitchExpressionContext):
-        return self.visitChildren(ctx)
-
-    # Visit a parse tree produced by JavaParser#constantExpression.
-    def visitConstantExpression(self, ctx: JavaParser.ConstantExpressionContext):
         return self.visitChildren(ctx)
 
 
