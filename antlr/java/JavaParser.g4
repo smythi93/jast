@@ -118,11 +118,11 @@ typeParameters
     ;
 
 typeParameter
-    : annotation* identifier (EXTENDS annotation* typeBound)?
+    : annotation* identifier (EXTENDS typeBound)?
     ;
 
 typeBound
-    : typeType ('&' typeType)*
+    : annotation* typeType ('&' typeType)*
     ;
 
 enumDeclaration
@@ -202,7 +202,7 @@ typeTypeOrVoid
     ;
 
 constructorDeclaration
-    : typeParameters? identifier formalParameters (THROWS qualifiedNameList)? constructorBody = block
+    : typeParameters? identifier formalParameters throws_? constructorBody = block
     ;
 
 compactConstructorDeclaration
@@ -390,7 +390,8 @@ annotationTypeElementDeclaration
     ;
 
 annotationTypeElementRest
-    : typeType annotationMethodOrConstantRest ';'
+    : annotationConstantDeclaration
+    | annotationMethodDeclaration
     | classDeclaration ';'?
     | interfaceDeclaration ';'?
     | enumDeclaration ';'?
@@ -398,17 +399,12 @@ annotationTypeElementRest
     | recordDeclaration ';'? // Java17
     ;
 
-annotationMethodOrConstantRest
-    : annotationMethodRest
-    | annotationConstantRest
+annotationConstantDeclaration
+    : typeType variableDeclarators ';'
     ;
 
-annotationMethodRest
-    : identifier '(' ')' defaultValue?
-    ;
-
-annotationConstantRest
-    : variableDeclarators
+annotationMethodDeclaration
+    : typeType identifier '(' ')' defaultValue? ';'
     ;
 
 defaultValue
@@ -441,11 +437,7 @@ requiresModifier
 // RECORDS - Java 17
 
 recordDeclaration
-    : RECORD identifier typeParameters? recordHeader classImplements? recordBody
-    ;
-
-recordHeader
-    : '(' recordComponentList? ')'
+    : RECORD identifier typeParameters? '(' recordComponentList? ')' classImplements? recordBody
     ;
 
 recordComponentList
@@ -457,7 +449,12 @@ recordComponent
     ;
 
 recordBody
-    : '{' (classBodyDeclaration | compactConstructorDeclaration)* '}'
+    : '{' recordBodyDeclaration* '}'
+    ;
+
+recordBodyDeclaration
+    : classBodyDeclaration
+    | compactConstructorDeclaration
     ;
 
 // STATEMENTS / BLOCKS
@@ -526,7 +523,7 @@ statement
     | DO statement WHILE parExpression ';'
     | TRY block (catchClause+ finallyBlock? | finallyBlock)
     | TRY resourceSpecification block catchClause* finallyBlock?
-    | SWITCH parExpression '{' switchBlockStatementGroup* switchLabel* '}'
+    | SWITCH parExpression switchBlock
     | SYNCHRONIZED parExpression block
     | RETURN expression? ';'
     | THROW expression ';'
@@ -535,8 +532,11 @@ statement
     | YIELD expression ';' // Java17
     | SEMI
     | statementExpression = expression ';'
-    | switchExpression ';'? // Java17
     | identifierLabel = identifier ':' statement
+    ;
+
+switchBlock
+    : '{' switchBlockStatementGroup* switchLabel* '}'
     ;
 
 catchClause
@@ -612,7 +612,7 @@ prefixExpression
     ;
 
 typeExpression
-    : '(' annotation* typeType ('&' typeType)* ')' expression
+    : '(' annotation* typeType ('&' typeType)* ')' typeExpression // Level 13
     | NEW creator
     | prefixExpression
     ;
