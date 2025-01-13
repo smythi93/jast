@@ -784,8 +784,12 @@ objectCreator
     ;
 
 createdName
-    : identifier typeArgumentsOrDiamond? ('.' identifier typeArgumentsOrDiamond?)*
+    : coitDiamond ('.' coitDiamond)*
     | primitiveType
+    ;
+
+ coitDiamond
+    : identifier typeArgumentsOrDiamond?
     ;
 
 innerCreator

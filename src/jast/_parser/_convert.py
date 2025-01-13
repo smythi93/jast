@@ -1865,7 +1865,10 @@ class JASTConverter(JavaParserVisitor):
             expr = self.visitSuperSuffix(ctx.superSuffix())
         elif ctx.NEW():
             expr = self.visitInnerCreator(ctx.innerCreator())
-            # TODO
+            if ctx.nonWildcardTypeArguments():
+                expr.type_arguments = self.visitNonWildcardTypeArguments(
+                    ctx.nonWildcardTypeArguments()
+                )
         elif ctx.identifier():
             expr = jast.Name(
                 identifier=self.visitIdentifier(ctx.identifier()),
@@ -1922,15 +1925,168 @@ class JASTConverter(JavaParserVisitor):
                 **self._get_location_rule(ctx),
             )
 
-    def visitSwitchLabeledRule(self, ctx: JavaParser.SwitchLabeledRuleContext):
+    def visitSwitchLabeledRule(
+        self, ctx: JavaParser.SwitchLabeledRuleContext
+    ) -> jast.SwitchExprRule:
         if ctx.CASE():
-            return jast.Case(
-                expression=self.visitExpression(ctx.expression()),
-                body=self.visitExpression(ctx.expression(1)),
+            if ctx.NULL_LITERAL():
+                cases = [
+                    jast.Constant(
+                        jast.NullLiteral(
+                            **self._get_location_rule(ctx.NULL_LITERAL()),
+                            **self._get_location_rule(ctx.NULL_LITERAL()),
+                        )
+                    )
+                ]
+            elif ctx.expressionList():
+                cases = self.visitExpressionList(ctx.expressionList())
+            else:
+                cases = [self.visitGuardedPattern(ctx.guardedPattern())]
+            label = jast.ExprCase()
+        else:
+            cases = []
+            label = jast.DefaultCase()
+        body = self.visitSwitchRuleOutcome(ctx.switchRuleOutcome())
+        return jast.SwitchExprRule(
+            label=label,
+            cases=cases,
+            body=body,
+            **self._get_location_rule(ctx),
+        )
+
+    def visitGuardedPattern(
+        self, ctx: JavaParser.GuardedPatternContext
+    ) -> jast.GuardedPattern:
+        if ctx.LPAREN():
+            return self.visitGuardedPattern(ctx.guardedPattern())
+        elif ctx.identifier():
+            start = self._get_location_rule(ctx)
+            end = self._get_location_rule(ctx.identifier())
+            pattern = jast.Pattern(
+                modifiers=[
+                    self.visitVariableModifier(modifier)
+                    for modifier in ctx.variableModifier()
+                ],
+                type_=self.visitTypeType(ctx.typeType()),
+                annotations=[
+                    self.visitAnnotation(annotation) for annotation in ctx.annotation()
+                ],
+                identifier=self.visitIdentifier(ctx.identifier()),
+                lineno=start["lineno"],
+                col_offset=start["col_offset"],
+                end_lineno=end["end_lineno"],
+                end_col_offset=end["end_col_offset"],
+            )
+            return jast.GuardedPattern(
+                pattern=pattern,
+                conditions=[
+                    self.visitExpression(condition) for condition in ctx.expression()
+                ],
                 **self._get_location_rule(ctx),
             )
         else:
-            return jast.DefaultRule(
-                body=self.visitExpression(ctx.expression()),
+            guarded_pattern = self.visitGuardedPattern(ctx.guardedPattern())
+            guarded_pattern.conditions.append(self.visitExpression(ctx.expression(0)))
+            return guarded_pattern
+
+    def visitSwitchRuleOutcome(
+        self, ctx: JavaParser.SwitchRuleOutcomeContext
+    ) -> List[jast.Statement]:
+        if ctx.block():
+            return [self.visitBlock(ctx.block())]
+        else:
+            return [
+                self.visitBlockStatement(statement)
+                for statement in ctx.blockStatement()
+            ]
+
+    def visitClassType(self, ctx: JavaParser.ClassTypeContext) -> jast.ClassType:
+        coit = jast.Coit(
+            annotations=[
+                self.visitAnnotation(annotation) for annotation in ctx.annotation()
+            ],
+            identifier=self.visitIdentifier(ctx.identifier()),
+            type_arguments=self.visitTypeArguments(ctx.typeArguments())
+            if ctx.typeArguments()
+            else None,
+            **self._get_location_rule(ctx),
+        )
+        if ctx.DOT():
+            class_type = self.visitClassOrInterfaceType(ctx.classOrInterfaceType())
+            class_type.coits.append(coit)
+            return class_type
+        else:
+            return jast.ClassType(coits=[coit], **self._get_location_rule(ctx))
+
+    def visitCreator(self, ctx: JavaParser.CreatorContext) -> jast.Expr:
+        if ctx.objectCreator():
+            return self.visitObjectCreator(ctx.objectCreator())
+        else:
+            return self.visitArrayCreator(ctx.arrayCreator())
+
+    def visitObjectCreator(
+        self, ctx: JavaParser.ObjectCreatorContext
+    ) -> jast.NewObject:
+        return jast.NewObject(
+            type_arguments=self.visitNonWildcardTypeArguments(
+                ctx.nonWildcardTypeArguments()
+            )
+            if ctx.nonWildcardTypeArguments()
+            else None,
+            type_=self.visitCreatedName(ctx.createdName()),
+            arguments=self.visitArguments(ctx.arguments()),
+            body=self.visitClassBody(ctx.classBody()) if ctx.classBody() else None,
+            **self._get_location_rule(ctx),
+        )
+
+    def visitCreatedName(self, ctx: JavaParser.CreatedNameContext) -> jast.Type:
+        if ctx.primitiveType():
+            return self.visitPrimitiveType(ctx.primitiveType())
+        else:
+            return jast.ClassType(
+                coits=[self.visitCoitDiamond(coit) for coit in ctx.coitDiamond()],
                 **self._get_location_rule(ctx),
             )
+
+    def visitCoitDiamond(self, ctx: JavaParser.CoitDiamondContext) -> jast.Coit:
+        return jast.Coit(
+            identifier=self.visitIdentifier(ctx.identifier()),
+            type_arguments=self.visitTypeArgumentsOrDiamond(
+                ctx.typeArgumentsOrDiamond()
+            )
+            if ctx.typeArgumentsOrDiamond()
+            else None,
+            **self._get_location_rule(ctx),
+        )
+
+    def visitInnerCreator(
+        self, ctx: JavaParser.InnerCreatorContext
+    ) -> jast.NewInnerObject:
+        return jast.NewInnerObject(
+            identifier=self.visitIdentifier(ctx.identifier()),
+            template_arguments=self.visitNonWildcardTypeArgumentsOrDiamond(
+                ctx.nonWildcardTypeArgumentsOrDiamond()
+            )
+            if ctx.nonWildcardTypeArgumentsOrDiamond()
+            else None,
+            arguments=self.visitArguments(ctx.arguments()),
+            body=self.visitClassBody(ctx.classBody()) if ctx.classBody() else None,
+            **self._get_location_rule(ctx),
+        )
+
+    def visitDimExpr(self, ctx: JavaParser.DimExprContext) -> jast.DimExpr:
+        return jast.DimExpr(
+            expression=self.visitExpression(ctx.expression()),
+            **self._get_location_rule(ctx),
+        )
+
+    def visitArrayCreator(self, ctx: JavaParser.ArrayCreatorContext) -> jast.NewArray:
+        return jast.NewArray(
+            type_=self.visitCreatedName(ctx.createdName()),
+            expr_dims=[self.visitDimExpr(dimExpr) for dimExpr in ctx.dimExpr()],
+            dims=self.visitDims(ctx.dims()) if ctx.dims() else None,
+            initializer=self.visitArrayInitializer(ctx.arrayInitializer())
+            if ctx.arrayInitializer()
+            else None,
+            **self._get_location_rule(ctx),
+        )

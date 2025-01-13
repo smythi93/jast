@@ -412,44 +412,44 @@ class TypeArguments(_JAST):
 class Coit(Type):
     def __init__(
         self,
+        annotations: List[Annotation] = None,
         identifier: Identifier = None,
-        arguments: TypeArguments = None,
+        type_arguments: TypeArguments = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if identifier is None:
             raise ValueError("identifier is required")
+        self.annotations = annotations or []
         self.identifier = identifier
-        self.arguments = arguments
+        self.type_arguments = type_arguments
 
     def __repr__(self):
         return f"Coit({self.identifier!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.annotations:
+            yield "annotations", self.annotations
         yield "identifier", self.identifier
-        if self.arguments:
-            yield "arguments", self.arguments
+        if self.type_arguments:
+            yield "type_arguments", self.type_arguments
 
 
 class ClassType(ReferenceType):
     def __init__(
         self,
-        annotations: List[Annotation] = None,
         coits: List[Coit] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if not coits:
             raise ValueError("coits is required")
-        self.annotations = annotations or []
         self.coits = coits
 
     def __repr__(self):
         return f"ClassType({self.coits!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        if self.annotations:
-            yield "annotations", self.annotations
         yield "coits", self.coits
 
 
@@ -1068,7 +1068,7 @@ class Cast(Expr):
         yield "expr", self.expr
 
 
-class ObjectCreation(Expr):
+class NewObject(Expr):
     def __init__(
         self,
         type_arguments: TypeArguments = None,
@@ -1098,6 +1098,40 @@ class ObjectCreation(Expr):
             yield "body", self.body
 
 
+class NewInnerObject(Expr):
+    def __init__(
+        self,
+        type_arguments: TypeArguments = None,
+        identifier: Identifier = None,
+        template_arguments: TypeArguments = None,
+        arguments: List[Expr] = None,
+        body: List["Declaration"] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if identifier is None:
+            raise ValueError("identifier is required for ObjectCreation")
+        self.type_arguments = type_arguments
+        self.identifier = identifier
+        self.template_arguments = template_arguments
+        self.arguments = arguments or []
+        self.body = body
+
+    def __repr__(self):
+        return "ObjectCreation()"
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.type_arguments:
+            yield "type_arguments", self.type_arguments
+        yield "identifier", self.identifier
+        if self.template_arguments:
+            yield "template_arguments", self.template_arguments
+        if self.arguments:
+            yield "arguments", self.arguments
+        if self.body:
+            yield "body", self.body
+
+
 class DimExpr(_JAST):
     def __init__(
         self, annotations: List[Annotation] = None, expr: Expr = None, **kwargs
@@ -1117,7 +1151,7 @@ class DimExpr(_JAST):
         yield "expr", self.expr
 
 
-class ArrayCreation(Expr):
+class NewArray(Expr):
     def __init__(
         self,
         type_: Type = None,
@@ -1151,28 +1185,24 @@ class ArrayCreation(Expr):
             yield "initializer", self.initializer
 
 
-class SwitchExprLabel(_JAST, abc.ABC):
+class SwitchExprLabel(JAST, abc.ABC):
     pass
 
 
 class ExprCase(SwitchExprLabel):
-    def __init__(self, expr: Expr = None, **kwargs):
-        super().__init__(**kwargs)
-        if expr is None:
-            raise ValueError("expr is required for ExprCase")
-        self.expr = expr
-
     def __repr__(self):
         return "ExprCase()"
 
-    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "expr", self.expr
+
+class ExprDefault(SwitchExprLabel):
+    def __repr__(self):
+        return "SwitchExprDefault()"
 
 
 class SwitchExprRule(_JAST):
     def __init__(
         self,
-        label: "SwitchLabel" = None,
+        label: SwitchExprLabel = None,
         cases: List[Expr | GuardedPattern] = None,
         arrow: bool = False,
         body: List["Statement"] = None,

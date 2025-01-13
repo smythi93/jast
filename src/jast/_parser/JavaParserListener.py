@@ -1201,6 +1201,14 @@ class JavaParserListener(ParseTreeListener):
     def exitCreatedName(self, ctx: JavaParser.CreatedNameContext):
         pass
 
+    # Enter a parse tree produced by JavaParser#coitDiamond.
+    def enterCoitDiamond(self, ctx: JavaParser.CoitDiamondContext):
+        pass
+
+    # Exit a parse tree produced by JavaParser#coitDiamond.
+    def exitCoitDiamond(self, ctx: JavaParser.CoitDiamondContext):
+        pass
+
     # Enter a parse tree produced by JavaParser#innerCreator.
     def enterInnerCreator(self, ctx: JavaParser.InnerCreatorContext):
         pass

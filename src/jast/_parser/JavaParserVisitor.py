@@ -608,6 +608,10 @@ class JavaParserVisitor(ParseTreeVisitor):
     def visitCreatedName(self, ctx: JavaParser.CreatedNameContext):
         return self.visitChildren(ctx)
 
+    # Visit a parse tree produced by JavaParser#coitDiamond.
+    def visitCoitDiamond(self, ctx: JavaParser.CoitDiamondContext):
+        return self.visitChildren(ctx)
+
     # Visit a parse tree produced by JavaParser#innerCreator.
     def visitInnerCreator(self, ctx: JavaParser.InnerCreatorContext):
         return self.visitChildren(ctx)
