@@ -8,6 +8,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "java-ast"
 version = "0.0.1"
+authors = [
+    { name = "Marius Smytzek", email = "marius.smytzek@cispa.de" },
+    { name = "Martin Eberlein", email = "ebermart@informatik.hu-berlin.de" },
+]
 description = "jAST: Analyzing and Modifying Java ASTs with Python"
 readme = "README.md"
 license = { file = "COPYING" }
@@ -23,6 +27,10 @@ classifiers = [
 dependencies = [
     "antlr4-python3-runtime>=4.13.2",
 ]
+
+[project.urls]
+"Homepage" = "https://github.com/smythi93/jast"
+"Bug Tracker" = "https://github.com/smythi93/jast/issues"
 
 [project.optional-dependencies]
 test = [
