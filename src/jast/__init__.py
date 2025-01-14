@@ -189,6 +189,7 @@ from jast._jast import (
     AnnotationDeclaration,
 )
 from jast._parse import parse, ParseMode
+from jast._unparse import unparse
 from jast._visitors import JNodeVisitor, JNodeTransformer
 
 __all__ = [
@@ -384,4 +385,5 @@ __all__ = [
     "JNodeTransformer",
     "parse",
     "ParseMode",
+    "unparse",
 ]

@@ -3,8 +3,6 @@ from typing import Any
 
 from jast._jast import JAST
 
-ast.NodeVisitor
-
 
 class JNodeVisitor:
     # noinspection PyMethodMayBeStatic
