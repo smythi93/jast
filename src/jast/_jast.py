@@ -1,26 +1,31 @@
+"""
+This module contains the abstract syntax tree (AST) classes for the Java AST (JAST).
+"""
+
 import abc
 from typing import List, Any, Iterator, Tuple, Union
 
 
 class JAST(abc.ABC):
+    """
+    Abstract base class for all JAST classes.
+    """
+
     def __init__(self, **kwargs):
         pass
 
     def __hash__(self):
         return hash(id(self))
 
-    def __str__(self):
-        return self.__repr__()
-
-    @abc.abstractmethod
-    def __repr__(self):
-        pass
-
     def __iter__(self) -> Iterator[Tuple[str, "JAST" | List["JAST"]]]:
         return iter([])
 
 
 class _JAST(JAST, abc.ABC):
+    """
+    Abstract base class for all JAST classes that have a location in the source code.
+    """
+
     def __init__(
         self,
         lineno: int = None,
@@ -40,26 +45,33 @@ class _JAST(JAST, abc.ABC):
 
 
 class Identifier(_JAST):
+    """
+    Represents an identifier in the Java AST.
+    """
+
     def __init__(self, name: str, **kwargs):
         super().__init__(**kwargs)
         self.name = name
 
     def __repr__(self):
-        return f"Identifier({self.name!r})"
+        return f"{self.name!r}"
 
 
 # Names
 
 
 class QualifiedName(_JAST):
+    """
+    Represents a qualified name in the Java AST.
+
+    <identifier>.<identifier>.<identifier>...
+    """
+
     def __init__(self, identifiers: List[Identifier] = None, **kwargs):
         super().__init__(**kwargs)
         if not identifiers:
             raise ValueError("identifier is required for QualifiedName")
         self.identifiers = identifiers
-
-    def __repr__(self):
-        return f"QualifiedName({self.identifiers!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "identifiers", self.identifiers
@@ -69,47 +81,79 @@ class QualifiedName(_JAST):
 
 
 class Literal(_JAST, abc.ABC):
+    """
+    Abstract base class for all literal values in the Java AST.
+    """
+
     def __init__(self, value: Any, **kwargs):
         super().__init__(**kwargs)
         self.value = value
 
     def __repr__(self):
-        return f"Literal({self.value!r})"
+        return f"{self.value!r}"
 
 
 class IntegerLiteral(Literal):
+    """
+    Represents an integer literal in the Java AST.
+    """
+
     def __init__(self, value: int, long: bool = False, **kwargs):
         super().__init__(value, **kwargs)
         self.long = long
 
 
 class FloatLiteral(Literal):
+    """
+    Represents a float literal in the Java AST.
+    """
+
     def __init__(self, value: float, double: bool = False, **kwargs):
         super().__init__(value, **kwargs)
         self.double = double
 
 
 class BoolLiteral(Literal):
+    """
+    Represents a boolean literal in the Java AST.
+    """
+
     def __init__(self, value: bool, **kwargs):
         super().__init__(value, **kwargs)
 
 
 class CharLiteral(Literal):
+    """
+    Represents a character literal in the Java AST.
+    """
+
     def __init__(self, value: str, **kwargs):
         super().__init__(value, **kwargs)
 
 
 class StringLiteral(Literal):
+    """
+    Represents a string literal in the Java AST.
+    """
+
     def __init__(self, value: str, **kwargs):
         super().__init__(value, **kwargs)
 
 
 class TextBlock(Literal):
+    """
+    Represents a text block literal in the Java AST.
+    """
+
     def __init__(self, value: str, **kwargs):
         super().__init__(value, **kwargs)
 
 
 class NullLiteral(Literal):
+    """
+    Represents a null literal in the Java AST.
+    """
+
     def __init__(self, **kwargs):
         super().__init__(None, **kwargs)
 
@@ -118,85 +162,108 @@ class NullLiteral(Literal):
 
 
 class Modifier(_JAST, abc.ABC):
-    pass
+    """
+    Abstract base class for all modifiers in the Java AST.
+    """
 
 
 class Transitive(Modifier):
-    def __repr__(self):
-        return "Transitive()"
+    """
+    Represents the transitive modifier in the Java AST.
+    """
 
 
 class Static(Modifier):
-    def __repr__(self):
-        return "Static()"
+    """
+    Represents the static modifier in the Java AST.
+    """
 
 
 class Public(Modifier):
-    def __repr__(self):
-        return "Public()"
+    """
+    Represents the public modifier in the Java AST.
+    """
 
 
 class Protected(Modifier):
-    def __repr__(self):
-        return "Protected()"
+    """
+    Represents the protected modifier in the Java AST.
+    """
 
 
 class Private(Modifier):
-    def __repr__(self):
-        return "Private()"
+    """
+    Represents the private modifier in the Java AST.
+    """
 
 
 class Abstract(Modifier):
-    def __repr__(self):
-        return "Abstract()"
+    """
+    Represents the abstract modifier in the Java AST.
+    """
 
 
 class Final(Modifier):
-    def __repr__(self):
-        return "Final()"
+    """
+    Represents the final modifier in the Java AST.
+    """
 
 
 class Sealed(Modifier):
-    def __repr__(self):
-        return "Sealed()"
+    """
+    Represents the sealed modifier in the Java AST.
+    """
 
 
 class NonSealed(Modifier):
-    def __repr__(self):
-        return "NonSealed()"
+    """
+    Represents the non-sealed modifier in the Java AST.
+    """
 
 
 class Strictfp(Modifier):
-    def __repr__(self):
-        return "Strictfp()"
+    """
+    Represents the strictfp modifier in the Java AST.
+    """
 
 
 class Transient(Modifier):
-    def __repr__(self):
-        return "Transient()"
+    """
+    Represents the transient modifier in the Java AST.
+    """
 
 
 class Volatile(Modifier):
-    def __repr__(self):
-        return "Volatile()"
+    """
+    Represents the volatile modifier in the Java AST.
+    """
 
 
 class Synchronized(Modifier):
-    def __repr__(self):
-        return "Synchronized()"
+    """
+    Represents the synchronized modifier in the Java AST.
+    """
 
 
 class Native(Modifier):
-    def __repr__(self):
-        return "Native()"
+    """
+    Represents the native modifier in the Java AST.
+    """
 
 
 class Default(Modifier):
-    def __repr__(self):
-        return "Default()"
+    """
+    Represents the default modifier in the Java AST.
+    """
 
 
 class ElementValuePair(_JAST):
+    """
+    Represents an element-value pair in the Java AST.
+
+    <identifier> = <value>
+    """
+
     def __init__(
         self, identifier: Identifier = None, value: "ElementValue" = None, **kwargs
     ):
@@ -208,27 +275,33 @@ class ElementValuePair(_JAST):
         self.identifier = identifier
         self.value = value
 
-    def __repr__(self):
-        return f"ElementValuePair({self.identifier!r})"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "identifier", self.identifier
         yield "value", self.value
 
 
 class ElementValueArrayInitializer(_JAST):
+    """
+    Represents an element-value array initializer in the Java AST.
+
+    { <value>, <value>, ... }
+    """
+
     def __init__(self, values: List["ElementValue"] = None, **kwargs):
         super().__init__(**kwargs)
         self.values = values or []
-
-    def __repr__(self):
-        return f"ElementValueArrayInitializer({self.values!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "values", self.values
 
 
 class Annotation(Modifier):
+    """
+    Represents an annotation in the Java AST.
+
+    @<name>(<element-value-pairs>)
+    """
+
     def __init__(
         self,
         name: QualifiedName = None,
@@ -241,15 +314,15 @@ class Annotation(Modifier):
         self.name = name
         self.elements = elements
 
-    def __repr__(self):
-        return f"Annotation({self.name!r})"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "name", self.name
         if self.elements:
             yield "elements", self.elements
 
 
+"""
+Represents a Type for element values in the Java AST.
+"""
 ElementValue = Union[ElementValueArrayInitializer, Annotation, "Expr"]
 
 
@@ -257,20 +330,28 @@ ElementValue = Union[ElementValueArrayInitializer, Annotation, "Expr"]
 
 
 class Type(_JAST, abc.ABC):
-    pass
+    """
+    Abstract base class for all types in the Java AST.
+    """
 
 
 class Void(Type):
-    def __repr__(self):
-        return "void"
+    """
+    Represents the void type in the Java AST.
+    """
 
 
 class Var(Type):
-    def __repr__(self):
-        return "var"
+    """
+    Represents var for variable types in the Java AST.
+    """
 
 
 class PrimitiveType(Type, abc.ABC):
+    """
+    Abstract base class for all primitive types in the Java AST.
+    """
+
     def __init__(self, annotations: List[Annotation] = None, **kwargs):
         super().__init__(**kwargs)
         self.annotations = annotations or []
@@ -281,46 +362,60 @@ class PrimitiveType(Type, abc.ABC):
 
 
 class Boolean(PrimitiveType):
-    def __repr__(self):
-        return "boolean"
+    """
+    Represents the boolean primitive type in the Java AST.
+    """
 
 
 class Byte(PrimitiveType):
-    def __repr__(self):
-        return "byte"
+    """
+    Represents the byte primitive type in the Java AST.
+    """
 
 
 class Short(PrimitiveType):
-    def __repr__(self):
-        return "short"
+    """
+    Represents the short primitive type in the Java AST.
+    """
 
 
 class Int(PrimitiveType):
-    def __repr__(self):
-        return "int"
+    """
+    Represents the int primitive type in the Java AST.
+    """
 
 
 class Long(PrimitiveType):
-    def __repr__(self):
-        return "long"
+    """
+    Represents the long primitive type in the Java AST.
+    """
 
 
 class Char(PrimitiveType):
-    def __repr__(self):
-        return "char"
+    """
+    Represents the char primitive type in the Java AST.
+    """
 
 
 class Float(PrimitiveType):
-    def __repr__(self):
-        return "float"
+    """
+    Represents the float primitive type in the Java AST.
+    """
 
 
 class Double(PrimitiveType):
-    def __repr__(self):
-        return "double"
+    """
+    Represents the double primitive type in the Java AST.
+    """
 
 
 class WildcardBound(_JAST):
+    """
+    Represents a wildcard bound in the Java AST.
+
+    (extends | super) <type>
+    """
+
     def __init__(
         self,
         type_: Type = None,
@@ -339,14 +434,17 @@ class WildcardBound(_JAST):
         self.extends = extends
         self.super = super_
 
-    def __repr__(self):
-        return f"WildcardBound({self.type!r})"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "type", self.type
 
 
 class Wildcard(Type):
+    """
+    Represents a wildcard type in the Java AST.
+
+    <annotation>* ? [<bound>]
+    """
+
     def __init__(
         self,
         annotations: List[Annotation] = None,
@@ -357,9 +455,6 @@ class Wildcard(Type):
         self.annotations = annotations or []
         self.bound = bound
 
-    def __repr__(self):
-        return "Wildcard()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
             yield "annotations", self.annotations
@@ -368,20 +463,29 @@ class Wildcard(Type):
 
 
 class TypeArguments(_JAST):
+    """
+    Represents type arguments in the Java AST.
+
+    < <type>, <type>, ... >
+    """
+
     def __init__(self, types: List[Type] = None, **kwargs):
         super().__init__(**kwargs)
         if types is None:
             raise ValueError("types is required for TypeArguments")
         self.types = types
 
-    def __repr__(self):
-        return f"TypeArguments({self.types!r})"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "types", self.types
 
 
 class Coit(Type):
+    """
+    Represents a simple class or interface type in the Java AST.
+
+    <annotation>* <identifier>[<type-arguments>]
+    """
+
     def __init__(
         self,
         annotations: List[Annotation] = None,
@@ -396,9 +500,6 @@ class Coit(Type):
         self.identifier = identifier
         self.type_arguments = type_arguments
 
-    def __repr__(self):
-        return f"Coit({self.identifier!r})"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
             yield "annotations", self.annotations
@@ -408,6 +509,12 @@ class Coit(Type):
 
 
 class ClassType(Type):
+    """
+    Represents a class type in the Java AST.
+
+    <annotation>* <coit>.<coit>.<coit>...
+    """
+
     def __init__(
         self,
         annotations: List[Annotation] = None,
@@ -420,9 +527,6 @@ class ClassType(Type):
         self.annotations = annotations or []
         self.coits = coits
 
-    def __repr__(self):
-        return f"ClassType({self.coits!r})"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
             yield "annotations", self.annotations
@@ -430,12 +534,15 @@ class ClassType(Type):
 
 
 class Dim(_JAST):
+    """
+    Represents a dimension in the Java AST.
+
+    []
+    """
+
     def __init__(self, annotations: List[Annotation] = None, **kwargs):
         super().__init__(**kwargs)
         self.annotations = annotations or []
-
-    def __repr__(self):
-        return "Dim()"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
@@ -443,6 +550,12 @@ class Dim(_JAST):
 
 
 class ArrayType(Type):
+    """
+    Represents an array type in the Java AST.
+
+    <annotation>* <type>[]
+    """
+
     def __init__(
         self,
         annotations: List[Annotation] = None,
@@ -457,9 +570,6 @@ class ArrayType(Type):
         self.type = type_
         self.dims = dims or []
 
-    def __repr__(self):
-        return f"ArrayType({self.type!r}{'[]' * len(self.dims)})"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
             yield "annotations", self.annotations
@@ -469,15 +579,18 @@ class ArrayType(Type):
 
 
 class VariableDeclaratorId(_JAST):
+    """
+    Represents a variable declarator id in the Java AST.
+
+    <identifier><dim><dim>...
+    """
+
     def __init__(self, identifier: Identifier = None, dims: List[Dim] = None, **kwargs):
         super().__init__(**kwargs)
         if identifier is None:
             raise ValueError("identifier is required for VariableDeclaratorId")
         self.identifier = identifier
         self.dims = dims or []
-
-    def __repr__(self):
-        return f"VariableDeclaratorId({self.identifier!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "identifier", self.identifier
@@ -489,6 +602,12 @@ class VariableDeclaratorId(_JAST):
 
 
 class TypeBound(_JAST):
+    """
+    Represents a type bound in the Java AST.
+
+    <annotation>* <type> & <type> & ...
+    """
+
     def __init__(
         self,
         annotations: List[Annotation] = None,
@@ -509,6 +628,12 @@ class TypeBound(_JAST):
 
 
 class TypeParameter(_JAST):
+    """
+    Represents a type parameter in the Java AST.
+
+    <annotation>* <identifier> [<bound>]
+    """
+
     def __init__(
         self,
         annotations: List[Annotation] = None,
@@ -523,9 +648,6 @@ class TypeParameter(_JAST):
         self.identifier = identifier
         self.bound = bound or []
 
-    def __repr__(self):
-        return f"TypeParameter({self.identifier!r})"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
             yield "annotations", self.annotations
@@ -535,14 +657,17 @@ class TypeParameter(_JAST):
 
 
 class TypeParameters(_JAST):
+    """
+    Represents type parameters in the Java AST.
+
+    < <type-parameter>, <type-parameter>, ... >
+    """
+
     def __init__(self, parameters: List[TypeParameter] = None, **kwargs):
         super().__init__(**kwargs)
         if not parameters:
             raise ValueError("parameters is required for TypeParameters")
         self.parameters = parameters
-
-    def __repr__(self):
-        return f"TypeParameters({self.parameters!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "parameters", self.parameters
@@ -552,6 +677,12 @@ class TypeParameters(_JAST):
 
 
 class Pattern(_JAST):
+    """
+    Represents a pattern in the Java AST.
+
+    <modifier>* <type> <annotation>* <identifier>
+    """
+
     def __init__(
         self,
         modifiers: List[Modifier] = None,
@@ -570,9 +701,6 @@ class Pattern(_JAST):
         self.annotations = annotations or []
         self.identifier = identifier
 
-    def __repr__(self):
-        return f"Pattern({self.type!r})"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
@@ -583,6 +711,12 @@ class Pattern(_JAST):
 
 
 class GuardedPattern(_JAST):
+    """
+    Represents a guarded pattern in the Java AST.
+
+    <pattern> && <condition> && <condition> && ...
+    """
+
     def __init__(
         self,
         pattern: Pattern = None,
@@ -597,9 +731,6 @@ class GuardedPattern(_JAST):
         self.pattern = pattern
         self.conditions = conditions
 
-    def __repr__(self):
-        return f"GuardedPattern({self.pattern!r})"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "pattern", self.pattern
         yield "conditions", self.conditions
@@ -609,230 +740,363 @@ class GuardedPattern(_JAST):
 
 
 class OP(JAST, abc.ABC):
-    pass
+    """
+    Abstract base class for all operators in the Java AST.
+    """
 
 
 class AssignmentOP(JAST, abc.ABC):
-    pass
+    """
+    Abstract base class for all assignment operators in the Java AST.
+    """
 
 
 class Assign(AssignmentOP):
-    def __repr__(self):
-        return "Assign()"
+    """
+    Represents the assignment operator in the Java AST.
+
+    =
+    """
 
 
 class AddAssign(AssignmentOP):
-    def __repr__(self):
-        return "AddAssign()"
+    """
+    Represents the addition assignment operator in the Java AST.
+
+    +=
+    """
 
 
 class SubAssign(AssignmentOP):
-    def __repr__(self):
-        return "SubAssign()"
+    """
+    Represents the subtraction assignment operator in the Java AST.
+
+    -=
+    """
 
 
 class MulAssign(AssignmentOP):
-    def __repr__(self):
-        return "MulAssign()"
+    """
+    Represents the multiplication assignment operator in the Java AST.
+
+    *=
+    """
 
 
 class DivAssign(AssignmentOP):
-    def __repr__(self):
-        return "DivAssign()"
+    """
+    Represents the division assignment operator in the Java AST.
+
+    /=
+    """
 
 
 class ModAssign(AssignmentOP):
-    def __repr__(self):
-        return "ModAssign()"
+    """
+    Represents the modulo assignment operator in the Java AST.
+
+    %=
+    """
 
 
 class AndAssign(AssignmentOP):
-    def __repr__(self):
-        return "AndAssign()"
+    """
+    Represents the bitwise AND assignment operator in the Java AST.
+
+    &=
+    """
 
 
 class OrAssign(AssignmentOP):
-    def __repr__(self):
-        return "OrAssign()"
+    """
+    Represents the bitwise OR assignment operator in the Java AST.
+
+    |=
+    """
 
 
 class XorAssign(AssignmentOP):
-    def __repr__(self):
-        return "XorAssign()"
+    """
+    Represents the bitwise XOR assignment operator in the Java AST.
+
+    ^=
+    """
 
 
 class LShiftAssign(AssignmentOP):
-    def __repr__(self):
-        return "LShiftAssign()"
+    """
+    Represents the left shift assignment operator in the Java AST.
+
+    <<=
+    """
 
 
 class RShiftAssign(AssignmentOP):
-    def __repr__(self):
-        return "RShiftAssign()"
+    """
+    Represents the right shift assignment operator in the Java AST.
+
+    >>=
+    """
 
 
 class URShiftAssign(AssignmentOP):
-    def __repr__(self):
-        return "RShiftAssign()"
+    """
+    Represents the unsigned right shift assignment operator in the Java AST.
+
+    >>>=
+    """
 
 
 class Operator(OP, abc.ABC):
-    pass
+    """
+    Abstract base class for all binary operators in the Java AST.
+    """
 
 
 class Or(Operator):
-    def __repr__(self):
-        return "Or()"
+    """
+    Represents the logical OR operator in the Java AST.
+
+    ||
+    """
 
 
 class And(Operator):
-    def __repr__(self):
-        return "And()"
+    """
+    Represents the logical AND operator in the Java AST.
+
+    &&
+    """
 
 
 class BitOr(Operator):
-    def __repr__(self):
-        return "BinOr()"
+    """
+    Represents the bitwise OR operator in the Java AST.
+
+    |
+    """
 
 
 class BitXor(Operator):
-    def __repr__(self):
-        return "ExclusiveOr()"
+    """
+    Represents the bitwise XOR operator in the Java AST.
+
+    ^
+    """
 
 
 class BitAnd(Operator):
-    def __repr__(self):
-        return "And()"
+    """
+    Represents the bitwise AND operator in the Java AST.
+
+    &
+    """
 
 
 class Eq(Operator):
-    def __repr__(self):
-        return "Eq()"
+    """
+    Represents the equality operator in the Java AST.
+
+    ==
+    """
 
 
 class NotEq(Operator):
-    def __repr__(self):
-        return "NotEq()"
+    """
+    Represents the inequality operator in the Java AST.
+
+    !=
+    """
 
 
 class Lt(Operator):
-    def __repr__(self):
-        return "Lt()"
+    """
+    Represents the less than operator in the Java AST.
+
+    <
+    """
 
 
 class LtE(Operator):
-    def __repr__(self):
-        return "LtE()"
+    """
+    Represents the less than or equal to operator in the Java AST.
+
+    <=
+    """
 
 
 class Gt(Operator):
-    def __repr__(self):
-        return "Gt()"
+    """
+    Represents the greater than operator in the Java AST.
+
+    >
+    """
 
 
 class GtE(Operator):
-    def __repr__(self):
-        return "GtE()"
+    """
+    Represents the greater than or equal to operator in the Java AST.
+
+    >=
+    """
 
 
 class LShift(Operator):
-    def __repr__(self):
-        return "LShift()"
+    """
+    Represents the left shift operator in the Java AST.
+
+    <<
+    """
 
 
 class RShift(Operator):
-    def __repr__(self):
-        return "RShift()"
+    """
+    Represents the right shift operator in the Java AST.
+
+    >>
+    """
 
 
 class URShift(Operator):
-    def __repr__(self):
-        return "URShift()"
+    """
+    Represents the unsigned right shift operator in the Java AST.
+
+    >>>
+    """
 
 
 class Add(Operator):
-    def __repr__(self):
-        return "Add()"
+    """
+    Represents the addition operator in the Java AST.
+
+    +
+    """
 
 
 class Sub(Operator):
-    def __repr__(self):
-        return "Sub()"
+    """
+    Represents the subtraction operator in the Java AST.
+
+    -
+    """
 
 
 class Mul(Operator):
-    def __repr__(self):
-        return "Mul()"
+    """
+    Represents the multiplication operator in the Java AST.
+
+    *
+    """
 
 
 class Div(Operator):
-    def __repr__(self):
-        return "Div()"
+    """
+    Represents the division operator in the Java AST.
+
+    /
+    """
 
 
 class Mod(Operator):
-    def __repr__(self):
-        return "Mod()"
+    """
+    Represents the modulo operator in the Java AST.
+
+    %
+    """
 
 
 class UnaryOperator(OP, abc.ABC):
-    pass
+    """
+    Abstract base class for all unary operators in the Java AST.
+    """
 
 
 class PreInc(UnaryOperator):
-    def __repr__(self):
-        return "PreInc()"
+    """
+    Represents the pre-increment operator in the Java AST.
+
+    ++
+    """
 
 
 class PreDec(UnaryOperator):
-    def __repr__(self):
-        return "PreDec()"
+    """
+    Represents the pre-decrement operator in the Java AST.
+
+    --
+    """
 
 
 class UAdd(UnaryOperator):
-    def __repr__(self):
-        return "UAdd()"
+    """
+    Represents the unary plus operator in the Java AST.
+
+    +
+    """
 
 
 class USub(UnaryOperator):
-    def __repr__(self):
-        return "USub()"
+    """
+    Represents the unary minus operator in the Java AST.
+
+    -
+    """
 
 
 class Invert(UnaryOperator):
-    def __repr__(self):
-        return "Invert()"
+    """
+    Represents the bitwise inversion operator in the Java AST.
+
+    ~
+    """
 
 
 class Not(UnaryOperator):
-    def __repr__(self):
-        return "Not()"
+    """
+    Represents the logical negation operator in the Java AST.
+
+    !
+    """
 
 
 class PostOperator(OP, abc.ABC):
-    pass
+    """
+    Abstract base class for all post operators in the Java AST.
+    """
 
 
 class PostInc(PostOperator):
-    def __repr__(self):
-        return "PostInc()"
+    """
+    Represents the post-increment operator in the Java AST.
+    """
 
 
 class PostDec(PostOperator):
-    def __repr__(self):
-        return "PostDec()"
+    """
+    Represents the post-decrement operator in the Java AST.
+    """
 
 
 # Expressions
 
 
 class Expr(_JAST, abc.ABC):
+    """
+    Abstract base class for all expressions in the Java AST.
+    """
+
     def __init__(self, level: int = 0, **kwargs):
         super().__init__(**kwargs)
         self.level = level
 
 
 class Call(Expr):
+    """
+    Represents a function call in the Java AST.
+
+    <function>(<argument>, <argument>, ...)
+    """
+
     def __init__(
         self,
         function: Expr = None,
@@ -845,9 +1109,6 @@ class Call(Expr):
         self.function = function
         self.arguments = arguments or []
 
-    def __repr__(self):
-        return "Call()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "function", self.function
         if self.arguments:
@@ -855,6 +1116,13 @@ class Call(Expr):
 
 
 class Lambda(Expr):
+    """
+    Represents a lambda function in the Java AST.
+
+    <parameter> -> <body>
+    (<parameter>, <parameter>, ...) -> <body>
+    """
+
     def __init__(
         self,
         parameters: Identifier
@@ -873,15 +1141,18 @@ class Lambda(Expr):
         self.parameters = parameters
         self.body = body
 
-    def __repr__(self):
-        return "Lambda()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "parameters", self.parameters
         yield "body", self.body
 
 
 class Assignment(Expr):
+    """
+    Represents an assignment in the Java AST.
+
+    <target> <op> <value>
+    """
+
     def __init__(
         self,
         target: Expr = None,
@@ -900,9 +1171,6 @@ class Assignment(Expr):
         self.op = op
         self.value = value
 
-    def __repr__(self):
-        return "Assignment()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "target", self.target
         yield "op", self.op
@@ -910,6 +1178,12 @@ class Assignment(Expr):
 
 
 class IfExp(Expr):
+    """
+    Represents an if expression in the Java AST.
+
+    <test> ? <body> : <orelse>
+    """
+
     def __init__(
         self,
         test: Expr = None,
@@ -928,9 +1202,6 @@ class IfExp(Expr):
         self.body = body
         self.orelse = orelse
 
-    def __repr__(self):
-        return "IfExp()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "test", self.test
         yield "body", self.body
@@ -938,6 +1209,12 @@ class IfExp(Expr):
 
 
 class BinOp(Expr):
+    """
+    Represents a binary operation in the Java AST.
+
+    <left> <op> <right>
+    """
+
     def __init__(
         self, left: Expr = None, op: Operator = None, right: Expr = None, **kwargs
     ):
@@ -952,9 +1229,6 @@ class BinOp(Expr):
         self.op = op
         self.right = right
 
-    def __repr__(self):
-        return "BinOp()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "left", self.left
         yield "op", self.op
@@ -962,6 +1236,12 @@ class BinOp(Expr):
 
 
 class InstanceOf(Expr):
+    """
+    Represents an instanceof expression in the Java AST.
+
+    <expr> instanceof <type>
+    """
+
     def __init__(self, expr: Expr = None, type_: Type | Pattern = None, **kwargs):
         super().__init__(**kwargs)
         if expr is None:
@@ -971,15 +1251,18 @@ class InstanceOf(Expr):
         self.expr = expr
         self.type = type_
 
-    def __repr__(self):
-        return "InstanceOf()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "expr", self.expr
         yield "type", self.type
 
 
 class UnaryOp(Expr):
+    """
+    Represents a unary operation in the Java AST.
+
+    <op> <expr>
+    """
+
     def __init__(self, op: UnaryOperator = None, expr: Expr = None, **kwargs):
         super().__init__(**kwargs)
         if op is None:
@@ -989,15 +1272,18 @@ class UnaryOp(Expr):
         self.op = op
         self.expr = expr
 
-    def __repr__(self):
-        return "UnaryOp()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "op", self.op
         yield "expr", self.expr
 
 
 class PostUnaryOp(Expr):
+    """
+    Represents a post-unary operation in the Java AST.
+
+    <expr> <op>
+    """
+
     def __init__(self, expr: Expr = None, op: PostOperator = None, **kwargs):
         super().__init__(**kwargs)
         if expr is None:
@@ -1007,15 +1293,18 @@ class PostUnaryOp(Expr):
         self.expr = expr
         self.op = op
 
-    def __repr__(self):
-        return "PostUnaryOp()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "expr", self.expr
         yield "op", self.op
 
 
 class Cast(Expr):
+    """
+    Represents a cast expression in the Java AST.
+
+    (<type>) <expr>
+    """
+
     def __init__(
         self,
         annotations: List[Annotation] = None,
@@ -1032,9 +1321,6 @@ class Cast(Expr):
         self.type = type_
         self.expr = expr
 
-    def __repr__(self):
-        return "Cast()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
             yield "annotations", self.annotations
@@ -1043,6 +1329,12 @@ class Cast(Expr):
 
 
 class NewObject(Expr):
+    """
+    Represents a new object creation in the Java AST.
+
+    new <type>(<argument>, <argument>, ...) [{ <body> }]
+    """
+
     def __init__(
         self,
         type_arguments: TypeArguments = None,
@@ -1059,9 +1351,6 @@ class NewObject(Expr):
         self.arguments = arguments or []
         self.body = body
 
-    def __repr__(self):
-        return "ObjectCreation()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.type_arguments:
             yield "type_arguments", self.type_arguments
@@ -1073,6 +1362,12 @@ class NewObject(Expr):
 
 
 class NewInnerObject(Expr):
+    """
+    Represents a new inner object creation in the Java AST.
+
+    <expr>.new <type>(<argument>, <argument>, ...) [{ <body> }]
+    """
+
     def __init__(
         self,
         type_arguments: TypeArguments = None,
@@ -1091,9 +1386,6 @@ class NewInnerObject(Expr):
         self.arguments = arguments or []
         self.body = body
 
-    def __repr__(self):
-        return "ObjectCreation()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.type_arguments:
             yield "type_arguments", self.type_arguments
@@ -1107,6 +1399,12 @@ class NewInnerObject(Expr):
 
 
 class DimExpr(_JAST):
+    """
+    Represents a dimension expression in the Java AST.
+
+    [ <expr> ]
+    """
+
     def __init__(
         self, annotations: List[Annotation] = None, expr: Expr = None, **kwargs
     ):
@@ -1116,9 +1414,6 @@ class DimExpr(_JAST):
         self.annotations = annotations or []
         self.expr = expr
 
-    def __repr__(self):
-        return "DimExpr()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
             yield "annotations", self.annotations
@@ -1126,6 +1421,13 @@ class DimExpr(_JAST):
 
 
 class NewArray(Expr):
+    """
+    Represents a new array creation in the Java AST.
+
+    new <type><dim_expr><dim_expr>...[<dim><dim>...]
+    new <type><dim><dim>... [<initializer>]
+    """
+
     def __init__(
         self,
         type_: Type = None,
@@ -1146,9 +1448,6 @@ class NewArray(Expr):
         self.dims = dims
         self.initializer = initializer
 
-    def __repr__(self):
-        return "ArrayCreation()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "type", self.type
         if self.expr_dims:
@@ -1160,20 +1459,28 @@ class NewArray(Expr):
 
 
 class SwitchExprLabel(JAST, abc.ABC):
-    pass
+    """
+    Abstract base class for all switch expression labels in the Java AST.
+    """
 
 
 class ExprCase(SwitchExprLabel):
-    def __repr__(self):
-        return "ExprCase()"
+    """
+    Represents a case label for switch expressions in the Java AST.
+    """
 
 
 class ExprDefault(SwitchExprLabel):
-    def __repr__(self):
-        return "SwitchExprDefault()"
+    """
+    Represents a default label for switch expressions in the Java AST.
+    """
 
 
 class SwitchExprRule(_JAST):
+    """
+    Represents a rule in a switch expression in the Java AST.
+    """
+
     def __init__(
         self,
         label: SwitchExprLabel = None,
@@ -1204,6 +1511,10 @@ class SwitchExprRule(_JAST):
 
 
 class SwitchExpr(Expr):
+    """
+    Represents a switch expression in the Java AST.
+    """
+
     def __init__(
         self,
         expr: Expr = None,
@@ -1226,6 +1537,12 @@ class SwitchExpr(Expr):
 
 
 class This(Expr):
+    """
+    Represents the this expression in the Java AST.
+
+    this
+    """
+
     def __init__(
         self,
         arguments: List[Expr] = None,
@@ -1234,15 +1551,18 @@ class This(Expr):
         super().__init__(**kwargs)
         self.arguments = arguments
 
-    def __repr__(self):
-        return "This()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.arguments:
             yield "arguments", self.arguments
 
 
 class Super(Expr):
+    """
+    Represents the super expression in the Java AST.
+
+    super
+    """
+
     def __init__(
         self,
         type_arguments: TypeArguments = None,
@@ -1255,9 +1575,6 @@ class Super(Expr):
         self.identifier = identifier
         self.arguments = arguments
 
-    def __repr__(self):
-        return "Super()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.type_arguments:
             yield "type_arguments", self.type_arguments
@@ -1268,48 +1585,61 @@ class Super(Expr):
 
 
 class Constant(Expr):
+    """
+    Represents a constant expression in the Java AST.
+
+    <value>
+    """
+
     def __init__(self, value: Literal = None, **kwargs):
         super().__init__(**kwargs)
         if value is None:
             raise ValueError("literal is required for Constant")
         self.value = value
 
-    def __repr__(self):
-        return "Constant()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "value", self.value
 
 
 class Name(Expr):
+    """
+    Represents a name expression in the Java AST.
+
+    <identifier>
+    """
+
     def __init__(self, identifier: Identifier = None, **kwargs):
         super().__init__(**kwargs)
         if identifier is None:
             raise ValueError("identifier is required for Name")
         self.identifier = identifier
 
-    def __repr__(self):
-        return "Name()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "identifier", self.identifier
 
 
 class Class(Expr):
+    """
+    Represents a class expression in the Java AST.
+
+    <type>.class
+    """
+
     def __init__(self, type_: Type = None, **kwargs):
         super().__init__(**kwargs)
         if type_ is None:
             raise ValueError("type_ is required for Class")
         self.type = type_
 
-    def __repr__(self):
-        return "Class()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "type", self.type
 
 
 class ExplicitGenericInvocation(Expr):
+    """
+    Represents an explicit generic invocation in the Java AST.
+    """
+
     def __init__(
         self,
         type_arguments: TypeArguments = None,
@@ -1322,9 +1652,6 @@ class ExplicitGenericInvocation(Expr):
         self.type_arguments = type_arguments
         self.expr = expr
 
-    def __repr__(self):
-        return "ExplicitGenericInvocation()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.type_arguments:
             yield "type_arguments", self.type_arguments
@@ -1332,6 +1659,12 @@ class ExplicitGenericInvocation(Expr):
 
 
 class ArrayAccess(Expr):
+    """
+    Represents an array access in the Java AST.
+
+    <expr>[<index>]
+    """
+
     def __init__(self, expr: Expr = None, index: Expr = None, **kwargs):
         super().__init__(**kwargs)
         if expr is None:
@@ -1341,15 +1674,18 @@ class ArrayAccess(Expr):
         self.expr = expr
         self.index = index
 
-    def __repr__(self):
-        return "ArrayAccess()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "expr", self.expr
         yield "index", self.index
 
 
 class Member(Expr):
+    """
+    Represents a member access in the Java AST.
+
+    <expr>.<member>
+    """
+
     def __init__(self, expr: Expr = None, member: Expr = None, **kwargs):
         super().__init__(**kwargs)
         if expr is None:
@@ -1359,15 +1695,18 @@ class Member(Expr):
         self.expr = expr
         self.member = member
 
-    def __repr__(self):
-        return "Member()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "expr", self.expr
         yield "member", self.member
 
 
 class Reference(Expr):
+    """
+    Represents a method reference in the Java AST.
+
+    <type>::<identifier>
+    """
+
     def __init__(
         self,
         type_: Expr | Type = None,
@@ -1388,9 +1727,6 @@ class Reference(Expr):
         self.identifier = identifier
         self.new = new
 
-    def __repr__(self):
-        return "Reference()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "type", self.type
         if self.type_arguments:
@@ -1403,12 +1739,15 @@ class Reference(Expr):
 
 
 class ArrayInitializer(_JAST):
+    """
+    Represents an array initializer in the Java AST.
+
+    { <value>, <value>, ... }
+    """
+
     def __init__(self, values: List[Union[Expr, "ArrayInitializer"]] = None, **kwargs):
         super().__init__(**kwargs)
         self.values = values or []
-
-    def __repr__(self):
-        return f"ArrayInitializer({self.values!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "values", self.values
@@ -1418,6 +1757,10 @@ class ArrayInitializer(_JAST):
 
 
 class ReceiverParameter(_JAST):
+    """
+    Represents a receiver parameter in the Java AST.
+    """
+
     def __init__(
         self,
         type_: Type = None,
@@ -1440,6 +1783,12 @@ class ReceiverParameter(_JAST):
 
 
 class Parameter(_JAST):
+    """
+    Represents a parameter in the Java AST.
+
+    <modifier>* <type> <identifier>
+    """
+
     def __init__(
         self,
         modifiers: List[Modifier] = None,
@@ -1456,9 +1805,6 @@ class Parameter(_JAST):
         self.type = type_
         self.identifier = identifier
 
-    def __repr__(self):
-        return f"Parameter({self.type!r})"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
@@ -1467,6 +1813,10 @@ class Parameter(_JAST):
 
 
 class VariableArityParameter(_JAST):
+    """
+    Represents a variable arity parameter in the Java AST.
+    """
+
     def __init__(
         self,
         modifiers: List[Modifier] = None,
@@ -1485,9 +1835,6 @@ class VariableArityParameter(_JAST):
         self.annotations = annotations or []
         self.identifier = identifier
 
-    def __repr__(self):
-        return f"VariableArityParameter({self.type!r})"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
@@ -1498,6 +1845,13 @@ class VariableArityParameter(_JAST):
 
 
 class FormalParameters(_JAST):
+    """
+    Represents formal parameters in the Java AST.
+
+    (<receiver-parameter>, <parameter>, ...)
+    (<parameter>, <parameter>, ...)
+    """
+
     def __init__(
         self,
         receiver_parameter: ReceiverParameter = None,
@@ -1507,9 +1861,6 @@ class FormalParameters(_JAST):
         super().__init__(**kwargs)
         self.receiver_parameter = receiver_parameter
         self.parameters = parameters or []
-
-    def __repr__(self):
-        return "FormalParameters()"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.receiver_parameter:
@@ -1522,10 +1873,18 @@ class FormalParameters(_JAST):
 
 
 class Statement(_JAST, abc.ABC):
-    pass
+    """
+    Abstract base class for all statements in the Java AST.
+    """
 
 
 class LocalClassDeclaration(Statement):
+    """
+    Represents a local class declaration in the Java AST.
+
+    class { <declaration> <declaration> ... }
+    """
+
     def __init__(self, declaration: "ClassDeclaration" = None, **kwargs):
         super().__init__(**kwargs)
         if declaration is None:
@@ -1540,34 +1899,46 @@ class LocalClassDeclaration(Statement):
 
 
 class LocalInterfaceDeclaration(Statement):
+    """
+    Represents a local interface declaration in the Java AST.
+
+    interface { <declaration> <declaration> ... }
+    """
+
     def __init__(self, declaration: "InterfaceDeclaration" = None, **kwargs):
         super().__init__(**kwargs)
         if declaration is None:
             raise ValueError("declaration is required for LocalInterfaceDeclaration")
         self.declaration = declaration
 
-    def __repr__(self):
-        return "LocalInterfaceDeclaration()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "declaration", self.declaration
 
 
 class LocalRecordDeclaration(Statement):
+    """
+    Represents a local record declaration in the Java AST.
+
+    record { <declaration> <declaration> ... }
+    """
+
     def __init__(self, declaration: "RecordDeclaration" = None, **kwargs):
         super().__init__(**kwargs)
         if declaration is None:
             raise ValueError("declaration is required for LocalRecordDeclaration")
         self.declaration = declaration
 
-    def __repr__(self):
-        return "LocalRecordDeclaration()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "declaration", self.declaration
 
 
 class LocalVariableDeclaration(Statement):
+    """
+    Represents a local variable declaration in the Java AST.
+
+    <modifier>* <type> <declarator>, <declarator>, ...;
+    """
+
     def __init__(
         self,
         modifiers: List[Modifier] = None,
@@ -1584,9 +1955,6 @@ class LocalVariableDeclaration(Statement):
         self.type = type_
         self.declarators = declarators
 
-    def __repr__(self):
-        return "LocalVariableDeclaration()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
@@ -1595,35 +1963,50 @@ class LocalVariableDeclaration(Statement):
 
 
 class Block(Statement):
+    """
+    Represents a block statement in the Java AST.
+
+    { <statement> <statement> ... }
+    """
+
     def __init__(self, body: List[Statement] = None, **kwargs):
         super().__init__(**kwargs)
         self.body = body or []
-
-    def __repr__(self):
-        return "Block()"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "body", self.body
 
 
 class Compound(Statement):
+    """
+    Represents a compound statement in the Java AST.
+
+    <statement> <statement> ...
+    """
+
     def __init__(self, statements: List[Statement] = None, **kwargs):
         super().__init__(**kwargs)
         self.statements = statements or []
-
-    def __repr__(self):
-        return "Compound()"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "statements", self.statements
 
 
 class Empty(Statement):
-    def __repr__(self):
-        return "EmptyStatement()"
+    """
+    Represents an empty statement in the Java AST.
+
+    ;
+    """
 
 
 class Labeled(Statement):
+    """
+    Represents a labeled statement in the Java AST.
+
+    <identifier>: <statement>
+    """
+
     def __init__(self, identifier: Identifier = None, body: Statement = None, **kwargs):
         super().__init__(**kwargs)
         if identifier is None:
@@ -1633,29 +2016,35 @@ class Labeled(Statement):
         self.identifier = identifier
         self.body = body
 
-    def __repr__(self):
-        return f"LabeledStatement({self.identifier!r})"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "identifier", self.identifier
         yield "body", self.body
 
 
 class Expression(Statement):
+    """
+    Represents an expression statement in the Java AST.
+
+    <expression>;
+    """
+
     def __init__(self, expression: Expr = None, **kwargs):
         super().__init__(**kwargs)
         if expression is None:
             raise ValueError("expression is required for ExpressionStatement")
         self.expression = expression
 
-    def __repr__(self):
-        return f"ExpressionStatement({self.expression!r})"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "expression", self.expression
 
 
 class If(Statement):
+    """
+    Represents an if statement in the Java AST.
+
+    if (<test>) <body> [else <orelse>]
+    """
+
     def __init__(
         self,
         test: Expr = None,
@@ -1672,9 +2061,6 @@ class If(Statement):
         self.body = body
         self.orelse = orelse
 
-    def __repr__(self):
-        return "IfStatement()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "test", self.test
         yield "body", self.body
@@ -1683,15 +2069,18 @@ class If(Statement):
 
 
 class Assert(Statement):
+    """
+    Represents an assert statement in the Java AST.
+
+    assert <test> [ : <message> ];
+    """
+
     def __init__(self, test: Expr = None, message: Expr = None, **kwargs):
         super().__init__(**kwargs)
         if test is None:
             raise ValueError("condition is required for AssertStatement")
         self.test = test
         self.message = message
-
-    def __repr__(self):
-        return "AssertStatement()"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "test", self.test
@@ -1700,10 +2089,16 @@ class Assert(Statement):
 
 
 class SwitchLabel(_JAST, abc.ABC):
-    pass
+    """
+    Abstract base class for all switch labels in the Java AST.
+    """
 
 
 class Match(Expr):
+    """
+    Represents a match for switch statements in the Java AST.
+    """
+
     def __init__(self, type_: Type = None, ident: Identifier = None, **kwargs):
         super().__init__(**kwargs)
         if type_ is None:
@@ -1713,15 +2108,16 @@ class Match(Expr):
         self.type = type_
         self.ident = ident
 
-    def __repr__(self):
-        return "Match()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "type", self.type
         yield "ident", self.ident
 
 
 class Case(SwitchLabel):
+    """
+    Represents a case label for switch statements in the Java AST.
+    """
+
     def __init__(self, expression: Expr = None, **kwargs):
         super().__init__(**kwargs)
         if not expression:
@@ -1736,11 +2132,21 @@ class Case(SwitchLabel):
 
 
 class DefaultCase(SwitchLabel):
+    """
+    Represents a default label for switch statements in the Java AST.
+    """
+
     def __repr__(self):
         return "DefaultCase()"
 
 
 class Throw(Statement):
+    """
+    Represents a throw statement in the Java AST.
+
+    throw <expression>;
+    """
+
     def __init__(self, expression: Expr = None, **kwargs):
         super().__init__(**kwargs)
         if expression is None:
@@ -1755,6 +2161,10 @@ class Throw(Statement):
 
 
 class SwitchGroup(_JAST):
+    """
+    Represents a group of switch labels in the Java AST.
+    """
+
     def __init__(
         self,
         labels: List[SwitchLabel] = None,
@@ -1769,15 +2179,16 @@ class SwitchGroup(_JAST):
         self.labels = labels
         self.statements = statements
 
-    def __repr__(self):
-        return "SwitchGroup()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "labels", self.labels
         yield "statements", self.statements
 
 
 class SwitchBlock(_JAST):
+    """
+    Represents a block of switch groups and labels in the Java AST.
+    """
+
     def __init__(
         self,
         groups: List[SwitchGroup] = None,
@@ -1788,15 +2199,18 @@ class SwitchBlock(_JAST):
         self.groups = groups or []
         self.labels = labels or []
 
-    def __repr__(self):
-        return "SwitchGroupBlock()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "groups", self.groups
         yield "labels", self.labels
 
 
 class Switch(Statement):
+    """
+    Represents a switch statement in the Java AST.
+
+    switch (<expression>) { <block> }
+    """
+
     def __init__(self, expression: Expr = None, block: SwitchBlock = None, **kwargs):
         super().__init__(**kwargs)
         if expression is None:
@@ -1806,15 +2220,18 @@ class Switch(Statement):
         self.expression = expression
         self.block = block
 
-    def __repr__(self):
-        return "SwitchStatement()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "expression", self.expression
         yield "block", self.block
 
 
 class While(Statement):
+    """
+    Represents a while statement in the Java AST.
+
+    while (<test>) <body>
+    """
+
     def __init__(self, test: Expr = None, body: Statement = None, **kwargs):
         super().__init__(**kwargs)
         if test is None:
@@ -1833,6 +2250,12 @@ class While(Statement):
 
 
 class DoWhile(Statement):
+    """
+    Represents a do-while statement in the Java AST.
+
+    do <body> while (<test>)
+    """
+
     def __init__(self, body: Statement = None, test: Expr = None, **kwargs):
         super().__init__(**kwargs)
         if body is None:
@@ -1851,6 +2274,12 @@ class DoWhile(Statement):
 
 
 class For(Statement):
+    """
+    Represents a for statement in the Java AST.
+
+    for (<init>; <test>; <update>) <body>
+    """
+
     def __init__(
         self,
         init: List[Expr] | LocalVariableDeclaration = None,
@@ -1867,9 +2296,6 @@ class For(Statement):
         self.update = update or []
         self.body = body
 
-    def __repr__(self):
-        return "ForStatement()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.init:
             yield "init", self.init
@@ -1881,6 +2307,12 @@ class For(Statement):
 
 
 class ForEach(Statement):
+    """
+    Represents a for-each statement in the Java AST.
+
+    for (<type> <identifier> : <expression>) <body>
+    """
+
     def __init__(
         self,
         modifiers: List[Modifier] = None,
@@ -1905,9 +2337,6 @@ class ForEach(Statement):
         self.expression = expression
         self.body = body
 
-    def __repr__(self):
-        return "ForEachStatement()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
@@ -1918,12 +2347,15 @@ class ForEach(Statement):
 
 
 class Break(Statement):
+    """
+    Represents a break statement in the Java AST.
+
+    break [<identifier>];
+    """
+
     def __init__(self, identifier: Identifier = None, **kwargs):
         super().__init__(**kwargs)
         self.identifier = identifier
-
-    def __repr__(self):
-        return f"BreakStatement({self.identifier!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.identifier:
@@ -1931,12 +2363,15 @@ class Break(Statement):
 
 
 class Continue(Statement):
+    """
+    Represents a continue statement in the Java AST.
+
+    continue [<identifier>];
+    """
+
     def __init__(self, identifier: Identifier = None, **kwargs):
         super().__init__(**kwargs)
         self.identifier = identifier
-
-    def __repr__(self):
-        return f"ContinueStatement({self.identifier!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.identifier:
@@ -1944,12 +2379,15 @@ class Continue(Statement):
 
 
 class Return(Statement):
+    """
+    Represents a return statement in the Java AST.
+
+    return [<expression>];
+    """
+
     def __init__(self, expression: Expr = None, **kwargs):
         super().__init__(**kwargs)
         self.expression = expression
-
-    def __repr__(self):
-        return f"ReturnStatement({self.expression!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.expression:
@@ -1957,6 +2395,12 @@ class Return(Statement):
 
 
 class Synch(Statement):
+    """
+    Represents a synchronized statement in the Java AST.
+
+    synchronized (<expression>) <block>
+    """
+
     def __init__(self, expression: Expr = None, block: Block = None, **kwargs):
         super().__init__(**kwargs)
         if expression is None:
@@ -1966,15 +2410,18 @@ class Synch(Statement):
         self.expression = expression
         self.block = block
 
-    def __repr__(self):
-        return "SynchronizedStatement()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "expression", self.expression
         yield "block", self.block
 
 
 class CatchClause(_JAST):
+    """
+    Represents a catch clause in the Java AST.
+
+    catch (<type> <identifier>) <block>
+    """
+
     def __init__(
         self,
         modifiers: List[Modifier] = None,
@@ -1995,9 +2442,6 @@ class CatchClause(_JAST):
         self.identifier = identifier
         self.body = body
 
-    def __repr__(self):
-        return f"CatchClause()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
@@ -2007,6 +2451,12 @@ class CatchClause(_JAST):
 
 
 class Try(Statement):
+    """
+    Represents a try statement in the Java AST.
+
+    try <block> [catch (<type> <identifier>) <block>]* [finally <block>]
+    """
+
     def __init__(
         self,
         body: Block = None,
@@ -2023,9 +2473,6 @@ class Try(Statement):
         self.catches = catches or []
         self.final = final
 
-    def __repr__(self):
-        return "TryStatement()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "body", self.body
         if self.catches:
@@ -2035,6 +2482,12 @@ class Try(Statement):
 
 
 class Resource(_JAST):
+    """
+    Represents a resource in the Java AST.
+
+    <modifier>* <type> <declarator>
+    """
+
     def __init__(
         self,
         modifiers: List[Modifier] = None,
@@ -2062,6 +2515,12 @@ class Resource(_JAST):
 
 
 class TryWithResources(Statement):
+    """
+    Represents a try-with-resources statement in the Java AST.
+
+    try (<resource>)* <block> [catch (<type> <identifier>) <block>]* [finally <block>]
+    """
+
     def __init__(
         self,
         resources: List[Resource | QualifiedName] = None,
@@ -2080,9 +2539,6 @@ class TryWithResources(Statement):
         self.catches = catches or []
         self.final = final
 
-    def __repr__(self):
-        return "TryWithResourcesStatement()"
-
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "resources", self.resources
         yield "body", self.body
@@ -2093,14 +2549,17 @@ class TryWithResources(Statement):
 
 
 class Yield(Statement):
+    """
+    Represents a yield statement in the Java AST.
+
+    yield <expression>;
+    """
+
     def __init__(self, expression: Expr = None, **kwargs):
         super().__init__(**kwargs)
         if expression is None:
             raise ValueError("expression is required for YieldStatement")
         self.expression = expression
-
-    def __repr__(self):
-        return f"YieldStatement({self.expression!r})"
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "expression", self.expression
@@ -2110,7 +2569,9 @@ class Yield(Statement):
 
 
 class Declaration(_JAST, abc.ABC):
-    pass
+    """
+    Abstract base class for all declarations in the Java AST.
+    """
 
 
 # Package Declaration

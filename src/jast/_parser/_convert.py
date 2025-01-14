@@ -1177,7 +1177,7 @@ class JASTConverter(JavaParserVisitor):
         self, ctx: JavaParser.TypeIdentifierContext
     ) -> jast.Identifier:
         return jast.Identifier(
-            identifier=ctx.getText(),
+            name=ctx.getText(),
             **self._get_location_rule(ctx),
         )
 
@@ -1327,19 +1327,19 @@ class JASTConverter(JavaParserVisitor):
                 expression=self.visitExpression(ctx.expression(0)),
                 **self._get_location_rule(ctx),
             )
-        elif ctx.SEMI():
-            return jast.Empty(**self._get_location_rule(ctx))
         elif ctx.statementExpression:
             return jast.Expression(
                 expression=self.visitExpression(ctx.statementExpression),
                 **self._get_location_rule(ctx),
             )
-        else:
+        elif ctx.identifierLabel:
             return jast.Labeled(
                 identifier=self.visitIdentifier(ctx.identifierLabel),
                 body=self.visitStatement(ctx.statement(0)),
                 **self._get_location_rule(ctx),
             )
+        else:
+            return jast.Empty(**self._get_location_rule(ctx))
 
     def visitSwitchBlock(self, ctx: JavaParser.SwitchBlockContext) -> jast.SwitchBlock:
         return jast.SwitchBlock(

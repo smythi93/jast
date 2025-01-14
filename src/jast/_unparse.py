@@ -14,7 +14,7 @@ class _Unparser(JNodeVisitor):
     def _check_level(self, level):
         if level < self._current_expr_level:
             return True
-        elif self._level_can_be_equal and level == self._current_expr_level:
+        elif not self._level_can_be_equal and level == self._current_expr_level:
             return True
         return False
 
@@ -145,6 +145,12 @@ class _Unparser(JNodeVisitor):
 
     def visit_TypeArguments(self, node):
         return f"<{', '.join([self.visit(type_arg) for type_arg in node.types])}>"
+
+    def visit_ArrayType(self, node):
+        return f"{self.visit(node.type)}{''.join([self.visit(dims) for dims in node.dims])}"
+
+    def visit_Dim(self, node):
+        return "[]"
 
     def visit_TypeParameter(self, node):
         annotations = " ".join(
@@ -479,7 +485,7 @@ class _Unparser(JNodeVisitor):
         par = self._check_level(node.level)
         pre_level = self._current_expr_level
         self._current_expr_level = node.level
-        self._level_can_be_equal = False
+        self._level_can_be_equal = True
         s = self.visit(node.function)
         s += "("
         s += ", ".join([self.visit(arg) for arg in node.arguments])
@@ -496,7 +502,7 @@ class _Unparser(JNodeVisitor):
         self._level_can_be_equal = True
         s = self.visit(node.expr)
         s += "."
-        self._level_can_be_equal = False
+        self._level_can_be_equal = True
         s += self.visit(node.member)
         self._current_expr_level = pre_level
         if par:
@@ -908,7 +914,7 @@ class _Unparser(JNodeVisitor):
             s += self.visit(node.type_parameters) + " "
         s += self.visit(node.return_type) + " "
         s += self.visit(node.identifier)
-        s += self.visit(node.parameters)
+        s += "(" + self.visit(node.parameters) + ")"
         if node.dims:
             s += "".join([self.visit(dims) for dims in node.dims])
         s += " "
