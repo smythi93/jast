@@ -22,7 +22,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Topic :: Scientific/Engineering",
     "Topic :: Software Development :: Testing",
-    "Topic :: Software Development :: Analysis",
+    "Topic :: Software Development :: Libraries",
 ]
 dependencies = [
     "antlr4-python3-runtime>=4.13.2",
