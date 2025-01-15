@@ -1,5 +1,4 @@
 import enum
-from io import UnsupportedOperation
 
 from antlr4.CommonTokenStream import CommonTokenStream
 from antlr4.InputStream import InputStream

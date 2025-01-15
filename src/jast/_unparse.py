@@ -88,7 +88,7 @@ class _Unparser(JNodeVisitor):
         return "default"
 
     def visit_ElementValuePair(self, node):
-        return f"{self.visit(node.identifier)} = {self.visit(node.value)}"
+        return f"{self.visit(node.id)} = {self.visit(node.value)}"
 
     def visit_ElementValueArrayInitializer(self, node):
         return f"{{{', '.join([self.visit(value) for value in node.values])}}}"
@@ -158,8 +158,8 @@ class _Unparser(JNodeVisitor):
         )
         type_bound = " extends " + self.visit(node.bound) if node.bound else ""
         if annotations:
-            return f"{annotations} {self.visit(node.identifier)}{type_bound}"
-        return f"{self.visit(node.identifier)}{type_bound}"
+            return f"{annotations} {self.visit(node.id)}{type_bound}"
+        return f"{self.visit(node.id)}{type_bound}"
 
     def visit_TypeParameters(self, node):
         return (
@@ -172,7 +172,7 @@ class _Unparser(JNodeVisitor):
         annotations = " ".join(
             [self.visit(annotation) for annotation in node.annotations]
         )
-        identifier = self.visit(node.identifier)
+        identifier = self.visit(node.id)
         if modifiers:
             type_ = f"{modifiers} {type_}"
         if annotations:
@@ -472,8 +472,8 @@ class _Unparser(JNodeVisitor):
         s += "::"
         if node.type_arguments:
             s += self.visit(node.type_arguments)
-        if node.identifier:
-            s += self.visit(node.identifier)
+        if node.id:
+            s += self.visit(node.id)
         if node.new:
             s += "new"
         self._current_expr_level = pre_level
@@ -532,11 +532,11 @@ class _Unparser(JNodeVisitor):
 
     def visit_Super(self, node):
         s = "super"
-        if node.identifier:
+        if node.id:
             s += "."
             if node.type_arguments:
                 s += self.visit(node.type_arguments)
-            s += self.visit(node.identifier)
+            s += self.visit(node.id)
         if node.arguments is not None:
             s += f"({', '.join([self.visit(arg) for arg in node.arguments])})"
         return s
@@ -545,7 +545,7 @@ class _Unparser(JNodeVisitor):
         return self.visit(node.value)
 
     def visit_Name(self, node):
-        return self.visit(node.identifier)
+        return self.visit(node.id)
 
     def visit_Class(self, node):
         return f"{self.visit(node.type)}.class"
@@ -571,7 +571,7 @@ class _Unparser(JNodeVisitor):
     def visit_ArrayInitializer(self, node):
         return f"{{{', '.join([self.visit(expr) for expr in node.values])}}}"
 
-    def visit_ReceiverParameter(self, node):
+    def visit_ReceiverParameter(self, node: jast.ReceiverParameter):
         s = self.visit(node.type)
         s += " "
         if node.identifiers:
@@ -587,7 +587,7 @@ class _Unparser(JNodeVisitor):
         if s:
             s += " "
         s += self.visit(node.type) + " "
-        s += self.visit(node.identifier)
+        s += self.visit(node.id)
         return s
 
     def visit_VariableArityParameter(self, node):
@@ -596,7 +596,7 @@ class _Unparser(JNodeVisitor):
             s += " "
         s += self.visit(node.type) + " "
         s += " ".join([self.visit(annotation) for annotation in node.annotations])
-        s += "... " + self.visit(node.identifier)
+        s += "... " + self.visit(node.id)
         return s
 
     def visit_FormalParameters(self, node):
@@ -665,16 +665,12 @@ class _Unparser(JNodeVisitor):
     def visit_Labeled(self, node):
         self._ignore_indent_block = False
         if self._indent > 0:
-            s = (
-                " " * self._current_level * self._indent
-                + self.visit(node.identifier)
-                + ":\n"
-            )
+            s = " " * self._current_level * self._indent + self.visit(node.id) + ":\n"
             self._current_level += 1
             s += self.visit(node.body)
             self._current_level -= 1
         else:
-            s = self.visit(node.identifier) + ": " + self.visit(node.body)
+            s = self.visit(node.id) + ": " + self.visit(node.body)
         return s
 
     def visit_Expression(self, node):
@@ -781,8 +777,8 @@ class _Unparser(JNodeVisitor):
     def visit_Break(self, node):
         self._ignore_indent_block = False
         s = "break"
-        if node.identifier:
-            s += " " + self.visit(node.identifier)
+        if node.id:
+            s += " " + self.visit(node.id)
         if self._indent > 0:
             s = " " * self._current_level * self._indent + s + ";\n"
         else:
@@ -792,8 +788,8 @@ class _Unparser(JNodeVisitor):
     def visit_Continue(self, node):
         self._ignore_indent_block = False
         s = "continue"
-        if node.identifier:
-            s += " " + self.visit(node.identifier)
+        if node.id:
+            s += " " + self.visit(node.id)
         if self._indent > 0:
             s = " " * self._current_level * self._indent + s + ";\n"
         else:
@@ -913,7 +909,7 @@ class _Unparser(JNodeVisitor):
         if node.type_parameters:
             s += self.visit(node.type_parameters) + " "
         s += self.visit(node.return_type) + " "
-        s += self.visit(node.identifier)
+        s += self.visit(node.id)
         s += "(" + self.visit(node.parameters) + ")"
         if node.dims:
             s += "".join([self.visit(dims) for dims in node.dims])
@@ -935,7 +931,7 @@ class _Unparser(JNodeVisitor):
         s += " ".join([self.visit(mod) for mod in node.modifiers])
         if s:
             s += " "
-        s += "class " + self.visit(node.identifier) + " "
+        s += "class " + self.visit(node.id) + " "
         if node.type_parameters:
             s += self.visit(node.type_parameters) + " "
         if node.extends:

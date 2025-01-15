@@ -1,4 +1,3 @@
-from select import kevent
 from typing import List, Dict, Optional
 
 from antlr4.ParserRuleContext import ParserRuleContext
@@ -192,7 +191,7 @@ class JASTConverter(JavaParserVisitor):
         )
         body = self.visitClassBody(ctx.classBody())
         return jast.ClassDeclaration(
-            identifier=identifier,
+            id=identifier,
             type_parameters=type_parameters,
             extends=extends,
             implements=implements,
@@ -233,7 +232,7 @@ class JASTConverter(JavaParserVisitor):
         type_bound = self.visitTypeBound(ctx.typeBound()) if ctx.typeBound() else None
         return jast.TypeParameter(
             annotations=annotations,
-            identifier=identifier,
+            id=identifier,
             type_bound=type_bound,
             **self._get_location_rule(ctx),
         )
@@ -269,7 +268,7 @@ class JASTConverter(JavaParserVisitor):
             else None
         )
         return jast.EnumDeclaration(
-            identifier=identifier,
+            id=identifier,
             implements=implements,
             constants=constants,
             body=body,
@@ -295,7 +294,7 @@ class JASTConverter(JavaParserVisitor):
         body = self.visitClassBody(ctx.classBody()) if ctx.classBody() else None
         return jast.EnumConstant(
             annotations=annotations,
-            identifier=identifier,
+            id=identifier,
             arguments=arguments,
             body=body,
             **self._get_location_rule(ctx),
@@ -328,7 +327,7 @@ class JASTConverter(JavaParserVisitor):
         )
         body = self.visitInterfaceBody(ctx.interfaceBody())
         return jast.InterfaceDeclaration(
-            identifier=identifier,
+            id=identifier,
             type_parameters=type_parameters,
             extends=extends,
             implements=implements,
@@ -358,14 +357,12 @@ class JASTConverter(JavaParserVisitor):
         if ctx.SEMI():
             return jast.EmptyDeclaration(**self._get_location_rule(ctx))
         elif ctx.block():
-            if ctx.STATIC():
-                return jast.StaticInitializer(
-                    block=self.visitBlock(ctx.block()), **self._get_location_rule(ctx)
-                )
-            else:
-                return jast.Initializer(
-                    block=self.visitBlock(ctx.block()), **self._get_location_rule(ctx)
-                )
+            return jast.Initializer(
+                block=self.visitBlock(ctx.block()),
+                static=ctx.STATIC() is not None,
+                **self._get_location_rule(ctx),
+            )
+
         else:
             declaration = self.visitMemberDeclaration(ctx.memberDeclaration())
             modifiers = [self.visitModifier(modifier) for modifier in ctx.modifier()]
@@ -410,7 +407,7 @@ class JASTConverter(JavaParserVisitor):
         return jast.MethodDeclaration(
             type_parameters=type_parameters,
             return_type=return_type,
-            identifier=identifier,
+            id=identifier,
             parameters=parameters,
             dims=dims,
             throws=throws,
@@ -460,7 +457,7 @@ class JASTConverter(JavaParserVisitor):
         body = self.visitBlock(ctx.constructorBody)
         return jast.ConstructorDeclaration(
             type_parameters=type_parameters,
-            identifier=identifier,
+            id=identifier,
             parameters=parameters,
             throws=throws,
             body=body,
@@ -475,7 +472,7 @@ class JASTConverter(JavaParserVisitor):
         body = self.visitBlock(ctx.constructorBody)
         return jast.CompactConstructorDeclaration(
             modifiers=modifiers,
-            identifier=identifier,
+            id=identifier,
             body=body,
             **self._get_location_rule(ctx),
         )
@@ -527,10 +524,10 @@ class JASTConverter(JavaParserVisitor):
 
     def visitConstDeclaration(
         self, ctx: JavaParser.ConstDeclarationContext
-    ) -> jast.ConstantDeclaration:
+    ) -> jast.FieldDeclaration:
         type_ = self.visitTypeType(ctx.typeType())
         declarators = self.visitVariableDeclarators(ctx.variableDeclarators())
-        return jast.ConstantDeclaration(
+        return jast.FieldDeclaration(
             type=type_,
             declarators=declarators,
             **self._get_location_rule(ctx),
@@ -578,7 +575,7 @@ class JASTConverter(JavaParserVisitor):
             type_parameters=type_parameters,
             annotations=annotations,
             return_type=return_type,
-            identifier=identifier,
+            id=identifier,
             parameters=parameters,
             dims=dims,
             throws=throws,
@@ -604,7 +601,7 @@ class JASTConverter(JavaParserVisitor):
             else None
         )
         return jast.VariableDeclarator(
-            identifier=identifier,
+            id=identifier,
             initializer=initializer,
             **self._get_location_rule(ctx),
         )
@@ -615,7 +612,7 @@ class JASTConverter(JavaParserVisitor):
         identifier = self.visitIdentifier(ctx.identifier())
         dims = self.visitDims(ctx.dims()) if ctx.dims() else None
         return jast.VariableDeclaratorId(
-            identifier=identifier, dims=dims, **self._get_location_rule(ctx)
+            id=identifier, dims=dims, **self._get_location_rule(ctx)
         )
 
     def visitVariableInitializer(
@@ -651,7 +648,7 @@ class JASTConverter(JavaParserVisitor):
             else None
         )
         return jast.Coit(
-            identifier=identifier,
+            id=identifier,
             type_arguments=type_arguments,
             **self._get_location_rule(ctx),
         )
@@ -663,7 +660,7 @@ class JASTConverter(JavaParserVisitor):
             ]
             if ctx.typeType():
                 bound = jast.WildcardBound(
-                    type_=self.visitTypeType(ctx.typeType()),
+                    type=self.visitTypeType(ctx.typeType()),
                     extends=ctx.EXTENDS() is not None,
                     super_=ctx.SUPER() is not None,
                     **self._get_location_rule(ctx),
@@ -711,7 +708,7 @@ class JASTConverter(JavaParserVisitor):
             self.visitIdentifier(identifier) for identifier in ctx.identifier()
         ]
         return jast.ReceiverParameter(
-            type_=type_, identifier=identifiers, **self._get_location_rule(ctx)
+            type=type_, id=identifiers, **self._get_location_rule(ctx)
         )
 
     def visitFormalParameterList(
@@ -734,8 +731,8 @@ class JASTConverter(JavaParserVisitor):
         identifier = self.visitVariableDeclaratorId(ctx.variableDeclaratorId())
         return jast.Parameter(
             modifiers=modifiers,
-            type_=type_,
-            identifier=identifier,
+            type=type_,
+            id=identifier,
             **self._get_location_rule(ctx),
         )
 
@@ -749,8 +746,8 @@ class JASTConverter(JavaParserVisitor):
         identifier = self.visitVariableDeclaratorId(ctx.variableDeclaratorId())
         return jast.VariableArityParameter(
             modifiers=modifiers,
-            type_=type_,
-            identifier=identifier,
+            type=type_,
+            id=identifier,
             **self._get_location_rule(ctx),
         )
 
@@ -769,13 +766,13 @@ class JASTConverter(JavaParserVisitor):
             **self._get_location_symbol(ctx.VAR())
         )  # TODO get symbol location
         identifier = jast.VariableDeclaratorId(
-            identifier=self.visitIdentifier(ctx.identifier()),
+            id=self.visitIdentifier(ctx.identifier()),
             **self._get_location_rule(ctx),
         )
         return jast.Parameter(
             modifiers=modifiers,
-            type_=type_,
-            identifier=identifier,
+            type=type_,
+            id=identifier,
             **self._get_location_rule(ctx),
         )
 
@@ -902,7 +899,7 @@ class JASTConverter(JavaParserVisitor):
         identifier = self.visitIdentifier(ctx.identifier())
         body = self.visitAnnotationTypeBody(ctx.annotationTypeBody())
         return jast.AnnotationDeclaration(
-            identifier=identifier,
+            id=identifier,
             body=body,
             **self._get_location_rule(ctx),
         )
@@ -953,11 +950,11 @@ class JASTConverter(JavaParserVisitor):
 
     def visitAnnotationConstantDeclaration(
         self, ctx: JavaParser.AnnotationConstantDeclarationContext
-    ) -> jast.AnnotationConstantDeclaration:
+    ) -> jast.FieldDeclaration:
         type_ = self.visitTypeType(ctx.typeType())
         declarators = self.visitVariableDeclarators(ctx.variableDeclarators())
-        return jast.AnnotationConstantDeclaration(
-            type_=type_,
+        return jast.FieldDeclaration(
+            type=type_,
             declarators=declarators,
             **self._get_location_rule(ctx),
         )
@@ -971,8 +968,8 @@ class JASTConverter(JavaParserVisitor):
             self.visitDefaultValue(ctx.defaultValue()) if ctx.defaultValue() else None
         )
         return jast.AnnotationMethodDeclaration(
-            type_=type_,
-            identifier=identifier,
+            type=type_,
+            id=identifier,
             default=default,
             **self._get_location_rule(ctx),
         )
@@ -1070,7 +1067,7 @@ class JASTConverter(JavaParserVisitor):
         )
         body = self.visitRecordBody(ctx.recordBody())
         return jast.RecordDeclaration(
-            identifier=identifier,
+            id=identifier,
             type_parameters=type_parameters,
             components=components,
             implements=implements,
@@ -1092,8 +1089,8 @@ class JASTConverter(JavaParserVisitor):
         type_ = self.visitTypeType(ctx.typeType())
         identifier = self.visitIdentifier(ctx.identifier())
         return jast.RecordComponent(
-            type_=type_,
-            identifier=identifier,
+            type=type_,
+            id=identifier,
             **self._get_location_rule(ctx),
         )
 
@@ -1146,8 +1143,8 @@ class JASTConverter(JavaParserVisitor):
             end = self._get_location_rule(ctx.expression())
             declarators = [
                 jast.VariableDeclarator(
-                    identifier=jast.VariableDeclaratorId(
-                        identifier=self.visitIdentifier(ctx.identifier().identifier()),
+                    id=jast.VariableDeclaratorId(
+                        id=self.visitIdentifier(ctx.identifier().identifier()),
                         **self._get_location_rule(ctx.identifier()),
                     ),
                     initializer=self.visitExpression(ctx.expression()),
@@ -1162,7 +1159,7 @@ class JASTConverter(JavaParserVisitor):
             declarators = self.visitVariableDeclarators(ctx.variableDeclarators())
         return jast.LocalVariableDeclaration(
             modifiers=modifiers,
-            type_=type_,
+            type=type_,
             declarators=declarators,
             **self._get_location_rule(ctx),
         )
@@ -1223,12 +1220,10 @@ class JASTConverter(JavaParserVisitor):
                         self.visitVariableModifier(modifier)
                         for modifier in ctx.variableModifier()
                     ],
-                    type_=jast.Var(**self._get_location_symbol(ctx.VAR()))
+                    type=jast.Var(**self._get_location_symbol(ctx.VAR()))
                     if ctx.VAR()
                     else self.visitTypeType(ctx.typeType()),
-                    identifier=self.visitVariableDeclaratorId(
-                        ctx.variableDeclaratorId()
-                    ),
+                    id=self.visitVariableDeclaratorId(ctx.variableDeclaratorId()),
                     expression=self.visitExpression(ctx.expression(0)),
                     body=self.visitStatement(ctx.statement(0)),
                 )
@@ -1310,16 +1305,12 @@ class JASTConverter(JavaParserVisitor):
             )
         elif ctx.BREAK():
             return jast.Break(
-                identifier=self.visitIdentifier(ctx.identifier())
-                if ctx.identifier()
-                else None,
+                id=self.visitIdentifier(ctx.identifier()) if ctx.identifier() else None,
                 **self._get_location_rule(ctx),
             )
         elif ctx.CONTINUE():
             return jast.Continue(
-                identifier=self.visitIdentifier(ctx.identifier())
-                if ctx.identifier()
-                else None,
+                id=self.visitIdentifier(ctx.identifier()) if ctx.identifier() else None,
                 **self._get_location_rule(ctx),
             )
         elif ctx.YIELD():
@@ -1334,7 +1325,7 @@ class JASTConverter(JavaParserVisitor):
             )
         elif ctx.identifierLabel:
             return jast.Labeled(
-                identifier=self.visitIdentifier(ctx.identifierLabel),
+                id=self.visitIdentifier(ctx.identifierLabel),
                 body=self.visitStatement(ctx.statement(0)),
                 **self._get_location_rule(ctx),
             )
@@ -1363,8 +1354,8 @@ class JASTConverter(JavaParserVisitor):
         body = self.visitBlock(ctx.block())
         return jast.CatchClause(
             modifiers=modifiers,
-            type_=type_,
-            identifier=identifier,
+            type=type_,
+            id=identifier,
             body=body,
             **self._get_location_rule(ctx),
         )
@@ -1402,7 +1393,7 @@ class JASTConverter(JavaParserVisitor):
                 type_ = jast.Var(**self._get_location_symbol(ctx.VAR()))
                 start = self._get_location_rule(ctx.identifier())
                 identifier = jast.VariableDeclaratorId(
-                    identifier=self.visitIdentifier(ctx.identifier().identifier()),
+                    id=self.visitIdentifier(ctx.identifier().identifier()),
                     **self._get_location_rule(ctx.identifier()),
                 )
             else:
@@ -1411,7 +1402,7 @@ class JASTConverter(JavaParserVisitor):
                 identifier = self.visitVariableDeclaratorId(ctx.variableDeclaratorId())
             end = self._get_location_rule(ctx.expression())
             declarator = jast.VariableDeclarator(
-                identifier=identifier,
+                id=identifier,
                 initializer=self.visitExpression(ctx.expression()),
                 lineno=start["lineno"],
                 col_offset=start["col_offset"],
@@ -1420,7 +1411,7 @@ class JASTConverter(JavaParserVisitor):
             )
             return jast.Resource(
                 modifiers=modifiers,
-                type_=type_,
+                type=type_,
                 declarator=declarator,
                 **self._get_location_rule(ctx),
             )
@@ -1447,15 +1438,15 @@ class JASTConverter(JavaParserVisitor):
                 expression = self.visitExpression(ctx.constantExpression)
             elif ctx.enumConstantName:
                 expression = jast.Name(
-                    identifier=self.visitIdentifier(ctx.enumConstantName),
+                    id=self.visitIdentifier(ctx.enumConstantName),
                     **self._get_location_rule(ctx.enumConstantName),
                 )
             else:
                 start = self._get_location_rule(ctx.typeType())
                 end = self._get_location_rule(ctx.varName)
                 expression = jast.Match(
-                    type_=self.visitTypeType(ctx.typeType()),
-                    identifier=self.visitIdentifier(ctx.varName),
+                    type=self.visitTypeType(ctx.typeType()),
+                    id=self.visitIdentifier(ctx.varName),
                     lineno=start["lineno"],
                     col_offset=start["col_offset"],
                     end_lineno=end["end_lineno"],
@@ -1489,7 +1480,7 @@ class JASTConverter(JavaParserVisitor):
             function = jast.Super(level=16, **self._get_location_rule(ctx.SUPER()))
         else:
             function = jast.Name(
-                identifier=self.visitIdentifier(ctx.identifier()),
+                id=self.visitIdentifier(ctx.identifier()),
                 level=16,
                 **self._get_location_rule(ctx.identifier()),
             )
@@ -1548,7 +1539,7 @@ class JASTConverter(JavaParserVisitor):
                 annotations=[
                     self.visitAnnotation(annotation) for annotation in ctx.annotation()
                 ],
-                type_=jast.TypeBound(
+                type=jast.TypeBound(
                     types=[self.visitTypeType(typeType) for typeType in ctx.typeType()],
                     **self._get_location_rule(ctx),
                 ),
@@ -1624,7 +1615,7 @@ class JASTConverter(JavaParserVisitor):
                     expression=self.visitRelationalExpression(
                         ctx.relationalExpression()
                     ),
-                    type_=self.visitTypeType(ctx.typeType())
+                    type=self.visitTypeType(ctx.typeType())
                     if ctx.typeType()
                     else self.visitPattern(ctx.pattern()),
                     level=9,
@@ -1805,11 +1796,11 @@ class JASTConverter(JavaParserVisitor):
                 self.visitVariableModifier(modifier)
                 for modifier in ctx.variableModifier()
             ],
-            type_=self.visitTypeType(ctx.typeType()),
+            type=self.visitTypeType(ctx.typeType()),
             annotations=[
                 self.visitAnnotation(annotation) for annotation in ctx.annotation()
             ],
-            identifier=self.visitIdentifier(ctx.identifier()),
+            id=self.visitIdentifier(ctx.identifier()),
             **self._get_location_rule(ctx),
         )
 
@@ -1874,7 +1865,7 @@ class JASTConverter(JavaParserVisitor):
     ) -> jast.Name:
         return jast.Name(
             level=16,
-            identifier=self.visitIdentifier(ctx.identifier()),
+            id=self.visitIdentifier(ctx.identifier()),
             **self._get_location_rule(ctx),
         )
 
@@ -1883,7 +1874,7 @@ class JASTConverter(JavaParserVisitor):
     ) -> jast.Class:
         return jast.Class(
             level=16,
-            type_=self.visitTypeTypeOrVoid(ctx.typeTypeOrVoid()),
+            type=self.visitTypeTypeOrVoid(ctx.typeTypeOrVoid()),
             **self._get_location_rule(ctx),
         )
 
@@ -1932,7 +1923,7 @@ class JASTConverter(JavaParserVisitor):
                 )
         elif ctx.identifier():
             expr = jast.Name(
-                identifier=self.visitIdentifier(ctx.identifier()),
+                id=self.visitIdentifier(ctx.identifier()),
                 level=16,
                 **self._get_location_rule(ctx.identifier()),
             )
@@ -1966,9 +1957,7 @@ class JASTConverter(JavaParserVisitor):
             type_arguments=self.visitTypeArguments(ctx.typeArguments())
             if ctx.typeArguments()
             else None,
-            identifier=self.visitIdentifier(ctx.identifier())
-            if ctx.identifier()
-            else None,
+            id=self.visitIdentifier(ctx.identifier()) if ctx.identifier() else None,
             new=ctx.NEW() is not None,
             level=16,
             **self._get_location_rule(ctx),
@@ -2032,11 +2021,11 @@ class JASTConverter(JavaParserVisitor):
                     self.visitVariableModifier(modifier)
                     for modifier in ctx.variableModifier()
                 ],
-                type_=self.visitTypeType(ctx.typeType()),
+                type=self.visitTypeType(ctx.typeType()),
                 annotations=[
                     self.visitAnnotation(annotation) for annotation in ctx.annotation()
                 ],
-                identifier=self.visitIdentifier(ctx.identifier()),
+                id=self.visitIdentifier(ctx.identifier()),
                 lineno=start["lineno"],
                 col_offset=start["col_offset"],
                 end_lineno=end["end_lineno"],
@@ -2070,7 +2059,7 @@ class JASTConverter(JavaParserVisitor):
             annotations=[
                 self.visitAnnotation(annotation) for annotation in ctx.annotation()
             ],
-            identifier=self.visitIdentifier(ctx.identifier()),
+            id=self.visitIdentifier(ctx.identifier()),
             type_arguments=self.visitTypeArguments(ctx.typeArguments())
             if ctx.typeArguments()
             else None,
@@ -2098,7 +2087,7 @@ class JASTConverter(JavaParserVisitor):
             )
             if ctx.nonWildcardTypeArguments()
             else None,
-            type_=self.visitCreatedName(ctx.createdName()),
+            type=self.visitCreatedName(ctx.createdName()),
             arguments=self.visitArguments(ctx.arguments()),
             body=self.visitClassBody(ctx.classBody()) if ctx.classBody() else None,
             level=13,
@@ -2116,7 +2105,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitCoitDiamond(self, ctx: JavaParser.CoitDiamondContext) -> jast.Coit:
         return jast.Coit(
-            identifier=self.visitIdentifier(ctx.identifier()),
+            id=self.visitIdentifier(ctx.identifier()),
             type_arguments=self.visitTypeArgumentsOrDiamond(
                 ctx.typeArgumentsOrDiamond()
             )
@@ -2129,7 +2118,7 @@ class JASTConverter(JavaParserVisitor):
         self, ctx: JavaParser.InnerCreatorContext
     ) -> jast.NewInnerObject:
         return jast.NewInnerObject(
-            identifier=self.visitIdentifier(ctx.identifier()),
+            id=self.visitIdentifier(ctx.identifier()),
             template_arguments=self.visitNonWildcardTypeArgumentsOrDiamond(
                 ctx.nonWildcardTypeArgumentsOrDiamond()
             )
@@ -2148,7 +2137,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitArrayCreator(self, ctx: JavaParser.ArrayCreatorContext) -> jast.NewArray:
         return jast.NewArray(
-            type_=self.visitCreatedName(ctx.createdName()),
+            type=self.visitCreatedName(ctx.createdName()),
             expr_dims=[self.visitDimExpr(dimExpr) for dimExpr in ctx.dimExpr()],
             dims=self.visitDims(ctx.dims()) if ctx.dims() else None,
             initializer=self.visitArrayInitializer(ctx.arrayInitializer())
@@ -2211,7 +2200,7 @@ class JASTConverter(JavaParserVisitor):
             type_ = self.visitPrimitiveType(ctx.primitiveType())
         if ctx.dims():
             type_ = jast.ArrayType(
-                type_=type_,
+                type=type_,
                 dims=self.visitDims(ctx.dims()),
                 **self._get_location_rule(ctx),
             )
@@ -2255,9 +2244,7 @@ class JASTConverter(JavaParserVisitor):
             type_arguments=self.visitTypeArguments(ctx.typeArguments())
             if ctx.typeArguments()
             else None,
-            identifier=self.visitIdentifier(ctx.identifier())
-            if ctx.identifier()
-            else None,
+            id=self.visitIdentifier(ctx.identifier()) if ctx.identifier() else None,
             arguments=self.visitArguments(ctx.arguments()) if ctx.arguments() else None,
             **self._get_location_rule(ctx),
         )
@@ -2270,7 +2257,7 @@ class JASTConverter(JavaParserVisitor):
         else:
             return jast.Call(
                 function=jast.Name(
-                    identifier=self.visitIdentifier(ctx.identifier()),
+                    id=self.visitIdentifier(ctx.identifier()),
                     **self._get_location_rule(ctx.identifier()),
                 ),
                 arguments=self.visitArguments(ctx.arguments()),
@@ -2298,14 +2285,11 @@ class JASTConverter(JavaParserVisitor):
                 ctx.interfaceMethodDeclaration()
             )
         elif ctx.block():
-            if ctx.STATIC():
-                return jast.StaticInitializer(
-                    body=self.visitBlock(ctx.block()), **self._get_location_rule(ctx)
-                )
-            else:
-                return jast.Initializer(
-                    body=self.visitBlock(ctx.block()), **self._get_location_rule(ctx)
-                )
+            return jast.Initializer(
+                body=self.visitBlock(ctx.block()),
+                static=ctx.STATIC() is not None,
+                **self._get_location_rule(ctx),
+            )
         elif ctx.constructorDeclaration():
             return self.visitConstructorDeclaration(ctx.constructorDeclaration())
         elif ctx.compactConstructorDeclaration():
