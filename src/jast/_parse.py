@@ -12,9 +12,25 @@ from jast._parser._convert import JASTConverter
 
 
 class ParseMode(enum.Enum):
+    """
+    The parse mode used to identify the Java code to parse
+    """
+
+    """
+    Parse a complete Java compilation unit.
+    """
     UNIT = "unit"
+    """
+    Parse a Java declaration.
+    """
     DECL = "decl"
+    """
+    Parse a Java statement.
+    """
     STMT = "stmt"
+    """
+    Parse a Java expression.
+    """
     EXPR = "expr"
 
 
@@ -60,4 +76,14 @@ _parser = _Parser()
 
 
 def parse(src: str, mode: ParseMode | str | int = ParseMode.UNIT) -> JAST:
+    """
+    Parse Java source code into an jAST.
+
+    :param src:     The Java source code.
+    :param mode:    The parse mode used to identify the java code.
+                    The default is `ParseMode.UNIT` which is used to parse a complete Java compilation unit.
+                    Other modes are `ParseMode.DECL`, `ParseMode.STMT`, and `ParseMode.EXPR`, for parsing
+                    Java declarations, statements, and expressions, respectively.
+    :return:        The jAST representing the Java source code.
+    """
     return _parser.parse(src, mode)

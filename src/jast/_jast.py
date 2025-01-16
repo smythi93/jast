@@ -32,6 +32,15 @@ class JAST(abc.ABC):
         """
         return iter([])
 
+    def __copy__(self):
+        """
+        Copy function for JAST classes.
+        :return: copy of the JAST class
+        """
+        obj = jtype(self).__new__(self.__class__)
+        obj.__dict__.update(self.__dict__)
+        return obj
+
 
 class _JAST(JAST, abc.ABC):
     """
@@ -65,30 +74,29 @@ class _JAST(JAST, abc.ABC):
 # Identifiers
 
 
-class Identifier(_JAST):
+class identifier(_JAST, str):
     """
     Represents an identifier in the Java AST.
     """
 
-    def __init__(self, name: str, **kwargs):
-        super().__init__(**kwargs)
-        self.name = name
+    def __new__(cls, *args, **kwargs):
+        return str.__new__(cls, *args, **kwargs)
 
 
 # Names
 
 
-class QualifiedName(_JAST):
+class qname(_JAST):
     """
-    Represents a qualified name in the Java AST.
+    Represents a qualified qname in the Java AST.
 
     <identifier>.<identifier>.<identifier>...
     """
 
-    def __init__(self, identifiers: List[Identifier] = None, **kwargs):
+    def __init__(self, identifiers: List[identifier] = None, **kwargs):
         super().__init__(**kwargs)
         if not identifiers:
-            raise ValueError("identifier is required for QualifiedName")
+            raise ValueError("identifier is required for qname")
         self.identifiers = identifiers
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -176,97 +184,97 @@ class NullLiteral(Literal):
 # Modifiers
 
 
-class Modifier(_JAST, abc.ABC):
+class modifier(_JAST, abc.ABC):
     """
     Abstract base class for all modifiers in the Java AST.
     """
 
 
-class Transitive(Modifier):
+class Transitive(modifier):
     """
     Represents the transitive modifier in the Java AST.
     """
 
 
-class Static(Modifier):
+class Static(modifier):
     """
     Represents the static modifier in the Java AST.
     """
 
 
-class Public(Modifier):
+class Public(modifier):
     """
     Represents the public modifier in the Java AST.
     """
 
 
-class Protected(Modifier):
+class Protected(modifier):
     """
     Represents the protected modifier in the Java AST.
     """
 
 
-class Private(Modifier):
+class Private(modifier):
     """
     Represents the private modifier in the Java AST.
     """
 
 
-class Abstract(Modifier):
+class Abstract(modifier):
     """
     Represents the abstract modifier in the Java AST.
     """
 
 
-class Final(Modifier):
+class Final(modifier):
     """
     Represents the final modifier in the Java AST.
     """
 
 
-class Sealed(Modifier):
+class Sealed(modifier):
     """
     Represents the sealed modifier in the Java AST.
     """
 
 
-class NonSealed(Modifier):
+class NonSealed(modifier):
     """
     Represents the non-sealed modifier in the Java AST.
     """
 
 
-class Strictfp(Modifier):
+class Strictfp(modifier):
     """
     Represents the strictfp modifier in the Java AST.
     """
 
 
-class Transient(Modifier):
+class Transient(modifier):
     """
     Represents the transient modifier in the Java AST.
     """
 
 
-class Volatile(Modifier):
+class Volatile(modifier):
     """
     Represents the volatile modifier in the Java AST.
     """
 
 
-class Synchronized(Modifier):
+class Synchronized(modifier):
     """
     Represents the synchronized modifier in the Java AST.
     """
 
 
-class Native(Modifier):
+class Native(modifier):
     """
     Represents the native modifier in the Java AST.
     """
 
 
-class Default(Modifier):
+class Default(modifier):
     """
     Represents the default modifier in the Java AST.
     """
@@ -280,7 +288,7 @@ class ElementValuePair(_JAST):
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, id: Identifier = None, value: "ElementValue" = None, **kwargs):
+    def __init__(self, id: identifier = None, value: "element" = None, **kwargs):
         super().__init__(**kwargs)
         if id is None:
             raise ValueError("id is required for ElementValuePair")
@@ -301,7 +309,7 @@ class ElementValueArrayInitializer(_JAST):
     { <value>, <value>, ... }
     """
 
-    def __init__(self, values: List["ElementValue"] = None, **kwargs):
+    def __init__(self, values: List["element"] = None, **kwargs):
         super().__init__(**kwargs)
         self.values = values or []
 
@@ -309,59 +317,60 @@ class ElementValueArrayInitializer(_JAST):
         yield "values", self.values
 
 
-class Annotation(Modifier):
+class Annotation(modifier):
     """
     Represents an annotation in the Java AST.
 
-    @<name>(<element-value-pairs>)
+    @<qname>(<element-value-pairs>)
     """
 
     def __init__(
         self,
-        name: QualifiedName = None,
-        elements: List[Union[ElementValuePair, "ElementValue"]] = None,
+        name: qname = None,
+        elements: List[Union[ElementValuePair, "element"]] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if name is None:
-            raise ValueError("name is required for Annotation")
+            raise ValueError("qname is required for Annotation")
         self.name = name
         self.elements = elements
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "name", self.name
+        yield "qname", self.name
         if self.elements:
             yield "elements", self.elements
 
 
 """
-Represents a Type for element values in the Java AST.
+Represents a jtype for element values in the Java AST.
 """
-ElementValue = Union[ElementValueArrayInitializer, Annotation, "Expr"]
+element = Union[ElementValueArrayInitializer, Annotation, "Expr"]
 
 
 # Types
 
 
-class Type(_JAST, abc.ABC):
+# noinspection PyShadowingBuiltins
+class jtype(_JAST, abc.ABC):
     """
     Abstract base class for all types in the Java AST.
     """
 
 
-class Void(Type):
+class Void(jtype):
     """
-    Represents the void type in the Java AST.
+    Represents the void jtype in the Java AST.
     """
 
 
-class Var(Type):
+class Var(jtype):
     """
     Represents var for variable types in the Java AST.
     """
 
 
-class PrimitiveType(Type, abc.ABC):
+class PrimitiveType(jtype, abc.ABC):
     """
     Abstract base class for all primitive types in the Java AST.
     """
@@ -377,49 +386,49 @@ class PrimitiveType(Type, abc.ABC):
 
 class Boolean(PrimitiveType):
     """
-    Represents the boolean primitive type in the Java AST.
+    Represents the boolean primitive jtype in the Java AST.
     """
 
 
 class Byte(PrimitiveType):
     """
-    Represents the byte primitive type in the Java AST.
+    Represents the byte primitive jtype in the Java AST.
     """
 
 
 class Short(PrimitiveType):
     """
-    Represents the short primitive type in the Java AST.
+    Represents the short primitive jtype in the Java AST.
     """
 
 
 class Int(PrimitiveType):
     """
-    Represents the int primitive type in the Java AST.
+    Represents the int primitive jtype in the Java AST.
     """
 
 
 class Long(PrimitiveType):
     """
-    Represents the long primitive type in the Java AST.
+    Represents the long primitive jtype in the Java AST.
     """
 
 
 class Char(PrimitiveType):
     """
-    Represents the char primitive type in the Java AST.
+    Represents the char primitive jtype in the Java AST.
     """
 
 
 class Float(PrimitiveType):
     """
-    Represents the float primitive type in the Java AST.
+    Represents the float primitive jtype in the Java AST.
     """
 
 
 class Double(PrimitiveType):
     """
-    Represents the double primitive type in the Java AST.
+    Represents the double primitive jtype in the Java AST.
     """
 
 
@@ -427,20 +436,20 @@ class WildcardBound(_JAST):
     """
     Represents a wildcard bound in the Java AST.
 
-    (extends | super) <type>
+    (extends | super) <jtype>
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        type: Type = None,
+        type: jtype = None,
         extends: bool = False,
         super_: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if type is None:
-            raise ValueError("type is required for WildcardBound")
+            raise ValueError("jtype is required for WildcardBound")
         if extends == super_:
             raise ValueError(
                 "extends and super_ are mutually exclusive for WildcardBound"
@@ -450,12 +459,12 @@ class WildcardBound(_JAST):
         self.super = super_
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "type", self.type
+        yield "jtype", self.type
 
 
-class Wildcard(Type):
+class Wildcard(jtype):
     """
-    Represents a wildcard type in the Java AST.
+    Represents a wildcard jtype in the Java AST.
 
     <annotation>* ? [<bound>]
     """
@@ -479,12 +488,12 @@ class Wildcard(Type):
 
 class TypeArguments(_JAST):
     """
-    Represents type arguments in the Java AST.
+    Represents jtype arguments in the Java AST.
 
-    < <type>, <type>, ... >
+    < <jtype>, <jtype>, ... >
     """
 
-    def __init__(self, types: List[Type] = None, **kwargs):
+    def __init__(self, types: List[jtype] = None, **kwargs):
         super().__init__(**kwargs)
         if types is None:
             raise ValueError("types is required for TypeArguments")
@@ -494,18 +503,18 @@ class TypeArguments(_JAST):
         yield "types", self.types
 
 
-class Coit(Type):
+class Coit(jtype):
     """
-    Represents a simple class or interface type in the Java AST.
+    Represents a simple class or interface jtype in the Java AST.
 
-    <annotation>* <id>[<type-arguments>]
+    <annotation>* <id>[<jtype-arguments>]
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
         annotations: List[Annotation] = None,
-        id: Identifier = None,
+        id: identifier = None,
         type_arguments: TypeArguments = None,
         **kwargs,
     ):
@@ -524,9 +533,9 @@ class Coit(Type):
             yield "type_arguments", self.type_arguments
 
 
-class ClassType(Type):
+class ClassType(jtype):
     """
-    Represents a class type in the Java AST.
+    Represents a class jtype in the Java AST.
 
     <annotation>* <coit>.<coit>.<coit>...
     """
@@ -565,24 +574,24 @@ class Dim(_JAST):
             yield "annotations", self.annotations
 
 
-class ArrayType(Type):
+class ArrayType(jtype):
     """
-    Represents an array type in the Java AST.
+    Represents an array jtype in the Java AST.
 
-    <annotation>* <type>[]
+    <annotation>* <jtype>[]
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
         annotations: List[Annotation] = None,
-        type: Type = None,
+        type: jtype = None,
         dims: List[Dim] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if type is None:
-            raise ValueError("type is required")
+            raise ValueError("jtype is required")
         self.annotations = annotations or []
         self.type = type
         self.dims = dims or []
@@ -590,7 +599,7 @@ class ArrayType(Type):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
             yield "annotations", self.annotations
-        yield "type", self.type
+        yield "jtype", self.type
         if self.dims:
             yield "dims", self.dims
 
@@ -603,7 +612,7 @@ class VariableDeclaratorId(_JAST):
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, id: Identifier = None, dims: List[Dim] = None, **kwargs):
+    def __init__(self, id: identifier = None, dims: List[Dim] = None, **kwargs):
         super().__init__(**kwargs)
         if id is None:
             raise ValueError("id is required for VariableDeclaratorId")
@@ -616,20 +625,20 @@ class VariableDeclaratorId(_JAST):
             yield "dims", self.dims
 
 
-# Type Parameters
+# jtype Parameters
 
 
 class TypeBound(_JAST):
     """
-    Represents a type bound in the Java AST.
+    Represents a jtype bound in the Java AST.
 
-    <annotation>* <type> & <type> & ...
+    <annotation>* <jtype> & <jtype> & ...
     """
 
     def __init__(
         self,
         annotations: List[Annotation] = None,
-        types: List[Type] = None,
+        types: List[jtype] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -642,9 +651,9 @@ class TypeBound(_JAST):
         yield "types", self.types
 
 
-class TypeParameter(_JAST):
+class typeparam(_JAST):
     """
-    Represents a type parameter in the Java AST.
+    Represents a jtype parameter in the Java AST.
 
     <annotation>* <id> [<bound>]
     """
@@ -653,7 +662,7 @@ class TypeParameter(_JAST):
     def __init__(
         self,
         annotations: List[Annotation] = None,
-        id: Identifier = None,
+        id: identifier = None,
         bound: TypeBound = None,
         **kwargs,
     ):
@@ -672,17 +681,17 @@ class TypeParameter(_JAST):
             yield "bound", self.bound
 
 
-class TypeParameters(_JAST):
+class typeparams(_JAST):
     """
-    Represents type parameters in the Java AST.
+    Represents jtype parameters in the Java AST.
 
-    < <type-parameter>, <type-parameter>, ... >
+    < <jtype-parameter>, <jtype-parameter>, ... >
     """
 
-    def __init__(self, parameters: List[TypeParameter] = None, **kwargs):
+    def __init__(self, parameters: List[typeparam] = None, **kwargs):
         super().__init__(**kwargs)
         if not parameters:
-            raise ValueError("parameters is required for TypeParameters")
+            raise ValueError("parameters is required for typeparams")
         self.parameters = parameters
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -696,21 +705,21 @@ class Pattern(_JAST):
     """
     Represents a pattern in the Java AST.
 
-    <modifier>* <type> <annotation>* <id>
+    <modifier>* <jtype> <annotation>* <id>
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        modifiers: List[Modifier] = None,
-        type: Type = None,
+        modifiers: List[modifier] = None,
+        type: jtype = None,
         annotations: List[Annotation] = None,
-        id: Identifier = None,
+        id: identifier = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if type is None:
-            raise ValueError("type is required for Pattern")
+            raise ValueError("jtype is required for Pattern")
         if id is None:
             raise ValueError("id is required for Pattern")
         self.modifiers = modifiers or []
@@ -721,7 +730,7 @@ class Pattern(_JAST):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "type", self.type
+        yield "jtype", self.type
         if self.annotations:
             yield "annotations", self.annotations
         yield "id", self.id
@@ -1142,9 +1151,9 @@ class Lambda(Expr):
 
     def __init__(
         self,
-        parameters: Identifier
-        | List[Identifier]
-        | List[Union["Parameter", "VariableArityParameter"]] = None,
+        parameters: identifier
+        | List[identifier]
+        | List[Union["param", "arity"]] = None,
         body: Union[Expr, "Block"] = None,
         **kwargs,
     ):
@@ -1153,7 +1162,7 @@ class Lambda(Expr):
             raise ValueError("parameters is required for Lambda")
         if body is None:
             raise ValueError("body is required for Lambda")
-        if isinstance(parameters, FormalParameters) and parameters.receiver_parameter:
+        if isinstance(parameters, params) and parameters.receiver_parameter:
             raise ValueError("receiver_parameter is not allowed for Lambda")
         self.parameters = parameters
         self.body = body
@@ -1256,22 +1265,22 @@ class InstanceOf(Expr):
     """
     Represents an instanceof expression in the Java AST.
 
-    <expr> instanceof <type>
+    <expr> instanceof <jtype>
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, expr: Expr = None, type: Type | Pattern = None, **kwargs):
+    def __init__(self, expr: Expr = None, type: jtype | Pattern = None, **kwargs):
         super().__init__(**kwargs)
         if expr is None:
             raise ValueError("expr is required for InstanceOf")
         if type is None:
-            raise ValueError("type is required for InstanceOf")
+            raise ValueError("jtype is required for InstanceOf")
         self.expr = expr
         self.type = type
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "expr", self.expr
-        yield "type", self.type
+        yield "jtype", self.type
 
 
 class UnaryOp(Expr):
@@ -1320,7 +1329,7 @@ class Cast(Expr):
     """
     Represents a cast expression in the Java AST.
 
-    (<type>) <expr>
+    (<jtype>) <expr>
     """
 
     # noinspection PyShadowingBuiltins
@@ -1333,7 +1342,7 @@ class Cast(Expr):
     ):
         super().__init__(**kwargs)
         if type is None:
-            raise ValueError("type is required for Cast")
+            raise ValueError("jtype is required for Cast")
         if expr is None:
             raise ValueError("expr is required for Cast")
         self.annotations = annotations or []
@@ -1343,7 +1352,7 @@ class Cast(Expr):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
             yield "annotations", self.annotations
-        yield "type", self.type
+        yield "jtype", self.type
         yield "expr", self.expr
 
 
@@ -1351,21 +1360,21 @@ class NewObject(Expr):
     """
     Represents a new object creation in the Java AST.
 
-    new <type>(<argument>, <argument>, ...) [{ <body> }]
+    new <jtype>(<argument>, <argument>, ...) [{ <body> }]
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
         type_arguments: TypeArguments = None,
-        type: Type = None,
+        type: jtype = None,
         arguments: List[Expr] = None,
-        body: List["Declaration"] = None,
+        body: List["declaration"] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if not type:
-            raise ValueError("type is required for ObjectCreation")
+            raise ValueError("jtype is required for ObjectCreation")
         self.type_arguments = type_arguments
         self.type = type
         self.arguments = arguments or []
@@ -1374,7 +1383,7 @@ class NewObject(Expr):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.type_arguments:
             yield "type_arguments", self.type_arguments
-        yield "type", self.type
+        yield "jtype", self.type
         if self.arguments:
             yield "arguments", self.arguments
         if self.body:
@@ -1385,17 +1394,17 @@ class NewInnerObject(Expr):
     """
     Represents a new inner object creation in the Java AST.
 
-    <expr>.new <type>(<argument>, <argument>, ...) [{ <body> }]
+    <expr>.new <jtype>(<argument>, <argument>, ...) [{ <body> }]
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
         type_arguments: TypeArguments = None,
-        id: Identifier = None,
+        id: identifier = None,
         template_arguments: TypeArguments = None,
         arguments: List[Expr] = None,
-        body: List["Declaration"] = None,
+        body: List["declaration"] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -1445,14 +1454,14 @@ class NewArray(Expr):
     """
     Represents a new array creation in the Java AST.
 
-    new <type><dim_expr><dim_expr>...[<dim><dim>...]
-    new <type><dim><dim>... [<initializer>]
+    new <jtype><dim_expr><dim_expr>...[<dim><dim>...]
+    new <jtype><dim><dim>... [<initializer>]
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        type: Type = None,
+        type: jtype = None,
         expr_dims: List[DimExpr] = None,
         dims: List[Dim] = None,
         initializer: "ArrayInitializer" = None,
@@ -1460,7 +1469,7 @@ class NewArray(Expr):
     ):
         super().__init__(**kwargs)
         if type is None:
-            raise ValueError("type is required for ArrayCreation")
+            raise ValueError("jtype is required for ArrayCreation")
         if expr_dims and initializer:
             raise ValueError(
                 "expr_dims and initializer are mutually exclusive for ArrayCreation"
@@ -1471,7 +1480,7 @@ class NewArray(Expr):
         self.initializer = initializer
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "type", self.type
+        yield "jtype", self.type
         if self.expr_dims:
             yield "expr_dims", self.expr_dims
         if self.dims:
@@ -1583,7 +1592,7 @@ class Super(Expr):
     def __init__(
         self,
         type_arguments: TypeArguments = None,
-        id: Identifier = None,
+        id: identifier = None,
         arguments: List[Expr] = None,
         **kwargs,
     ):
@@ -1620,13 +1629,13 @@ class Constant(Expr):
 
 class Name(Expr):
     """
-    Represents a name expression in the Java AST.
+    Represents a qname expression in the Java AST.
 
     <id>
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, id: Identifier = None, **kwargs):
+    def __init__(self, id: identifier = None, **kwargs):
         super().__init__(**kwargs)
         if id is None:
             raise ValueError("id is required for Name")
@@ -1636,22 +1645,22 @@ class Name(Expr):
         yield "id", self.id
 
 
-class Class(Expr):
+class ClassExpr(Expr):
     """
     Represents a class expression in the Java AST.
 
-    <type>.class
+    <jtype>.class
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, type: Type = None, **kwargs):
+    def __init__(self, type: jtype = None, **kwargs):
         super().__init__(**kwargs)
         if type is None:
-            raise ValueError("type is required for Class")
+            raise ValueError("jtype is required for ClassExpr")
         self.type = type
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "type", self.type
+        yield "jtype", self.type
 
 
 class ExplicitGenericInvocation(Expr):
@@ -1723,22 +1732,22 @@ class Reference(Expr):
     """
     Represents a method reference in the Java AST.
 
-    <type>::<id>
+    <jtype>::<id>
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        type: Expr | Type = None,
+        type: Expr | jtype = None,
         type_arguments: TypeArguments = None,
-        id: Identifier = None,
+        id: identifier = None,
         new: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if type is None:
-            raise ValueError("type is required for Reference")
-        if new and Identifier:
+            raise ValueError("jtype is required for Reference")
+        if new and identifier:
             raise ValueError("new and id are mutually exclusive for Reference")
         if new == bool(id):
             raise ValueError("new and id are mutually exclusive for Reference")
@@ -1748,7 +1757,7 @@ class Reference(Expr):
         self.new = new
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "type", self.type
+        yield "jtype", self.type
         if self.type_arguments:
             yield "type_arguments", self.type_arguments
         if self.id:
@@ -1776,7 +1785,7 @@ class ArrayInitializer(_JAST):
 # Parameters
 
 
-class ReceiverParameter(_JAST):
+class receiver(_JAST):
     """
     Represents a receiver parameter in the Java AST.
     """
@@ -1784,42 +1793,42 @@ class ReceiverParameter(_JAST):
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        type: Type = None,
-        identifiers: List[Identifier] = None,
+        type: jtype = None,
+        identifiers: List[identifier] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if type is None:
-            raise ValueError("type is required for ReceiverParameter")
+            raise ValueError("jtype is required for receiver")
         self.type = type
         self.identifiers = identifiers
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "type", self.type
+        yield "jtype", self.type
         if self.identifiers:
             yield "identifiers", self.identifiers
 
 
-class Parameter(_JAST):
+class param(_JAST):
     """
     Represents a parameter in the Java AST.
 
-    <modifier>* <type> <id>
+    <modifier>* <jtype> <id>
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        modifiers: List[Modifier] = None,
-        type: Type = None,
+        modifiers: List[modifier] = None,
+        type: jtype = None,
         id: VariableDeclaratorId = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if type is None:
-            raise ValueError("type is required for Parameter")
+            raise ValueError("jtype is required for param")
         if id is None:
-            raise ValueError("id is required for Parameter")
+            raise ValueError("id is required for param")
         self.modifiers = modifiers or []
         self.type = type
         self.id = id
@@ -1827,11 +1836,11 @@ class Parameter(_JAST):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "type", self.type
+        yield "jtype", self.type
         yield "id", self.id
 
 
-class VariableArityParameter(_JAST):
+class arity(_JAST):
     """
     Represents a variable arity parameter in the Java AST.
     """
@@ -1839,17 +1848,17 @@ class VariableArityParameter(_JAST):
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        modifiers: List[Modifier] = None,
-        type: Type = None,
+        modifiers: List[modifier] = None,
+        type: jtype = None,
         annotations: List[Annotation] = None,
         id: VariableDeclaratorId = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if type is None:
-            raise ValueError("type is required for VariableArityParameter")
+            raise ValueError("jtype is required for arity")
         if id is None:
-            raise ValueError("id is required for VariableArityParameter")
+            raise ValueError("id is required for arity")
         self.modifiers = modifiers or []
         self.type = type
         self.annotations = annotations or []
@@ -1858,13 +1867,13 @@ class VariableArityParameter(_JAST):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "type", self.type
+        yield "jtype", self.type
         if self.annotations:
             yield "annotations", self.annotations
         yield "id", self.id
 
 
-class FormalParameters(_JAST):
+class params(_JAST):
     """
     Represents formal parameters in the Java AST.
 
@@ -1874,8 +1883,8 @@ class FormalParameters(_JAST):
 
     def __init__(
         self,
-        receiver_parameter: ReceiverParameter = None,
-        parameters: List[Parameter | VariableArityParameter] = None,
+        receiver_parameter: receiver = None,
+        parameters: List[param | arity] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -1905,7 +1914,7 @@ class LocalClassDeclaration(Statement):
     class { <declaration> <declaration> ... }
     """
 
-    def __init__(self, declaration: "ClassDeclaration" = None, **kwargs):
+    def __init__(self, declaration: "Class" = None, **kwargs):
         super().__init__(**kwargs)
         if declaration is None:
             raise ValueError("declaration is required for LocalClassDeclaration")
@@ -1922,7 +1931,7 @@ class LocalInterfaceDeclaration(Statement):
     interface { <declaration> <declaration> ... }
     """
 
-    def __init__(self, declaration: "InterfaceDeclaration" = None, **kwargs):
+    def __init__(self, declaration: "Interface" = None, **kwargs):
         super().__init__(**kwargs)
         if declaration is None:
             raise ValueError("declaration is required for LocalInterfaceDeclaration")
@@ -1939,7 +1948,7 @@ class LocalRecordDeclaration(Statement):
     record { <declaration> <declaration> ... }
     """
 
-    def __init__(self, declaration: "RecordDeclaration" = None, **kwargs):
+    def __init__(self, declaration: "Record" = None, **kwargs):
         super().__init__(**kwargs)
         if declaration is None:
             raise ValueError("declaration is required for LocalRecordDeclaration")
@@ -1953,20 +1962,20 @@ class LocalVariableDeclaration(Statement):
     """
     Represents a local variable declaration in the Java AST.
 
-    <modifier>* <type> <declarator>, <declarator>, ...;
+    <modifier>* <jtype> <declarator>, <declarator>, ...;
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        modifiers: List[Modifier] = None,
-        type: Type = None,
-        declarators: List["VariableDeclarator"] = None,
+        modifiers: List[modifier] = None,
+        type: jtype = None,
+        declarators: List["declarator"] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if type is None:
-            raise ValueError("type is required for LocalVariableDeclaration")
+            raise ValueError("jtype is required for LocalVariableDeclaration")
         if not declarators:
             raise ValueError("declarators is required for LocalVariableDeclaration")
         self.modifiers = modifiers or []
@@ -1976,7 +1985,7 @@ class LocalVariableDeclaration(Statement):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "type", self.type
+        yield "jtype", self.type
         yield "declarators", self.declarators
 
 
@@ -2026,7 +2035,7 @@ class Labeled(Statement):
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, id: Identifier = None, body: Statement = None, **kwargs):
+    def __init__(self, id: identifier = None, body: Statement = None, **kwargs):
         super().__init__(**kwargs)
         if id is None:
             raise ValueError("id is required for LabeledStatement")
@@ -2119,17 +2128,17 @@ class Match(Expr):
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, type: Type = None, ident: Identifier = None, **kwargs):
+    def __init__(self, type: jtype = None, ident: identifier = None, **kwargs):
         super().__init__(**kwargs)
         if type is None:
-            raise ValueError("type is required for Match")
+            raise ValueError("jtype is required for Match")
         if ident is None:
             raise ValueError("ident is required for Match")
         self.type = type
         self.ident = ident
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "type", self.type
+        yield "jtype", self.type
         yield "ident", self.ident
 
 
@@ -2319,14 +2328,14 @@ class ForEach(Statement):
     """
     Represents a for-each statement in the Java AST.
 
-    for (<type> <id> : <expression>) <body>
+    for (<jtype> <id> : <expression>) <body>
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        modifiers: List[Modifier] = None,
-        type: Type = None,
+        modifiers: List[modifier] = None,
+        type: jtype = None,
         id: VariableDeclaratorId = None,
         expression: Expr = None,
         body: Statement = None,
@@ -2334,7 +2343,7 @@ class ForEach(Statement):
     ):
         super().__init__(**kwargs)
         if type is None:
-            raise ValueError("type is required for ForEachStatement")
+            raise ValueError("jtype is required for ForEachStatement")
         if id is None:
             raise ValueError("id is required for ForEachStatement")
         if expression is None:
@@ -2350,7 +2359,7 @@ class ForEach(Statement):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "type", self.type
+        yield "jtype", self.type
         yield "id", self.id
         yield "expression", self.expression
         yield "body", self.body
@@ -2364,7 +2373,7 @@ class Break(Statement):
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, id: Identifier = None, **kwargs):
+    def __init__(self, id: identifier = None, **kwargs):
         super().__init__(**kwargs)
         self.id = id
 
@@ -2381,7 +2390,7 @@ class Continue(Statement):
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, id: Identifier = None, **kwargs):
+    def __init__(self, id: identifier = None, **kwargs):
         super().__init__(**kwargs)
         self.id = id
 
@@ -2431,15 +2440,15 @@ class CatchClause(_JAST):
     """
     Represents a catch clause in the Java AST.
 
-    catch (<type> <id>) <block>
+    catch (<jtype> <id>) <block>
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        modifiers: List[Modifier] = None,
-        exceptions: List[QualifiedName] = None,
-        id: Identifier = None,
+        modifiers: List[modifier] = None,
+        exceptions: List[qname] = None,
+        id: identifier = None,
         body: Block = None,
         **kwargs,
     ):
@@ -2467,7 +2476,7 @@ class Try(Statement):
     """
     Represents a try statement in the Java AST.
 
-    try <block> [catch (<type> <id>) <block>]* [finally <block>]
+    try <block> [catch (<jtype> <id>) <block>]* [finally <block>]
     """
 
     def __init__(
@@ -2498,20 +2507,20 @@ class Resource(_JAST):
     """
     Represents a resource in the Java AST.
 
-    <modifier>* <type> <declarator>
+    <modifier>* <jtype> <declarator>
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        modifiers: List[Modifier] = None,
-        type: Type = None,
-        declarator: "VariableDeclarator" = None,
+        modifiers: List[modifier] = None,
+        type: jtype = None,
+        declarator: "declarator" = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if type is None:
-            raise ValueError("type is required for Resource")
+            raise ValueError("jtype is required for Resource")
         if declarator is None:
             raise ValueError("declarator is required for Resource")
         self.modifiers = modifiers or []
@@ -2521,7 +2530,7 @@ class Resource(_JAST):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "type", self.type
+        yield "jtype", self.type
         yield "declarator", self.declarator
 
 
@@ -2529,12 +2538,12 @@ class TryWithResources(Statement):
     """
     Represents a try-with-resources statement in the Java AST.
 
-    try (<resource>)* <block> [catch (<type> <id>) <block>]* [finally <block>]
+    try (<resource>)* <block> [catch (<jtype> <id>) <block>]* [finally <block>]
     """
 
     def __init__(
         self,
-        resources: List[Resource | QualifiedName] = None,
+        resources: List[Resource | qname] = None,
         body: Block = None,
         catches: List[CatchClause] = None,
         final: Block = None,
@@ -2579,72 +2588,14 @@ class Yield(Statement):
 # Declarations
 
 
-class Declaration(_JAST, abc.ABC):
+# noinspection PyPep8Naming
+class declaration(_JAST, abc.ABC):
     """
     Abstract base class for all declarations in the Java AST.
     """
 
 
-# Package Declaration
-
-
-class PackageDeclaration(Declaration):
-    """
-    Represents a package declaration in the Java AST.
-
-    package <name>;
-    """
-
-    def __init__(
-        self, annotations: List[Annotation] = None, name: QualifiedName = None, **kwargs
-    ):
-        super().__init__(**kwargs)
-        if name is None:
-            raise ValueError("name is required for PackageDeclaration")
-        self.annotations = annotations or []
-        self.name = name
-
-    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        if self.annotations:
-            yield "annotations", self.annotations
-        yield "name", self.name
-
-
-# Import Declarations
-
-
-class ImportDeclaration(Declaration):
-    """
-    Represents an import declaration in the Java AST.
-
-    import <name>;
-    import static <name>;
-    import <name>.*;
-    import static <name>.*;
-    """
-
-    def __init__(
-        self,
-        name: QualifiedName = None,
-        static: bool = False,
-        on_demand: bool = False,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        if name is None:
-            raise ValueError("name is required for ImportDeclaration")
-        self.name = name
-        self.static = static
-        self.on_demand = on_demand
-
-    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "name", self.name
-
-
-# Top Level Declarations
-
-
-class EmptyDeclaration(Declaration):
+class EmptyDecl(declaration):
     """
     Represents an empty declaration in the Java AST.
 
@@ -2655,160 +2606,217 @@ class EmptyDeclaration(Declaration):
         super().__init__(**kwargs)
 
 
-# Module Declaration
+# Package declaration
 
 
-class ModuleDirective(_JAST, abc.ABC):
+class Package(declaration):
+    """
+    Represents a package declaration in the Java AST.
+
+    package <qname>;
+    """
+
+    def __init__(
+        self, annotations: List[Annotation] = None, name: qname = None, **kwargs
+    ):
+        super().__init__(**kwargs)
+        if name is None:
+            raise ValueError("qname is required for Package")
+        self.annotations = annotations or []
+        self.name = name
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.annotations:
+            yield "annotations", self.annotations
+        yield "qname", self.name
+
+
+# Import Declarations
+
+
+class Import(declaration):
+    """
+    Represents an import declaration in the Java AST.
+
+    import <qname>;
+    import static <qname>;
+    import <qname>.*;
+    import static <qname>.*;
+    """
+
+    def __init__(
+        self,
+        static: bool = False,
+        name: qname = None,
+        on_demand: bool = False,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if name is None:
+            raise ValueError("qname is required for Import")
+        self.static = static
+        self.name = name
+        self.on_demand = on_demand
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "qname", self.name
+
+
+# Module declaration
+
+
+class directive(_JAST, abc.ABC):
     """
     Abstract base class for all module directives in the Java AST.
     """
 
 
-class RequiresDirective(ModuleDirective):
+class Requires(directive):
     """
     Represents a requires directive in the Java AST.
 
-    requires <name>;
+    requires <qname>;
     """
 
     def __init__(
         self,
-        modifiers: List[Modifier] = None,
-        name: QualifiedName = None,
+        modifiers: List[modifier] = None,
+        name: qname = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if name is None:
-            raise ValueError("name is required for RequiresDirective")
+            raise ValueError("qname is required for Requires")
         self.modifiers = modifiers
         self.name = name
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "name", self.name
+        yield "qname", self.name
 
 
-class ExportsDirective(ModuleDirective):
+class Exports(directive):
     """
     Represents an exports directive in the Java AST.
 
-    exports <name> [to <name>];
+    exports <qname> [to <qname>];
     """
 
     def __init__(
         self,
-        name: QualifiedName = None,
-        to: QualifiedName = None,
+        name: qname = None,
+        to: qname = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if name is None:
-            raise ValueError("name is required for ExportsDirective")
+            raise ValueError("qname is required for Exports")
         self.name = name
         self.to = to
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "name", self.name
+        yield "qname", self.name
         if self.to:
             yield "to", self.to
 
 
-class OpensDirective(ModuleDirective):
+class Opens(directive):
     """
     Represents an opens directive in the Java AST.
 
-    opens <name> [to <name>];
+    opens <qname> [to <qname>];
     """
 
     def __init__(
         self,
-        name: QualifiedName = None,
-        to: QualifiedName = None,
+        name: qname = None,
+        to: qname = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if name is None:
-            raise ValueError("name is required for OpensDirective")
+            raise ValueError("qname is required for Opens")
         self.name = name
         self.to = to
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "name", self.name
+        yield "qname", self.name
         if self.to:
             yield "to", self.to
 
 
-class UsesDirective(ModuleDirective):
+class UsesDirective(directive):
     """
     Represents an uses directive in the Java AST.
 
-    uses <name>;
+    uses <qname>;
     """
 
     def __init__(
         self,
-        name: QualifiedName = None,
+        name: qname = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if name is None:
-            raise ValueError("name is required for UsesDirective")
+            raise ValueError("qname is required for UsesDirective")
         self.name = name
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "name", self.name
+        yield "qname", self.name
 
 
-class ProvidesDirective(ModuleDirective):
+class ProvidesDirective(directive):
     """
     Represents a provides directive in the Java AST.
 
-    provides <name> with <name>;
+    provides <qname> with <qname>;
     """
 
     def __init__(
         self,
-        name: QualifiedName = None,
-        with_: QualifiedName = None,
+        name: qname = None,
+        with_: qname = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if name is None:
-            raise ValueError("type is required for ProvidesDirective")
+            raise ValueError("jtype is required for ProvidesDirective")
         if not with_:
             raise ValueError("with_ is required for ProvidesDirective")
         self.name = name
         self.with_ = with_
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "name", self.name
+        yield "qname", self.name
         yield "with", self.with_
 
 
-class ModuleDeclaration(Declaration):
+class Module(declaration):
     """
     Represents a module declaration in the Java AST.
 
-    module <name> { <directive> <directive> ... }
+    module <qname> { <directive> <directive> ... }
     """
 
+    # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        open_: bool = None,
-        name: List[QualifiedName] = None,
-        directives: List[ModuleDirective] = None,
+        open: bool = False,
+        name: qname = None,
+        directives: List[directive] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if not name:
-            raise ValueError("name is required for ModuleDeclaration")
-        self.open_ = open_
+            raise ValueError("qname is required for Module")
+        self.open = open
         self.name = name
         self.directives = directives or []
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "open_", self.open_
+        yield "open", self.open
         if self.directives:
             yield "directives", self.directives
 
@@ -2816,7 +2824,7 @@ class ModuleDeclaration(Declaration):
 # Field Declarations
 
 
-class VariableDeclarator(_JAST):
+class declarator(_JAST):
     """
     Represents a variable declarator in the Java AST.
 
@@ -2832,7 +2840,7 @@ class VariableDeclarator(_JAST):
     ):
         super().__init__(**kwargs)
         if id is None:
-            raise ValueError("id_ is required for VariableDeclarator")
+            raise ValueError("id_ is required for declarator")
         self.id = id
         self.initializer = initializer
 
@@ -2842,26 +2850,26 @@ class VariableDeclarator(_JAST):
             yield "initializer", self.initializer
 
 
-class FieldDeclaration(Declaration):
+class Field(declaration):
     """
     Represents a field declaration in the Java AST.
 
-    <modifier>* <type> <declarator>, <declarator>, ...;
+    <modifier>* <jtype> <declarator>, <declarator>, ...;
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        modifiers: List[Modifier] = None,
-        type: Type = None,
-        declarators: List[VariableDeclarator] = None,
+        modifiers: List[modifier] = None,
+        type: jtype = None,
+        declarators: List[declarator] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if type is None:
-            raise ValueError("type is required for FieldDeclaration")
+            raise ValueError("jtype is required for Field")
         if not declarators:
-            raise ValueError("declarators is required for FieldDeclaration")
+            raise ValueError("declarators is required for Field")
         self.modifiers = modifiers or []
         self.type = type
         self.declarators = declarators
@@ -2869,92 +2877,41 @@ class FieldDeclaration(Declaration):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "type", self.type
+        yield "jtype", self.type
         yield "declarators", self.declarators
 
 
 # Method Declarations
 
 
-class MethodDeclaration(Declaration):
+class Method(declaration):
     """
     Represents a method declaration in the Java AST.
 
-    <modifier>* <type> <id>(<parameter>, <parameter>, ...) <body>
+    <modifier>* <jtype> <id>(<parameter>, <parameter>, ...) <body>
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        modifiers: List[Modifier] = None,
-        type_parameters: TypeParameters = None,
-        return_type: Type = None,
-        id: Identifier = None,
-        parameters: FormalParameters = None,
-        dims: List[Dim] = None,
-        throws: List[QualifiedName] = None,
-        body: Block = None,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        if return_type is None:
-            raise ValueError("return_type is required for MethodDeclaration")
-        if id is None:
-            raise ValueError("name is required for MethodDeclaration")
-        self.modifiers = modifiers or []
-        self.type_parameters = type_parameters or []
-        self.return_type = return_type
-        self.id = id
-        self.parameters = parameters
-        self.dims = dims or []
-        self.throws = throws or []
-        self.body = body or []
-
-    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        if self.modifiers:
-            yield "modifiers", self.modifiers
-        if self.type_parameters:
-            yield "type_parameters", self.type_parameters
-        yield "return_type", self.return_type
-        yield "id", self.id
-        if self.parameters:
-            yield "parameters", self.parameters
-        if self.dims:
-            yield "dims", self.dims
-        if self.throws:
-            yield "throws", self.throws
-        if self.body:
-            yield "body", self.body
-
-
-class InterfaceMethodDeclaration(Declaration):
-    """
-    Represents an interface method declaration in the Java AST.
-
-    <modifier>* <type> <id>(<parameter>, <parameter>, ...) <body>
-    """
-
-    # noinspection PyShadowingBuiltins
-    def __init__(
-        self,
-        modifiers: List[Modifier] = None,
-        type_parameters: TypeParameters = None,
+        modifiers: List[modifier] = None,
+        type_params: typeparams = None,
         annotations: List[Annotation] = None,
-        return_type: Type = None,
-        id: Identifier = None,
-        parameters: FormalParameters = None,
+        return_type: jtype = None,
+        id: identifier = None,
+        parameters: params = None,
         dims: List[Dim] = None,
-        throws: List[QualifiedName] = None,
+        throws: List[qname] = None,
         body: Block = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if return_type is None:
-            raise ValueError("type_ is required for InterfaceMethodDeclaration")
+            raise ValueError("return_type is required for Method")
         if id is None:
-            raise ValueError("name is required for InterfaceMethodDeclaration")
+            raise ValueError("qname is required for Method")
         self.modifiers = modifiers or []
-        self.type_parameters = type_parameters
+        self.type_params = type_params or []
         self.annotations = annotations or []
         self.return_type = return_type
         self.id = id
@@ -2966,12 +2923,12 @@ class InterfaceMethodDeclaration(Declaration):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        if self.type_parameters:
-            yield "type_parameters", self.type_parameters
+        if self.type_params:
+            yield "type_params", self.type_params
         if self.annotations:
             yield "annotations", self.annotations
         yield "return_type", self.return_type
-        yield "name", self.id
+        yield "id", self.id
         if self.parameters:
             yield "parameters", self.parameters
         if self.dims:
@@ -2982,10 +2939,51 @@ class InterfaceMethodDeclaration(Declaration):
             yield "body", self.body
 
 
+# Constructor declaration
+
+
+class Constructor(declaration):
+    """
+    Represents a constructor declaration in the Java AST.
+
+    <modifier>* <id>(<parameter>, <parameter>, ...) <body>
+    """
+
+    # noinspection PyShadowingBuiltins
+    def __init__(
+        self,
+        modifiers: List[modifier] = None,
+        type_params: typeparams = None,
+        id: identifier = None,
+        parameters: params = None,
+        body: Block = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if id is None:
+            raise ValueError("id is required for Constructor")
+        self.modifiers = modifiers or []
+        self.type_params = type_params or []
+        self.id = id
+        self.parameters = parameters or []
+        self.body = body
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.modifiers:
+            yield "modifiers", self.modifiers
+        if self.type_params:
+            yield "type_params", self.type_params
+        yield "id", self.id
+        if self.parameters:
+            yield "parameters", self.parameters
+        if self.body:
+            yield "body", self.body
+
+
 # Initializers
 
 
-class Initializer(Declaration):
+class Initializer(declaration):
     """
     Represents an initializer in the Java AST.
 
@@ -3004,104 +3002,33 @@ class Initializer(Declaration):
         yield "body", self.body
 
 
-# Constructor Declaration
+# Interface
 
 
-class ConstructorDeclaration(Declaration):
-    """
-    Represents a constructor declaration in the Java AST.
-
-    <modifier>* <id>(<parameter>, <parameter>, ...) <body>
-    """
-
-    # noinspection PyShadowingBuiltins
-    def __init__(
-        self,
-        modifiers: List[Modifier] = None,
-        type_parameters: TypeParameters = None,
-        id: Identifier = None,
-        parameters: FormalParameters = None,
-        body: Block = None,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        if id is None:
-            raise ValueError("id is required for ConstructorDeclaration")
-        self.modifiers = modifiers or []
-        self.type_parameters = type_parameters or []
-        self.id = id
-        self.parameters = parameters or []
-        self.body = body
-
-    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        if self.modifiers:
-            yield "modifiers", self.modifiers
-        if self.type_parameters:
-            yield "type_parameters", self.type_parameters
-        yield "id", self.id
-        if self.parameters:
-            yield "parameters", self.parameters
-        if self.body:
-            yield "body", self.body
-
-
-class CompactConstructorDeclaration(Declaration):
-    """
-    Represents a compact constructor declaration in the Java AST.
-
-    <modifier>* <id> <body>
-    """
-
-    # noinspection PyShadowingBuiltins
-    def __init__(
-        self,
-        modifiers: List[Modifier] = None,
-        id: Identifier = None,
-        body: Block = None,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        if id is None:
-            raise ValueError("id is required for CompactConstructorDeclaration")
-        self.modifiers = modifiers or []
-        self.id = id
-        self.body = body
-
-    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        if self.modifiers:
-            yield "modifiers", self.modifiers
-        yield "id", self.id
-        if self.body:
-            yield "body", self.body
-
-
-# InterfaceDeclaration
-
-
-class InterfaceDeclaration(Declaration):
+class Interface(declaration):
     """
     Represents an interface declaration in the Java AST.
 
-    <modifier>* interface <name> { <declaration> <declaration> ... }
+    <modifier>* interface <qname> { <declaration> <declaration> ... }
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        modifiers: List[Modifier] = None,
-        id: Identifier = None,
-        type_parameters: TypeParameters = None,
-        extends: List[Type] = None,
-        permits: List[Type] = None,
-        body: List[Declaration] = None,
+        modifiers: List[modifier] = None,
+        id: identifier = None,
+        type_params: typeparams = None,
+        extends: List[jtype] = None,
+        permits: List[jtype] = None,
+        body: List[declaration] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if id is None:
-            raise ValueError("name is required for NormalInterfaceDeclaration")
+            raise ValueError("qname is required for Interface")
         self.modifiers = modifiers or []
         self.id = id
-        self.type_parameters = type_parameters or []
+        self.type_params = type_params or []
         self.extends = extends or []
         self.permits = permits or []
         self.body = body or []
@@ -3110,8 +3037,8 @@ class InterfaceDeclaration(Declaration):
         if self.modifiers:
             yield "modifiers", self.modifiers
         yield "id", self.id
-        if self.type_parameters:
-            yield "type_parameters", self.type_parameters
+        if self.type_params:
+            yield "type_params", self.type_params
         if self.extends:
             yield "extends", self.extends
         if self.permits:
@@ -3120,27 +3047,27 @@ class InterfaceDeclaration(Declaration):
             yield "body", self.body
 
 
-class AnnotationMethodDeclaration(Declaration):
+class AnnotationMethod(declaration):
     """
     Represents an annotation method declaration in the Java AST.
 
-    <modifier>* <type> <id>() [default <value>]
+    <modifier>* <jtype> <identifier>() [default <element>]
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        modifiers: List[Modifier] = None,
-        type: Type = None,
-        id: Identifier = None,
-        default: ElementValue = None,
+        modifiers: List[modifier] = None,
+        type: jtype = None,
+        id: identifier = None,
+        default: element = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if type is None:
-            raise ValueError("type is required for AnnotationMethodDeclaration")
+            raise ValueError("jtype is required for AnnotationMethod")
         if id is None:
-            raise ValueError("name is required for AnnotationMethodDeclaration")
+            raise ValueError("qname is required for AnnotationMethod")
         self.modifiers = modifiers or []
         self.type = type
         self.id = id
@@ -3149,32 +3076,32 @@ class AnnotationMethodDeclaration(Declaration):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "type", self.type
+        yield "jtype", self.type
         yield "id", self.id
         if self.default:
             yield "default", self.default
 
 
-class AnnotationDeclaration(Declaration):
+class AnnotationDecl(declaration):
     """
     Represents an annotation declaration in the Java AST.
 
-    <modifier>* @interface <name> { <declaration> <declaration> ... }
+    <modifier>* @interface <identifier> { <declaration> <declaration> ... }
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        modifiers: List[Modifier] = None,
-        id: Identifier = None,
-        extends: List[Type] = None,
-        permits: List[Type] = None,
-        body: List[Declaration] = None,
+        modifiers: List[modifier] = None,
+        id: identifier = None,
+        extends: List[jtype] = None,
+        permits: List[jtype] = None,
+        body: List[declaration] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if id is None:
-            raise ValueError("name is required for AnnotationInterfaceDeclaration")
+            raise ValueError("qname is required for AnnotationInterfaceDeclaration")
         self.modifiers = modifiers or []
         self.name = id
         self.extends = extends or []
@@ -3184,7 +3111,7 @@ class AnnotationDeclaration(Declaration):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "name", self.name
+        yield "qname", self.name
         if self.extends:
             yield "extends", self.extends
         if self.permits:
@@ -3193,34 +3120,34 @@ class AnnotationDeclaration(Declaration):
             yield "body", self.body
 
 
-# Class Declarations
+# ClassExpr Declarations
 
 
-class ClassDeclaration(Declaration):
+class Class(declaration):
     """
     Represents a class declaration in the Java AST.
 
-    <modifier>* class <name> { <declaration> <declaration> ... }
+    <modifier>* class <qname> { <declaration> <declaration> ... }
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        modifiers: List[Modifier] = None,
-        id: Identifier = None,
-        type_parameters: TypeParameters = None,
-        extends: Type = None,
-        implements: List[Type] = None,
-        permits: List[Type] = None,
-        body: List[Declaration] = None,
+        modifiers: List[modifier] = None,
+        id: identifier = None,
+        type_params: typeparams = None,
+        extends: jtype = None,
+        implements: List[jtype] = None,
+        permits: List[jtype] = None,
+        body: List[declaration] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if id is None:
-            raise ValueError("name is required for ClassDeclaration")
+            raise ValueError("qname is required for Class")
         self.modifiers = modifiers or []
         self.id = id
-        self.type_parameters = type_parameters or []
+        self.type_params = type_params or []
         self.extends = extends
         self.implements = implements or []
         self.permits = permits or []
@@ -3230,8 +3157,8 @@ class ClassDeclaration(Declaration):
         if self.modifiers:
             yield "modifiers", self.modifiers
         yield "id", self.id
-        if self.type_parameters:
-            yield "type_parameters", self.type_parameters
+        if self.type_params:
+            yield "type_params", self.type_params
         if self.extends:
             yield "extends", self.extends
         if self.implements:
@@ -3242,25 +3169,25 @@ class ClassDeclaration(Declaration):
             yield "body", self.body
 
 
-class EnumConstant(_JAST):
+class enumconstant(_JAST):
     """
     Represents an enum constant in the Java AST.
 
-    <annotation>* <name> [(<argument>, <argument>, ...)] [<block>]
+    <annotation>* <qname> [(<argument>, <argument>, ...)] [<block>]
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
         annotations: List[Annotation] = None,
-        id: Identifier = None,
+        id: identifier = None,
         arguments: List[Expr] = None,
         body: Block = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if id is None:
-            raise ValueError("name is required for EnumConstant")
+            raise ValueError("qname is required for enumconstant")
         self.annotations = annotations or []
         self.name = id
         self.arguments = arguments
@@ -3269,33 +3196,33 @@ class EnumConstant(_JAST):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
             yield "annotations", self.annotations
-        yield "name", self.name
+        yield "qname", self.name
         if self.arguments:
             yield "arguments", self.arguments
         if self.body:
             yield "body", self.body
 
 
-class EnumDeclaration(Declaration):
+class Enum(declaration):
     """
     Represents an enum declaration in the Java AST.
 
-    <modifier>* enum <name> { <constant>, <constant>, ...[; <declaration> <declaration> ... ]}
+    <modifier>* enum <qname> { <constant>, <constant>, ...[; <declaration> <declaration> ... ]}
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        modifiers: List[Modifier] = None,
-        id: Identifier = None,
-        implements: List[Type] = None,
-        constants: List[EnumConstant] = None,
-        body: List[Declaration] = None,
+        modifiers: List[modifier] = None,
+        id: identifier = None,
+        implements: List[jtype] = None,
+        constants: List[enumconstant] = None,
+        body: List[declaration] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if id is None:
-            raise ValueError("name is required for EnumDeclaration")
+            raise ValueError("qname is required for Enum")
         self.modifiers = modifiers or []
         self.name = id
         self.implements = implements or []
@@ -3305,7 +3232,7 @@ class EnumDeclaration(Declaration):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "name", self.name
+        yield "qname", self.name
         if self.implements:
             yield "implements", self.implements
         if self.constants:
@@ -3314,33 +3241,33 @@ class EnumDeclaration(Declaration):
             yield "body", self.body
 
 
-class RecordComponent(_JAST):
+class recordcomponent(_JAST):
     """
     Represents a record component in the Java AST.
 
-    <type> <name>
+    <jtype> <qname>
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, type: Type = None, id: Identifier = None, **kwargs):
+    def __init__(self, type: jtype = None, id: identifier = None, **kwargs):
         super().__init__(**kwargs)
         if type is None:
-            raise ValueError("type is required for RecordComponent")
+            raise ValueError("jtype is required for recordcomponent")
         if id is None:
-            raise ValueError("name is required for RecordComponent")
+            raise ValueError("qname is required for recordcomponent")
         self.type = type
         self.id = id
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "type", self.type
+        yield "jtype", self.type
         yield "id", self.id
 
 
-class RecordDeclaration(ClassDeclaration):
+class Record(Class):
     """
     Represents a record declaration in the Java AST.
 
-    <modifier>* record <name> (<component>, <component>, ...) [implements <type>, <type>, ...] {
+    <modifier>* record <qname> (<component>, <component>, ...) [implements <jtype>, <jtype>, ...] {
         <declaration> <declaration> ...
     }
     """
@@ -3348,20 +3275,20 @@ class RecordDeclaration(ClassDeclaration):
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
-        modifiers: List[Modifier] = None,
-        id: Identifier = None,
-        type_parameters: TypeParameters = None,
-        components: List[RecordComponent] = None,
-        implements: List[ClassType] = None,
-        body: List[Declaration] = None,
+        modifiers: List[modifier] = None,
+        id: identifier = None,
+        type_params: typeparams = None,
+        components: List[recordcomponent] = None,
+        implements: List[jtype] = None,
+        body: List[declaration] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if id is None:
-            raise ValueError("name is required for RecordDeclaration")
+            raise ValueError("qname is required for Record")
         self.modifiers = modifiers or []
         self.name = id
-        self.type_parameters = type_parameters or []
+        self.type_params = type_params or []
         self.components = components or []
         self.implements = implements or []
         self.body = body or []
@@ -3369,9 +3296,9 @@ class RecordDeclaration(ClassDeclaration):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "name", self.name
-        if self.type_parameters:
-            yield "type_parameters", self.type_parameters
+        yield "qname", self.name
+        if self.type_params:
+            yield "type_params", self.type_params
         if self.components:
             yield "components", self.components
         if self.implements:
@@ -3383,13 +3310,14 @@ class RecordDeclaration(ClassDeclaration):
 # Compilation Unit
 
 
-class CompilationUnit(JAST, abc.ABC):
+# noinspection PyPep8Naming
+class mod(JAST, abc.ABC):
     """
     Abstract base class for all compilation units in the Java AST.
     """
 
 
-class OrdinaryCompilationUnit(CompilationUnit):
+class CompilationUnit(mod):
     """
     Represents an ordinary compilation unit in the Java AST.
 
@@ -3398,9 +3326,9 @@ class OrdinaryCompilationUnit(CompilationUnit):
 
     def __init__(
         self,
-        package: PackageDeclaration = None,
-        imports: List[ImportDeclaration] = None,
-        declarations: List[Declaration] = None,
+        package: Package = None,
+        imports: List[Import] = None,
+        declarations: List[declaration] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -3416,7 +3344,7 @@ class OrdinaryCompilationUnit(CompilationUnit):
         yield "declarations", self.declarations
 
 
-class ModularCompilationUnit(CompilationUnit):
+class ModularUnit(mod):
     """
     Represents a modular compilation unit in the Java AST.
 
@@ -3425,13 +3353,13 @@ class ModularCompilationUnit(CompilationUnit):
 
     def __init__(
         self,
-        imports: List[ImportDeclaration] = None,
-        module: ModuleDeclaration = None,
+        imports: List[Import] = None,
+        module: Module = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if not module:
-            raise ValueError("module is required for ModularCompilationUnit")
+            raise ValueError("module is required for ModularUnit")
         self.imports = imports or []
         self.module = module
 

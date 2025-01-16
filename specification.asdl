@@ -1,0 +1,35 @@
+module Java
+{
+    mod = CompilationUnit(Package package, Import* imports, declaration* types)
+        | ModularUnit(Import* imports, Module types)
+
+    declaration = EmptyDecl()
+        | Package(Annotation* annotations, qname name)
+        | Import(Annotation* annotations, bool static, qname name, bool on_demand)
+        | Module(bool open, qname name, directive* directives)
+        | Field(modifier* modifiers, jtype type, declarator* variables)
+        | Method(modifier* modifiers, typeparams? type_params, Annotation* annotations, jtype return_type,
+                 identifier id, params parameters, dim* dims, qname* throws, Block? body)
+        | Constructor(modifier* modifiers, typeparams? type_params, identifier id, params? parameters, Block? body)
+        | AnnotationMethod(modifier* modifiers, jtype type, identifier id, element? default_value)
+        | Initializer(bool static, Block body)
+        | Class(modifier* modifiers, identifier id, typeparams? type_params, jtype? extends, jtype* implements,
+                jtype* permits, declaration* body)
+        | Enum(modifier* modifiers, identifier id, jtype* implements, enumconstant* constants,
+               declaration* body)
+        | Interface(modifier* modifiers, identifier id, typeparams? type_params, jtype* extends, jtype* permits,
+                    declaration* body)
+        | AnnotationDecl(modifier* modifiers, identifier id, jtype* extends, jtype* permits, declaration* body)
+        | Record(modifier* modifiers, identifier id, typeparams? type_params, recordcomponent* components,
+                 jtype* implements, jtype* permits, declaration* body)
+
+    directive = Requires(modifier* modifiers, qname name)
+        | Exports(modifier* modifiers, qname name, qname to)
+        | Opens(modifier* modifiers, qname name, qname to)
+        | Uses(modifier* modifiers, qname name)
+        | Provides(modifier* modifiers, qname name, qname with_)
+
+
+    enumconstant = (Annotation* annotations, identifier id, expr* arguments, Block? body)
+
+    recordcomponent = (jtype type, identifier id)

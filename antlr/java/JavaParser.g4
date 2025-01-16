@@ -14,7 +14,7 @@
  2. Redistributions in binary form must reproduce the above copyright
     notice, this list of conditions and the following disclaimer in the
     documentation and/or other materials provided with the distribution.
- 3. The name of the author may not be used to endorse or promote products
+ 3. The qname of the author may not be used to endorse or promote products
     derived from this software without specific prior written permission.
 
  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -198,9 +198,9 @@ memberDeclaration
     ;
 
 /* We use rule this even for void methods which cannot have [] after parameters.
-   This simplifies grammar and we can consider void to be a type, which
+   This simplifies grammar and we can consider void to be a jtype, which
    renders the [] matching as a context-sensitive issue or a semantic check
-   for invalid return type after parsing.
+   for invalid return jtype after parsing.
  */
 methodDeclaration
     : typeParameters? typeTypeOrVoid identifier formalParameters dims? throws_? methodBody
@@ -259,7 +259,7 @@ constDeclaration
     : typeType variableDeclarators ';'
     ;
 
-// Early versions of Java allows brackets after the method name, eg.
+// Early versions of Java allows brackets after the method qname, eg.
 // public int[] return2DArray() [] { ... }
 // is the same as
 // public int[][] return2DArray() { ... }
@@ -342,7 +342,7 @@ lastFormalParameter
     : variableModifier* typeType annotation* '...' variableDeclaratorId
     ;
 
-// local variable type inference
+// local variable jtype inference
 lambdaLVTIList
     : lambdaLVTIParameter (',' lambdaLVTIParameter)*
     ;
@@ -519,7 +519,7 @@ identifier
     | VAR
     ;
 
-typeIdentifier // Identifiers that are not restricted for type declarations
+typeIdentifier // Identifiers that are not restricted for jtype declarations
     : IDENTIFIER
     | MODULE
     | OPEN

@@ -18,10 +18,10 @@ class _Unparser(JNodeVisitor):
             return True
         return False
 
-    def visit_Identifier(self, node: jast.Identifier):
+    def visit_Identifier(self, node: jast.identifier):
         return node.name
 
-    def visit_QualifiedName(self, node: jast.QualifiedName):
+    def visit_QualifiedName(self, node: jast.qname):
         return ".".join([self.visit(identifier) for identifier in node.identifiers])
 
     def visit_IntegerLiteral(self, node):
@@ -571,7 +571,7 @@ class _Unparser(JNodeVisitor):
     def visit_ArrayInitializer(self, node):
         return f"{{{', '.join([self.visit(expr) for expr in node.values])}}}"
 
-    def visit_ReceiverParameter(self, node: jast.ReceiverParameter):
+    def visit_ReceiverParameter(self, node: jast.receiver):
         s = self.visit(node.type)
         s += " "
         if node.identifiers:

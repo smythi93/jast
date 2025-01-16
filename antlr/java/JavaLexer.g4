@@ -14,7 +14,7 @@
  2. Redistributions in binary form must reproduce the above copyright
     notice, this list of conditions and the following disclaimer in the
     documentation and/or other materials provided with the distribution.
- 3. The name of the author may not be used to endorse or promote products
+ 3. The qname of the author may not be used to endorse or promote products
     derived from this software without specific prior written permission.
 
  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -100,11 +100,11 @@ PROVIDES   : 'provides';
 WITH       : 'with';
 TRANSITIVE : 'transitive';
 
-// Local Variable Type Inference
-VAR: 'var'; // reserved type name
+// Local Variable jtype Inference
+VAR: 'var'; // reserved jtype qname
 
 // Switch Expressions
-YIELD: 'yield'; // reserved type name from Java 14
+YIELD: 'yield'; // reserved jtype qname from Java 14
 
 // Records
 RECORD: 'record';

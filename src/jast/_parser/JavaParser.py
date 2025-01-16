@@ -18157,7 +18157,7 @@ class JavaParser(Parser):
     def declarationStart(self):
         localctx = JavaParser.DeclarationStartContext(self, self._ctx, self.state)
         self.enterRule(localctx, 2, self.RULE_declarationStart)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.state = 353
             self._errHandler.sync(self)
@@ -18455,7 +18455,7 @@ class JavaParser(Parser):
             self, self._ctx, self.state
         )
         self.enterRule(localctx, 8, self.RULE_ordinaryCompilationUnit)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 362
@@ -18567,7 +18567,7 @@ class JavaParser(Parser):
     def modularCompilationUnit(self):
         localctx = JavaParser.ModularCompilationUnitContext(self, self._ctx, self.state)
         self.enterRule(localctx, 10, self.RULE_modularCompilationUnit)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 382
@@ -18646,7 +18646,7 @@ class JavaParser(Parser):
     def packageDeclaration(self):
         localctx = JavaParser.PackageDeclarationContext(self, self._ctx, self.state)
         self.enterRule(localctx, 12, self.RULE_packageDeclaration)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 390
@@ -18720,7 +18720,7 @@ class JavaParser(Parser):
     def importDeclaration(self):
         localctx = JavaParser.ImportDeclarationContext(self, self._ctx, self.state)
         self.enterRule(localctx, 14, self.RULE_importDeclaration)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 397
@@ -19178,7 +19178,7 @@ class JavaParser(Parser):
     def classDeclaration(self):
         localctx = JavaParser.ClassDeclarationContext(self, self._ctx, self.state)
         self.enterRule(localctx, 24, self.RULE_classDeclaration)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 444
@@ -19417,7 +19417,7 @@ class JavaParser(Parser):
     def typeParameters(self):
         localctx = JavaParser.TypeParametersContext(self, self._ctx, self.state)
         self.enterRule(localctx, 32, self.RULE_typeParameters)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 469
@@ -19490,7 +19490,7 @@ class JavaParser(Parser):
     def typeParameter(self):
         localctx = JavaParser.TypeParameterContext(self, self._ctx, self.state)
         self.enterRule(localctx, 34, self.RULE_typeParameter)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 483
@@ -19569,7 +19569,7 @@ class JavaParser(Parser):
     def typeBound(self):
         localctx = JavaParser.TypeBoundContext(self, self._ctx, self.state)
         self.enterRule(localctx, 36, self.RULE_typeBound)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 494
@@ -19658,7 +19658,7 @@ class JavaParser(Parser):
     def enumDeclaration(self):
         localctx = JavaParser.EnumDeclarationContext(self, self._ctx, self.state)
         self.enterRule(localctx, 38, self.RULE_enumDeclaration)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 505
@@ -19819,7 +19819,7 @@ class JavaParser(Parser):
     def enumConstant(self):
         localctx = JavaParser.EnumConstantContext(self, self._ctx, self.state)
         self.enterRule(localctx, 42, self.RULE_enumConstant)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 533
@@ -19896,7 +19896,7 @@ class JavaParser(Parser):
     def enumBodyDeclarations(self):
         localctx = JavaParser.EnumBodyDeclarationsContext(self, self._ctx, self.state)
         self.enterRule(localctx, 44, self.RULE_enumBodyDeclarations)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 543
@@ -19972,7 +19972,7 @@ class JavaParser(Parser):
     def interfaceDeclaration(self):
         localctx = JavaParser.InterfaceDeclarationContext(self, self._ctx, self.state)
         self.enterRule(localctx, 46, self.RULE_interfaceDeclaration)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 550
@@ -20053,7 +20053,7 @@ class JavaParser(Parser):
     def classBody(self):
         localctx = JavaParser.ClassBodyContext(self, self._ctx, self.state)
         self.enterRule(localctx, 48, self.RULE_classBody)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 563
@@ -20129,7 +20129,7 @@ class JavaParser(Parser):
     def interfaceBody(self):
         localctx = JavaParser.InterfaceBodyContext(self, self._ctx, self.state)
         self.enterRule(localctx, 50, self.RULE_interfaceBody)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 572
@@ -20207,7 +20207,7 @@ class JavaParser(Parser):
     def classBodyDeclaration(self):
         localctx = JavaParser.ClassBodyDeclarationContext(self, self._ctx, self.state)
         self.enterRule(localctx, 52, self.RULE_classBodyDeclaration)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.state = 593
             self._errHandler.sync(self)
@@ -20421,7 +20421,7 @@ class JavaParser(Parser):
     def methodDeclaration(self):
         localctx = JavaParser.MethodDeclarationContext(self, self._ctx, self.state)
         self.enterRule(localctx, 56, self.RULE_methodDeclaration)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 606
@@ -20560,7 +20560,7 @@ class JavaParser(Parser):
     def dim(self):
         localctx = JavaParser.DimContext(self, self._ctx, self.state)
         self.enterRule(localctx, 60, self.RULE_dim)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 629
@@ -20823,7 +20823,7 @@ class JavaParser(Parser):
     def constructorDeclaration(self):
         localctx = JavaParser.ConstructorDeclarationContext(self, self._ctx, self.state)
         self.enterRule(localctx, 68, self.RULE_constructorDeclaration)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 647
@@ -21426,7 +21426,7 @@ class JavaParser(Parser):
             self, self._ctx, self.state
         )
         self.enterRule(localctx, 82, self.RULE_interfaceMethodDeclaration)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 703
@@ -21529,7 +21529,7 @@ class JavaParser(Parser):
     def variableDeclarators(self):
         localctx = JavaParser.VariableDeclaratorsContext(self, self._ctx, self.state)
         self.enterRule(localctx, 84, self.RULE_variableDeclarators)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 726
@@ -21592,7 +21592,7 @@ class JavaParser(Parser):
     def variableDeclarator(self):
         localctx = JavaParser.VariableDeclaratorContext(self, self._ctx, self.state)
         self.enterRule(localctx, 86, self.RULE_variableDeclarator)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 734
@@ -21649,7 +21649,7 @@ class JavaParser(Parser):
     def variableDeclaratorId(self):
         localctx = JavaParser.VariableDeclaratorIdContext(self, self._ctx, self.state)
         self.enterRule(localctx, 88, self.RULE_variableDeclaratorId)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 739
@@ -21828,7 +21828,7 @@ class JavaParser(Parser):
     def arrayInitializer(self):
         localctx = JavaParser.ArrayInitializerContext(self, self._ctx, self.state)
         self.enterRule(localctx, 92, self.RULE_arrayInitializer)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 747
@@ -22042,7 +22042,7 @@ class JavaParser(Parser):
     def typeArgument(self):
         localctx = JavaParser.TypeArgumentContext(self, self._ctx, self.state)
         self.enterRule(localctx, 98, self.RULE_typeArgument)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.state = 789
             self._errHandler.sync(self)
@@ -22132,7 +22132,7 @@ class JavaParser(Parser):
     def qualifiedNameList(self):
         localctx = JavaParser.QualifiedNameListContext(self, self._ctx, self.state)
         self.enterRule(localctx, 100, self.RULE_qualifiedNameList)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 791
@@ -22201,7 +22201,7 @@ class JavaParser(Parser):
     def formalParameters(self):
         localctx = JavaParser.FormalParametersContext(self, self._ctx, self.state)
         self.enterRule(localctx, 102, self.RULE_formalParameters)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 799
@@ -22314,7 +22314,7 @@ class JavaParser(Parser):
     def receiverParameter(self):
         localctx = JavaParser.ReceiverParameterContext(self, self._ctx, self.state)
         self.enterRule(localctx, 104, self.RULE_receiverParameter)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 815
@@ -22387,7 +22387,7 @@ class JavaParser(Parser):
     def formalParameterList(self):
         localctx = JavaParser.FormalParameterListContext(self, self._ctx, self.state)
         self.enterRule(localctx, 106, self.RULE_formalParameterList)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.state = 839
             self._errHandler.sync(self)
@@ -22550,7 +22550,7 @@ class JavaParser(Parser):
     def lastFormalParameter(self):
         localctx = JavaParser.LastFormalParameterContext(self, self._ctx, self.state)
         self.enterRule(localctx, 110, self.RULE_lastFormalParameter)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 853
@@ -22631,7 +22631,7 @@ class JavaParser(Parser):
     def lambdaLVTIList(self):
         localctx = JavaParser.LambdaLVTIListContext(self, self._ctx, self.state)
         self.enterRule(localctx, 112, self.RULE_lambdaLVTIList)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 866
@@ -22697,7 +22697,7 @@ class JavaParser(Parser):
     def lambdaLVTIParameter(self):
         localctx = JavaParser.LambdaLVTIParameterContext(self, self._ctx, self.state)
         self.enterRule(localctx, 114, self.RULE_lambdaLVTIParameter)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 877
@@ -22929,7 +22929,7 @@ class JavaParser(Parser):
     def integerLiteral(self):
         localctx = JavaParser.IntegerLiteralContext(self, self._ctx, self.state)
         self.enterRule(localctx, 120, self.RULE_integerLiteral)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 900
@@ -22982,7 +22982,7 @@ class JavaParser(Parser):
     def floatLiteral(self):
         localctx = JavaParser.FloatLiteralContext(self, self._ctx, self.state)
         self.enterRule(localctx, 122, self.RULE_floatLiteral)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 902
@@ -23047,7 +23047,7 @@ class JavaParser(Parser):
     def annotation(self):
         localctx = JavaParser.AnnotationContext(self, self._ctx, self.state)
         self.enterRule(localctx, 124, self.RULE_annotation)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 904
@@ -23123,7 +23123,7 @@ class JavaParser(Parser):
     def elementValuePairs(self):
         localctx = JavaParser.ElementValuePairsContext(self, self._ctx, self.state)
         self.enterRule(localctx, 126, self.RULE_elementValuePairs)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 914
@@ -23321,7 +23321,7 @@ class JavaParser(Parser):
             self, self._ctx, self.state
         )
         self.enterRule(localctx, 132, self.RULE_elementValueArrayInitializer)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 931
@@ -23474,7 +23474,7 @@ class JavaParser(Parser):
     def annotationTypeBody(self):
         localctx = JavaParser.AnnotationTypeBodyContext(self, self._ctx, self.state)
         self.enterRule(localctx, 136, self.RULE_annotationTypeBody)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 952
@@ -23880,7 +23880,7 @@ class JavaParser(Parser):
             self, self._ctx, self.state
         )
         self.enterRule(localctx, 144, self.RULE_annotationMethodDeclaration)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 999
@@ -23998,7 +23998,7 @@ class JavaParser(Parser):
     def moduleDeclaration(self):
         localctx = JavaParser.ModuleDeclarationContext(self, self._ctx, self.state)
         self.enterRule(localctx, 148, self.RULE_moduleDeclaration)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1012
@@ -24063,7 +24063,7 @@ class JavaParser(Parser):
     def moduleBody(self):
         localctx = JavaParser.ModuleBodyContext(self, self._ctx, self.state)
         self.enterRule(localctx, 150, self.RULE_moduleBody)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1018
@@ -24153,7 +24153,7 @@ class JavaParser(Parser):
     def moduleDirective(self):
         localctx = JavaParser.ModuleDirectiveContext(self, self._ctx, self.state)
         self.enterRule(localctx, 152, self.RULE_moduleDirective)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.state = 1063
             self._errHandler.sync(self)
@@ -24282,7 +24282,7 @@ class JavaParser(Parser):
     def requiresModifier(self):
         localctx = JavaParser.RequiresModifierContext(self, self._ctx, self.state)
         self.enterRule(localctx, 154, self.RULE_requiresModifier)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1065
@@ -24353,7 +24353,7 @@ class JavaParser(Parser):
     def recordDeclaration(self):
         localctx = JavaParser.RecordDeclarationContext(self, self._ctx, self.state)
         self.enterRule(localctx, 156, self.RULE_recordDeclaration)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1067
@@ -24443,7 +24443,7 @@ class JavaParser(Parser):
     def recordComponentList(self):
         localctx = JavaParser.RecordComponentListContext(self, self._ctx, self.state)
         self.enterRule(localctx, 158, self.RULE_recordComponentList)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1082
@@ -24562,7 +24562,7 @@ class JavaParser(Parser):
     def recordBody(self):
         localctx = JavaParser.RecordBodyContext(self, self._ctx, self.state)
         self.enterRule(localctx, 162, self.RULE_recordBody)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1093
@@ -24695,7 +24695,7 @@ class JavaParser(Parser):
     def block(self):
         localctx = JavaParser.BlockContext(self, self._ctx, self.state)
         self.enterRule(localctx, 166, self.RULE_block)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1106
@@ -25000,7 +25000,7 @@ class JavaParser(Parser):
     def identifier(self):
         localctx = JavaParser.IdentifierContext(self, self._ctx, self.state)
         self.enterRule(localctx, 172, self.RULE_identifier)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1138
@@ -25092,7 +25092,7 @@ class JavaParser(Parser):
     def typeIdentifier(self):
         localctx = JavaParser.TypeIdentifierContext(self, self._ctx, self.state)
         self.enterRule(localctx, 174, self.RULE_typeIdentifier)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1140
@@ -25161,7 +25161,7 @@ class JavaParser(Parser):
     def localTypeDeclaration(self):
         localctx = JavaParser.LocalTypeDeclarationContext(self, self._ctx, self.state)
         self.enterRule(localctx, 176, self.RULE_localTypeDeclaration)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1145
@@ -25350,7 +25350,7 @@ class JavaParser(Parser):
     def statement(self):
         localctx = JavaParser.StatementContext(self, self._ctx, self.state)
         self.enterRule(localctx, 178, self.RULE_statement)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.state = 1276
             self._errHandler.sync(self)
@@ -25789,7 +25789,7 @@ class JavaParser(Parser):
     def switchBlock(self):
         localctx = JavaParser.SwitchBlockContext(self, self._ctx, self.state)
         self.enterRule(localctx, 180, self.RULE_switchBlock)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1278
@@ -25878,7 +25878,7 @@ class JavaParser(Parser):
     def catchClause(self):
         localctx = JavaParser.CatchClauseContext(self, self._ctx, self.state)
         self.enterRule(localctx, 182, self.RULE_catchClause)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1293
@@ -25952,7 +25952,7 @@ class JavaParser(Parser):
     def catchType(self):
         localctx = JavaParser.CatchTypeContext(self, self._ctx, self.state)
         self.enterRule(localctx, 184, self.RULE_catchType)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1306
@@ -26067,7 +26067,7 @@ class JavaParser(Parser):
     def resourceSpecification(self):
         localctx = JavaParser.ResourceSpecificationContext(self, self._ctx, self.state)
         self.enterRule(localctx, 188, self.RULE_resourceSpecification)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1317
@@ -26213,7 +26213,7 @@ class JavaParser(Parser):
     def resource(self):
         localctx = JavaParser.ResourceContext(self, self._ctx, self.state)
         self.enterRule(localctx, 192, self.RULE_resource)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.state = 1349
             self._errHandler.sync(self)
@@ -26311,7 +26311,7 @@ class JavaParser(Parser):
             self, self._ctx, self.state
         )
         self.enterRule(localctx, 194, self.RULE_switchBlockStatementGroup)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1352
@@ -26613,7 +26613,7 @@ class JavaParser(Parser):
     def expressionList(self):
         localctx = JavaParser.ExpressionListContext(self, self._ctx, self.state)
         self.enterRule(localctx, 202, self.RULE_expressionList)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1382
@@ -26772,7 +26772,7 @@ class JavaParser(Parser):
         _prevctx = localctx
         _startState = 206
         self.enterRecursionRule(localctx, 206, self.RULE_postfixExpression, _p)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1398
@@ -26873,7 +26873,7 @@ class JavaParser(Parser):
     def prefixExpression(self):
         localctx = JavaParser.PrefixExpressionContext(self, self._ctx, self.state)
         self.enterRule(localctx, 208, self.RULE_prefixExpression)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.state = 1410
             self._errHandler.sync(self)
@@ -27017,7 +27017,7 @@ class JavaParser(Parser):
     def typeExpression(self):
         localctx = JavaParser.TypeExpressionContext(self, self._ctx, self.state)
         self.enterRule(localctx, 210, self.RULE_typeExpression)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.state = 1433
             self._errHandler.sync(self)
@@ -27132,7 +27132,7 @@ class JavaParser(Parser):
         _prevctx = localctx
         _startState = 212
         self.enterRecursionRule(localctx, 212, self.RULE_multiplicativeExpression, _p)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1436
@@ -27234,7 +27234,7 @@ class JavaParser(Parser):
         _prevctx = localctx
         _startState = 214
         self.enterRecursionRule(localctx, 214, self.RULE_additiveExpression, _p)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1447
@@ -27461,7 +27461,7 @@ class JavaParser(Parser):
         _prevctx = localctx
         _startState = 218
         self.enterRecursionRule(localctx, 218, self.RULE_relationalExpression, _p)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1477
@@ -27598,7 +27598,7 @@ class JavaParser(Parser):
         _prevctx = localctx
         _startState = 220
         self.enterRecursionRule(localctx, 220, self.RULE_equalityExpression, _p)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1494
@@ -28233,7 +28233,7 @@ class JavaParser(Parser):
     def assignmentExpression(self):
         localctx = JavaParser.AssignmentExpressionContext(self, self._ctx, self.state)
         self.enterRule(localctx, 234, self.RULE_assignmentExpression)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.state = 1579
             self._errHandler.sync(self)
@@ -28379,7 +28379,7 @@ class JavaParser(Parser):
     def pattern(self):
         localctx = JavaParser.PatternContext(self, self._ctx, self.state)
         self.enterRule(localctx, 238, self.RULE_pattern)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1588
@@ -28522,7 +28522,7 @@ class JavaParser(Parser):
     def lambdaParameters(self):
         localctx = JavaParser.LambdaParametersContext(self, self._ctx, self.state)
         self.enterRule(localctx, 242, self.RULE_lambdaParameters)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.state = 1626
             self._errHandler.sync(self)
@@ -29083,7 +29083,7 @@ class JavaParser(Parser):
         _prevctx = localctx
         _startState = 246
         self.enterRecursionRule(localctx, 246, self.RULE_primary, _p)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1668
@@ -29454,7 +29454,7 @@ class JavaParser(Parser):
     def switchExpression(self):
         localctx = JavaParser.SwitchExpressionContext(self, self._ctx, self.state)
         self.enterRule(localctx, 248, self.RULE_switchExpression)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.state = 1713
             self._errHandler.sync(self)
@@ -29591,7 +29591,7 @@ class JavaParser(Parser):
     def switchLabeledRule(self):
         localctx = JavaParser.SwitchLabeledRuleContext(self, self._ctx, self.state)
         self.enterRule(localctx, 250, self.RULE_switchLabeledRule)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.state = 1726
             self._errHandler.sync(self)
@@ -29725,7 +29725,7 @@ class JavaParser(Parser):
         _prevctx = localctx
         _startState = 252
         self.enterRecursionRule(localctx, 252, self.RULE_guardedPattern, _p)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1754
@@ -29883,7 +29883,7 @@ class JavaParser(Parser):
     def switchRuleOutcome(self):
         localctx = JavaParser.SwitchRuleOutcomeContext(self, self._ctx, self.state)
         self.enterRule(localctx, 254, self.RULE_switchRuleOutcome)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.state = 1771
             self._errHandler.sync(self)
@@ -29969,7 +29969,7 @@ class JavaParser(Parser):
     def classType(self):
         localctx = JavaParser.ClassTypeContext(self, self._ctx, self.state)
         self.enterRule(localctx, 256, self.RULE_classType)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1776
@@ -30110,7 +30110,7 @@ class JavaParser(Parser):
     def objectCreator(self):
         localctx = JavaParser.ObjectCreatorContext(self, self._ctx, self.state)
         self.enterRule(localctx, 260, self.RULE_objectCreator)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1793
@@ -30183,7 +30183,7 @@ class JavaParser(Parser):
     def createdName(self):
         localctx = JavaParser.CreatedNameContext(self, self._ctx, self.state)
         self.enterRule(localctx, 262, self.RULE_createdName)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.state = 1809
             self._errHandler.sync(self)
@@ -30273,7 +30273,7 @@ class JavaParser(Parser):
     def coitDiamond(self):
         localctx = JavaParser.CoitDiamondContext(self, self._ctx, self.state)
         self.enterRule(localctx, 264, self.RULE_coitDiamond)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1811
@@ -30336,7 +30336,7 @@ class JavaParser(Parser):
     def innerCreator(self):
         localctx = JavaParser.InnerCreatorContext(self, self._ctx, self.state)
         self.enterRule(localctx, 266, self.RULE_innerCreator)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1815
@@ -30796,7 +30796,7 @@ class JavaParser(Parser):
     def typeList(self):
         localctx = JavaParser.TypeListContext(self, self._ctx, self.state)
         self.enterRule(localctx, 280, self.RULE_typeList)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1859
@@ -30865,7 +30865,7 @@ class JavaParser(Parser):
     def typeType(self):
         localctx = JavaParser.TypeTypeContext(self, self._ctx, self.state)
         self.enterRule(localctx, 282, self.RULE_typeType)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1870
@@ -30960,7 +30960,7 @@ class JavaParser(Parser):
     def primitiveType(self):
         localctx = JavaParser.PrimitiveTypeContext(self, self._ctx, self.state)
         self.enterRule(localctx, 284, self.RULE_primitiveType)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1880
@@ -31025,7 +31025,7 @@ class JavaParser(Parser):
     def typeArguments(self):
         localctx = JavaParser.TypeArgumentsContext(self, self._ctx, self.state)
         self.enterRule(localctx, 286, self.RULE_typeArguments)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1882
@@ -31095,7 +31095,7 @@ class JavaParser(Parser):
     def superSuffix(self):
         localctx = JavaParser.SuperSuffixContext(self, self._ctx, self.state)
         self.enterRule(localctx, 288, self.RULE_superSuffix)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.state = 1902
             self._errHandler.sync(self)
@@ -31264,7 +31264,7 @@ class JavaParser(Parser):
     def arguments(self):
         localctx = JavaParser.ArgumentsContext(self, self._ctx, self.state)
         self.enterRule(localctx, 292, self.RULE_arguments)
-        self._la = 0  # Token type
+        self._la = 0  # Token jtype
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 1911
