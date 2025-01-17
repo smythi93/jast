@@ -729,11 +729,11 @@ class JavaParserListener(ParseTreeListener):
     def exitRecordBodyDeclaration(self, ctx: JavaParser.RecordBodyDeclarationContext):
         pass
 
-    # Enter a parse tree produced by JavaParser#block.
+    # Enter a parse tree produced by JavaParser#body.
     def enterBlock(self, ctx: JavaParser.BlockContext):
         pass
 
-    # Exit a parse tree produced by JavaParser#block.
+    # Exit a parse tree produced by JavaParser#body.
     def exitBlock(self, ctx: JavaParser.BlockContext):
         pass
 
@@ -1021,11 +1021,11 @@ class JavaParserListener(ParseTreeListener):
     def exitAssignmentExpression(self, ctx: JavaParser.AssignmentExpressionContext):
         pass
 
-    # Enter a parse tree produced by JavaParser#expression.
+    # Enter a parse tree produced by JavaParser#value.
     def enterExpression(self, ctx: JavaParser.ExpressionContext):
         pass
 
-    # Exit a parse tree produced by JavaParser#expression.
+    # Exit a parse tree produced by JavaParser#value.
     def exitExpression(self, ctx: JavaParser.ExpressionContext):
         pass
 
@@ -1355,11 +1355,11 @@ class JavaParserListener(ParseTreeListener):
     ):
         pass
 
-    # Enter a parse tree produced by JavaParser#arguments.
+    # Enter a parse tree produced by JavaParser#args.
     def enterArguments(self, ctx: JavaParser.ArgumentsContext):
         pass
 
-    # Exit a parse tree produced by JavaParser#arguments.
+    # Exit a parse tree produced by JavaParser#args.
     def exitArguments(self, ctx: JavaParser.ArgumentsContext):
         pass
 

@@ -7,7 +7,7 @@ module Java
         | Package(Annotation* annotations, qname name)
         | Import(Annotation* annotations, bool static, qname name, bool on_demand)
         | Module(bool open, qname name, directive* directives)
-        | Field(modifier* modifiers, jtype type, declarator* variables)
+        | Field(modifier* modifiers, jtype type, declarator* declarators)
         | Method(modifier* modifiers, typeparams? type_params, Annotation* annotations, jtype return_type,
                  identifier id, params parameters, dim* dims, qname* throws, Block? body)
         | Constructor(modifier* modifiers, typeparams? type_params, identifier id, params? parameters, Block? body)
@@ -22,14 +22,71 @@ module Java
         | AnnotationDecl(modifier* modifiers, identifier id, jtype* extends, jtype* permits, declaration* body)
         | Record(modifier* modifiers, identifier id, typeparams? type_params, recordcomponent* components,
                  jtype* implements, jtype* permits, declaration* body)
+        attributes (int lineno, int col_offset, int end_lineno, int end_col_offset)
 
     directive = Requires(modifier* modifiers, qname name)
         | Exports(modifier* modifiers, qname name, qname to)
         | Opens(modifier* modifiers, qname name, qname to)
         | Uses(modifier* modifiers, qname name)
         | Provides(modifier* modifiers, qname name, qname with_)
+        attributes (int lineno, int col_offset, int end_lineno, int end_col_offset)
+
+    stmt = Empty()
+        | Block(stmt* statements)
+        | Compound(stmt* statements)
+
+        | LocalClass(Class decl)
+        | LocalInterface(Interface decl)
+        | LocalRecord(Record decl)
+        | LocalVariable(modifier* modifiers, jtype type, declarator* variables)
+
+        | Labeled(identifier label, stmt body)
+
+        | If(expr test, stmt body, stmt? orelse)
+        | Switch(expr value, switchblock body)
+        | While(expr test, stmt body)
+        | DoWhile(stmt body, expr test)
+        | For((expr* | LocalVariable)? init, expr? test, expr* update, stmt body)
+        | ForEach(modifier* modifiers, jtype type, identifier id, expr iter, stmt body)
+        | Try(Block body, catch* catches, Block? final)
+        | TryWithResources(Block body,
+                           (resource | qname)* resources,
+                           catch* catches,
+                           Block? final)
+
+        | Assert(expr test, expr? msg)
+        | Throw(expr value)
+        | Expression(expr value)
+        | Return(expr? value)
+        | Yield(expr value)
+        | Break(identifier? label)
+        | Continue(identifier? label)
+        | Synch(expr lock, Block body)
+        attributes (int lineno, int col_offset, int end_lineno, int end_col_offset)
+
+    expr = lambda(identifier | identifier* | params args, expr | Block body)
+        | Assign(expr target, operator? op, expr value)
+        | IfExp(expr test, expr body, expr orelse)
+        | BinOp(expr left, operator op, expr right)
+        | InstanceOf(expr value, jtype type)
+        | UnaryOp(unaryop op, expr operand)
+        | PostOp(expr operand, operator op)
+        | Cast(Annotation* annotations, jtype type, expr value)
+        | NewObject(typeargs? type_args, jtype type, typeargs? template_args, expr* args, declaration* body)
+        | NewArray(jtype type, expr* expr_dims, dim* dims, arrayinit? initializer)
+
+
 
 
     enumconstant = (Annotation* annotations, identifier id, expr* arguments, Block? body)
 
     recordcomponent = (jtype type, identifier id)
+
+    switchlabel = Case(expr value) | DefaultCase()
+    switchblock = (switchgroup* groups, switchlabel* labels)
+    switchgroup = (switchlabel* labels, stmt* statements)
+
+    catch = (modifier* modifiers, qname* excs, identifier id, Block body)
+
+    resource = (modifier* modifiers, jtype type, declarator variable)
+}

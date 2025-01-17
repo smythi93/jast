@@ -308,10 +308,10 @@ class _Unparser(JNodeVisitor):
         pre_level = self._current_expr_level
         self._current_expr_level = node.level
         self._level_can_be_equal = True
-        if isinstance(node.parameters, list):
-            expr = f"({', '.join([self.visit(param) for param in node.parameters])}) -> {self.visit(node.body)}"
+        if isinstance(node.args, list):
+            expr = f"({', '.join([self.visit(param) for param in node.args])}) -> {self.visit(node.body)}"
         else:
-            expr = f"{self.visit(node.parameters)} -> {self.visit(node.body)}"
+            expr = f"{self.visit(node.args)} -> {self.visit(node.body)}"
         self._current_expr_level = pre_level
         if par:
             return f"({expr})"
@@ -379,11 +379,9 @@ class _Unparser(JNodeVisitor):
         pre_level = self._current_expr_level
         self._current_expr_level = -1
         self._level_can_be_equal = False
-        type_argument = (
-            self.visit(node.type_arguments) + " " if node.type_arguments else ""
-        )
+        type_argument = self.visit(node.type_args) + " " if node.type_args else ""
         type_ = self.visit(node.type)
-        args = f"({', '.join([self.visit(arg) for arg in node.arguments])})"
+        args = f"({', '.join([self.visit(arg) for arg in node.args])})"
         if node.body:
             body = "{"
             if self._indent > 0:
@@ -665,17 +663,21 @@ class _Unparser(JNodeVisitor):
     def visit_Labeled(self, node):
         self._ignore_indent_block = False
         if self._indent > 0:
-            s = " " * self._current_level * self._indent + self.visit(node.id) + ":\n"
+            s = (
+                " " * self._current_level * self._indent
+                + self.visit(node.label)
+                + ":\n"
+            )
             self._current_level += 1
             s += self.visit(node.body)
             self._current_level -= 1
         else:
-            s = self.visit(node.id) + ": " + self.visit(node.body)
+            s = self.visit(node.label) + ": " + self.visit(node.body)
         return s
 
     def visit_Expression(self, node):
         self._ignore_indent_block = False
-        s = self.visit(node.expression)
+        s = self.visit(node.value)
         if self._indent > 0:
             s = " " * self._current_level * self._indent + s + ";\n"
         else:
@@ -712,8 +714,8 @@ class _Unparser(JNodeVisitor):
     def visit_Assert(self, node):
         self._ignore_indent_block = False
         s = "assert " + self.visit(node.test)
-        if node.message:
-            s += " : " + self.visit(node.message)
+        if node.msg:
+            s += " : " + self.visit(node.msg)
         if self._indent > 0:
             s = " " * self._current_level * self._indent + s + ";\n"
         else:
@@ -722,7 +724,7 @@ class _Unparser(JNodeVisitor):
 
     def visit_Throw(self, node):
         self._ignore_indent_block = False
-        s = "throw " + self.visit(node.expression)
+        s = "throw " + self.visit(node.exc)
         if self._indent > 0:
             s = " " * self._current_level * self._indent + s + ";\n"
         else:
@@ -799,8 +801,8 @@ class _Unparser(JNodeVisitor):
     def visit_Return(self, node):
         self._ignore_indent_block = False
         s = "return"
-        if node.expression:
-            s += " " + self.visit(node.expression)
+        if node.value:
+            s += " " + self.visit(node.value)
         if self._indent > 0:
             s = " " * self._current_level * self._indent + s + ";\n"
         else:
@@ -822,8 +824,8 @@ class _Unparser(JNodeVisitor):
     def visit_Yield(self, node):
         self._ignore_indent_block = False
         s = "yield"
-        if node.expression:
-            s += " " + self.visit(node.expression)
+        if node.value:
+            s += " " + self.visit(node.value)
         if self._indent > 0:
             s = " " * self._current_level * self._indent + s + ";\n"
         else:

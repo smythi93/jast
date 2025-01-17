@@ -21,7 +21,7 @@ class ParseMode(enum.Enum):
     """
     UNIT = "unit"
     """
-    Parse a Java declaration.
+    Parse a Java decl.
     """
     DECL = "decl"
     """
@@ -29,7 +29,7 @@ class ParseMode(enum.Enum):
     """
     STMT = "stmt"
     """
-    Parse a Java expression.
+    Parse a Java value.
     """
     EXPR = "expr"
 

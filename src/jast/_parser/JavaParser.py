@@ -17792,7 +17792,7 @@ class JavaParser(Parser):
         "recordComponent",
         "recordBody",
         "recordBodyDeclaration",
-        "block",
+        "body",
         "blockStatement",
         "localVariableDeclaration",
         "identifier",
@@ -17827,7 +17827,7 @@ class JavaParser(Parser):
         "logicalOrExpression",
         "ternaryExpression",
         "assignmentExpression",
-        "expression",
+        "value",
         "pattern",
         "lambdaExpression",
         "lambdaParameters",
@@ -17855,7 +17855,7 @@ class JavaParser(Parser):
         "typeArguments",
         "superSuffix",
         "explicitGenericInvocationSuffix",
-        "arguments",
+        "args",
     ]
 
     EOF = Token.EOF

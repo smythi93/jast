@@ -615,7 +615,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitVariableInitializer(
         self, ctx: JavaParser.VariableInitializerContext
-    ) -> jast.Expr | jast.ArrayInitializer:
+    ) -> jast.expr | jast.arrayinit:
         if ctx.expression():
             return self.visitExpression(ctx.expression())
         else:
@@ -623,8 +623,8 @@ class JASTConverter(JavaParserVisitor):
 
     def visitArrayInitializer(
         self, ctx: JavaParser.ArrayInitializerContext
-    ) -> jast.ArrayInitializer:
-        return jast.ArrayInitializer(
+    ) -> jast.arrayinit:
+        return jast.arrayinit(
             initializers=[
                 self.visitVariableInitializer(variable_initializer)
                 for variable_initializer in ctx.variableInitializer()
@@ -1111,9 +1111,7 @@ class JASTConverter(JavaParserVisitor):
             **self._get_location_rule(ctx),
         )
 
-    def visitBlockStatement(
-        self, ctx: JavaParser.BlockStatementContext
-    ) -> jast.Statement:
+    def visitBlockStatement(self, ctx: JavaParser.BlockStatementContext) -> jast.stmt:
         if ctx.localVariableDeclaration():
             return self.visitLocalVariableDeclaration(ctx.localVariableDeclaration())
         elif ctx.localTypeDeclaration():
@@ -1123,7 +1121,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitLocalVariableDeclaration(
         self, ctx: JavaParser.LocalVariableDeclarationContext
-    ) -> jast.LocalVariableDeclaration:
+    ) -> jast.LocalVariable:
         modifiers = [
             self.visitVariableModifier(modifier) for modifier in ctx.variableModifier()
         ]
@@ -1147,7 +1145,7 @@ class JASTConverter(JavaParserVisitor):
         else:
             type_ = self.visitTypeType(ctx.typeType())
             declarators = self.visitVariableDeclarators(ctx.variableDeclarators())
-        return jast.LocalVariableDeclaration(
+        return jast.LocalVariable(
             modifiers=modifiers,
             type=type_,
             declarators=declarators,
@@ -1185,15 +1183,13 @@ class JASTConverter(JavaParserVisitor):
         self._set_location_rule(declaration, ctx)
         return declaration
 
-    def visitStatement(self, ctx: JavaParser.StatementContext) -> jast.Statement:
+    def visitStatement(self, ctx: JavaParser.StatementContext) -> jast.stmt:
         if ctx.blockLabel:
             return self.visitBlock(ctx.blockLabel)
         elif ctx.ASSERT():
             return jast.Assert(
                 expression=self.visitExpression(ctx.expression(0)),
-                message=self.visitExpression(ctx.expression(1))
-                if ctx.COLON()
-                else None,
+                msg=self.visitExpression(ctx.expression(1)) if ctx.COLON() else None,
                 **self._get_location_rule(ctx),
             )
         elif ctx.IF():
@@ -1214,7 +1210,7 @@ class JASTConverter(JavaParserVisitor):
                     if ctx.VAR()
                     else self.visitTypeType(ctx.typeType()),
                     id=self.visitVariableDeclaratorId(ctx.variableDeclaratorId()),
-                    expression=self.visitExpression(ctx.expression(0)),
+                    iter=self.visitExpression(ctx.expression(0)),
                     body=self.visitStatement(ctx.statement(0)),
                 )
             else:
@@ -1271,26 +1267,26 @@ class JASTConverter(JavaParserVisitor):
                 )
         elif ctx.SWITCH():
             return jast.Switch(
-                expression=self.visitParExpression(ctx.parExpression()),
-                block=self.visitSwitchBlock(ctx.switchBlock()),
+                subject=self.visitParExpression(ctx.parExpression()),
+                body=self.visitSwitchBlock(ctx.switchBlock()),
                 **self._get_location_rule(ctx),
             )
         elif ctx.SYNCHRONIZED():
             return jast.Synch(
-                expression=self.visitParExpression(ctx.parExpression()),
+                lock=self.visitParExpression(ctx.parExpression()),
                 body=self.visitBlock(ctx.block()),
                 **self._get_location_rule(ctx),
             )
         elif ctx.RETURN():
             return jast.Return(
-                expression=self.visitExpression(ctx.expression(0))
+                value=self.visitExpression(ctx.expression(0))
                 if ctx.expression()
                 else None,
                 **self._get_location_rule(ctx),
             )
         elif ctx.THROW():
             return jast.Throw(
-                expression=self.visitExpression(ctx.expression(0)),
+                exc=self.visitExpression(ctx.expression(0)),
                 **self._get_location_rule(ctx),
             )
         elif ctx.BREAK():
@@ -1305,25 +1301,25 @@ class JASTConverter(JavaParserVisitor):
             )
         elif ctx.YIELD():
             return jast.Yield(
-                expression=self.visitExpression(ctx.expression(0)),
+                value=self.visitExpression(ctx.expression(0)),
                 **self._get_location_rule(ctx),
             )
         elif ctx.statementExpression:
             return jast.Expression(
-                expression=self.visitExpression(ctx.statementExpression),
+                value=self.visitExpression(ctx.statementExpression),
                 **self._get_location_rule(ctx),
             )
         elif ctx.identifierLabel:
             return jast.Labeled(
-                id=self.visitIdentifier(ctx.identifierLabel),
+                label=self.visitIdentifier(ctx.identifierLabel),
                 body=self.visitStatement(ctx.statement(0)),
                 **self._get_location_rule(ctx),
             )
         else:
             return jast.Empty(**self._get_location_rule(ctx))
 
-    def visitSwitchBlock(self, ctx: JavaParser.SwitchBlockContext) -> jast.SwitchBlock:
-        return jast.SwitchBlock(
+    def visitSwitchBlock(self, ctx: JavaParser.SwitchBlockContext) -> jast.switchblock:
+        return jast.switchblock(
             groups=[
                 self.visitSwitchBlockStatementGroup(switchBlockStatementGroup)
                 for switchBlockStatementGroup in ctx.switchBlockStatementGroup()
@@ -1335,14 +1331,14 @@ class JASTConverter(JavaParserVisitor):
             **self._get_location_rule(ctx),
         )
 
-    def visitCatchClause(self, ctx: JavaParser.CatchClauseContext) -> jast.CatchClause:
+    def visitCatchClause(self, ctx: JavaParser.CatchClauseContext) -> jast.catch:
         modifiers = [
             self.visitVariableModifier(modifier) for modifier in ctx.variableModifier()
         ]
         type_ = self.visitCatchType(ctx.catchType())
         identifier = self.visitIdentifier(ctx.identifier())
         body = self.visitBlock(ctx.block())
-        return jast.CatchClause(
+        return jast.catch(
             modifiers=modifiers,
             type=type_,
             id=identifier,
@@ -1361,15 +1357,15 @@ class JASTConverter(JavaParserVisitor):
 
     def visitResourceSpecification(
         self, ctx: JavaParser.ResourceSpecificationContext
-    ) -> List[jast.Resource | jast.qname]:
+    ) -> List[jast.resource | jast.qname]:
         return self.visitResources(ctx.resources())
 
     def visitResources(
         self, ctx: JavaParser.ResourcesContext
-    ) -> List[jast.Resource | jast.qname]:
+    ) -> List[jast.resource | jast.qname]:
         return [self.visitResource(resource) for resource in ctx.resource()]
 
-    def visitResource(self, ctx: JavaParser.ResourceContext) -> jast.Resource:
+    def visitResource(self, ctx: JavaParser.ResourceContext) -> jast.resource:
         if ctx.qualifiedName():
             return self.visitQualifiedName(ctx.qualifiedName())
         else:
@@ -1397,7 +1393,7 @@ class JASTConverter(JavaParserVisitor):
                 end_lineno=end["end_lineno"],
                 end_col_offset=end["end_col_offset"],
             )
-            return jast.Resource(
+            return jast.resource(
                 modifiers=modifiers,
                 type=type_,
                 declarator=declarator,
@@ -1406,8 +1402,8 @@ class JASTConverter(JavaParserVisitor):
 
     def visitSwitchBlockStatementGroup(
         self, ctx: JavaParser.SwitchBlockStatementGroupContext
-    ) -> jast.SwitchGroup:
-        return jast.SwitchGroup(
+    ) -> jast.switchgroup:
+        return jast.switchgroup(
             labels=[
                 self.visitSwitchLabel(switchLabel) for switchLabel in ctx.switchLabel()
             ],
@@ -1418,7 +1414,7 @@ class JASTConverter(JavaParserVisitor):
             **self._get_location_rule(ctx),
         )
 
-    def visitSwitchLabel(self, ctx: JavaParser.SwitchLabelContext) -> jast.SwitchLabel:
+    def visitSwitchLabel(self, ctx: JavaParser.SwitchLabelContext) -> jast.switchlabel:
         if ctx.DEFAULT():
             return jast.Default(**self._get_location_rule(ctx))
         else:
@@ -1441,19 +1437,19 @@ class JASTConverter(JavaParserVisitor):
                     end_col_offset=end["end_col_offset"],
                 )
             return jast.Case(
-                expression=expression,
+                guard=expression,
                 **self._get_location_rule(ctx),
             )
 
     def visitForInit(
         self, ctx: JavaParser.ForInitContext
-    ) -> jast.LocalVariableDeclaration | List[jast.Expression]:
+    ) -> jast.LocalVariable | List[jast.Expression]:
         if ctx.localVariableDeclaration():
             return self.visitLocalVariableDeclaration(ctx.localVariableDeclaration())
         else:
             return self.visitExpressionList(ctx.expressionList())
 
-    def visitParExpr(self, ctx: JavaParser.ParExprContext) -> jast.Expr:
+    def visitParExpr(self, ctx: JavaParser.ParExprContext) -> jast.expr:
         return self.visitExpression(ctx.expression())
 
     def visitExpressionList(
@@ -1487,7 +1483,7 @@ class JASTConverter(JavaParserVisitor):
                 op = jast.PostInc()
             else:
                 op = jast.PostDec()
-            return jast.PostUnaryOp(
+            return jast.PostOp(
                 expression=self.visitPostfixExpression(ctx.postfixExpression()),
                 op=op,
                 level=15,
@@ -1517,7 +1513,7 @@ class JASTConverter(JavaParserVisitor):
                 **self._get_location_rule(ctx),
             )
 
-    def visitTypeExpression(self, ctx: JavaParser.TypeExpressionContext) -> jast.Expr:
+    def visitTypeExpression(self, ctx: JavaParser.TypeExpressionContext) -> jast.expr:
         if ctx.prefixExpression():
             return self.visitPrefixExpression(ctx.prefixExpression())
         elif ctx.NEW():
@@ -1538,7 +1534,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitMultiplicativeExpression(
         self, ctx: JavaParser.MultiplicativeExpressionContext
-    ) -> jast.Expr:
+    ) -> jast.expr:
         if ctx.bop:
             if ctx.MUL():
                 op = jast.Mul()
@@ -1558,7 +1554,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitAdditiveExpression(
         self, ctx: JavaParser.AdditiveExpressionContext
-    ) -> jast.Expr:
+    ) -> jast.expr:
         if ctx.bop:
             if ctx.ADD():
                 op = jast.Add()
@@ -1576,7 +1572,7 @@ class JASTConverter(JavaParserVisitor):
         else:
             return self.visitMultiplicativeExpression(ctx.multiplicativeExpression())
 
-    def visitShiftExpression(self, ctx: JavaParser.ShiftExpressionContext) -> jast.Expr:
+    def visitShiftExpression(self, ctx: JavaParser.ShiftExpressionContext) -> jast.expr:
         if ctx.shiftExpression():
             if ctx.LT():
                 op = jast.LShift()
@@ -1596,7 +1592,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitRelationalExpression(
         self, ctx: JavaParser.RelationalExpressionContext
-    ) -> jast.Expr:
+    ) -> jast.expr:
         if ctx.bop:
             if ctx.INSTANCEOF():
                 return jast.InstanceOf(
@@ -1630,7 +1626,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitEqualityExpression(
         self, ctx: JavaParser.EqualityExpressionContext
-    ) -> jast.Expr:
+    ) -> jast.expr:
         if ctx.bop:
             if ctx.EQUAL():
                 op = jast.Eq()
@@ -1648,7 +1644,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitBitwiseAndExpression(
         self, ctx: JavaParser.BitwiseAndExpressionContext
-    ) -> jast.Expr:
+    ) -> jast.expr:
         if ctx.BITAND():
             return jast.BinOp(
                 left=self.visitBitwiseAndExpression(ctx.bitwiseAndExpression()),
@@ -1662,7 +1658,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitBitwiseXorExpression(
         self, ctx: JavaParser.BitwiseXorExpressionContext
-    ) -> jast.Expr:
+    ) -> jast.expr:
         if ctx.CARET():
             return jast.BinOp(
                 left=self.visitBitwiseXorExpression(ctx.bitwiseXorExpression()),
@@ -1676,7 +1672,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitBitwiseOrExpression(
         self, ctx: JavaParser.BitwiseOrExpressionContext
-    ) -> jast.Expr:
+    ) -> jast.expr:
         if ctx.BITOR():
             return jast.BinOp(
                 left=self.visitBitwiseOrExpression(ctx.bitwiseOrExpression()),
@@ -1690,7 +1686,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitLogicalAndExpression(
         self, ctx: JavaParser.LogicalAndExpressionContext
-    ) -> jast.Expr:
+    ) -> jast.expr:
         if ctx.AND():
             return jast.BinOp(
                 left=self.visitLogicalAndExpression(ctx.logicalAndExpression()),
@@ -1704,7 +1700,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitLogicalOrExpression(
         self, ctx: JavaParser.LogicalOrExpressionContext
-    ) -> jast.Expr:
+    ) -> jast.expr:
         if ctx.OR():
             return jast.BinOp(
                 left=self.visitLogicalOrExpression(ctx.logicalOrExpression()),
@@ -1718,7 +1714,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitTernaryExpression(
         self, ctx: JavaParser.TernaryExpressionContext
-    ) -> jast.Expr:
+    ) -> jast.expr:
         if ctx.QUESTION():
             if ctx.ternaryExpression():
                 orelse = self.visitTernaryExpression(ctx.ternaryExpression())
@@ -1736,7 +1732,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitAssignmentExpression(
         self, ctx: JavaParser.AssignmentExpressionContext
-    ) -> jast.Expr:
+    ) -> jast.expr:
         if ctx.bop:
             if ctx.ASSIGN():
                 op = jast.Assign()
@@ -1762,7 +1758,7 @@ class JASTConverter(JavaParserVisitor):
                 op = jast.RShiftAssign()
             else:
                 op = jast.URShiftAssign()
-            return jast.Assignment(
+            return jast.Assign(
                 target=self.visitTernaryExpression(ctx.ternaryExpression()),
                 op=op,
                 value=self.visitExpression(ctx.expression()),
@@ -1772,7 +1768,7 @@ class JASTConverter(JavaParserVisitor):
         else:
             return self.visitTernaryExpression(ctx.ternaryExpression())
 
-    def visitExpression(self, ctx: JavaParser.ExpressionContext) -> jast.Expr:
+    def visitExpression(self, ctx: JavaParser.ExpressionContext) -> jast.expr:
         if ctx.assignmentExpression():
             return self.visitAssignmentExpression(ctx.assignmentExpression())
         else:
@@ -1796,7 +1792,7 @@ class JASTConverter(JavaParserVisitor):
         parameters = self.visitLambdaParameters(ctx.lambdaParameters())
         body = self.visitLambdaBody(ctx.lambdaBody())
         return jast.Lambda(
-            parameters=parameters,
+            args=parameters,
             body=body,
             level=0,
             **self._get_location_rule(ctx),
@@ -1819,13 +1815,13 @@ class JASTConverter(JavaParserVisitor):
 
     def visitLambdaBody(
         self, ctx: JavaParser.LambdaBodyContext
-    ) -> jast.Expr | jast.Block:
+    ) -> jast.expr | jast.Block:
         if ctx.expression():
             return self.visitExpression(ctx.expression())
         else:
             return self.visitBlock(ctx.block())
 
-    def visitParExpression(self, ctx: JavaParser.ParExpressionContext) -> jast.Expr:
+    def visitParExpression(self, ctx: JavaParser.ParExpressionContext) -> jast.expr:
         return self.visitExpression(ctx.expression())
 
     def visitThisExpression(self, ctx: JavaParser.ThisExpressionContext) -> jast.This:
@@ -1902,7 +1898,7 @@ class JASTConverter(JavaParserVisitor):
         elif ctx.NEW():
             expr = self.visitInnerCreator(ctx.innerCreator())
             if ctx.nonWildcardTypeArguments():
-                expr.type_arguments = self.visitNonWildcardTypeArguments(
+                expr.type_args = self.visitNonWildcardTypeArguments(
                     ctx.nonWildcardTypeArguments()
                 )
         elif ctx.identifier():
@@ -1949,7 +1945,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitSwitchExpression(
         self, ctx: JavaParser.SwitchExpressionContext
-    ) -> jast.Expr:
+    ) -> jast.expr:
         if ctx.primary():
             return self.visit(ctx.primary())
         else:
@@ -2029,7 +2025,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitSwitchRuleOutcome(
         self, ctx: JavaParser.SwitchRuleOutcomeContext
-    ) -> List[jast.Statement]:
+    ) -> List[jast.stmt]:
         if ctx.block():
             return [self.visitBlock(ctx.block())]
         else:
@@ -2056,7 +2052,7 @@ class JASTConverter(JavaParserVisitor):
         else:
             return jast.ClassType(coits=[coit], **self._get_location_rule(ctx))
 
-    def visitCreator(self, ctx: JavaParser.CreatorContext) -> jast.Expr:
+    def visitCreator(self, ctx: JavaParser.CreatorContext) -> jast.expr:
         if ctx.objectCreator():
             return self.visitObjectCreator(ctx.objectCreator())
         else:
@@ -2066,13 +2062,11 @@ class JASTConverter(JavaParserVisitor):
         self, ctx: JavaParser.ObjectCreatorContext
     ) -> jast.NewObject:
         return jast.NewObject(
-            type_arguments=self.visitNonWildcardTypeArguments(
-                ctx.nonWildcardTypeArguments()
-            )
+            type_args=self.visitNonWildcardTypeArguments(ctx.nonWildcardTypeArguments())
             if ctx.nonWildcardTypeArguments()
             else None,
             type=self.visitCreatedName(ctx.createdName()),
-            arguments=self.visitArguments(ctx.arguments()),
+            args=self.visitArguments(ctx.arguments()),
             body=self.visitClassBody(ctx.classBody()) if ctx.classBody() else None,
             level=13,
             **self._get_location_rule(ctx),
@@ -2235,7 +2229,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitExplicitGenericInvocationSuffix(
         self, ctx: JavaParser.ExplicitGenericInvocationSuffixContext
-    ) -> jast.Expr:
+    ) -> jast.expr:
         if ctx.superSuffix():
             return self.visitSuperSuffix(ctx.superSuffix())
         else:
@@ -2248,7 +2242,7 @@ class JASTConverter(JavaParserVisitor):
                 **self._get_location_rule(ctx),
             )
 
-    def visitArguments(self, ctx: JavaParser.ArgumentsContext) -> List[jast.Expr]:
+    def visitArguments(self, ctx: JavaParser.ArgumentsContext) -> List[jast.expr]:
         return self.visitExpressionList(ctx.expressionList())
 
     def visitDeclarationStart(
@@ -2299,10 +2293,8 @@ class JASTConverter(JavaParserVisitor):
         else:
             return self.visitRecordDeclaration(ctx.recordDeclaration())
 
-    def visitStatementStart(
-        self, ctx: JavaParser.StatementStartContext
-    ) -> jast.Statement:
+    def visitStatementStart(self, ctx: JavaParser.StatementStartContext) -> jast.stmt:
         return self.visitBlockStatement(ctx.blockStatement())
 
-    def visitExpressionStart(self, ctx: JavaParser.ExpressionStartContext) -> jast.Expr:
+    def visitExpressionStart(self, ctx: JavaParser.ExpressionStartContext) -> jast.expr:
         return self.visitExpression(ctx.expression())
