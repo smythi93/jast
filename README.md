@@ -1,5 +1,13 @@
 # jAST: Analyzing and Modifying Java ASTs with Python
 
+[![Python Version](https://img.shields.io/pypi/pyversions/java-ast)](https://pypi.org/project/java-ast/)
+[![GitHub release](https://img.shields.io/github/v/release/smythi93/jast)](https://img.shields.io/github/v/release/smythi93/jast)
+[![PyPI](https://img.shields.io/pypi/v/java-ast)](https://pypi.org/project/java-ast/)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/smythi93/jast/test-jast.yml?branch=main)](https://img.shields.io/github/actions/workflow/status/smythi93/fixkit/test-jast.yml?branch=main)
+[![Coverage Status](https://coveralls.io/repos/github/smythi93/jast/badge.svg?branch=main)](https://coveralls.io/github/smythi93/jast?branch=main)
+[![Licence](https://img.shields.io/github/license/smythi93/jast)](https://img.shields.io/github/license/smythi93/jast)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 The `jast` module helps Python applications to process trees of the Java
 abstract syntax grammar.
 
@@ -189,13 +197,13 @@ The `jast` module can be installed from the Python Package Index (PyPI)
 by running the following command:
 
 ```bash
-pip install jast
+pip install java-ast
 ```
 
 Depending on your system configuration you might need to use `pip3`:
 
 ```bash
-pip3 install jast
+pip3 install java-ast
 ```
 
 ## Usage

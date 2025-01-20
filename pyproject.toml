@@ -10,7 +10,7 @@ name = "java-ast"
 version = "0.0.1"
 authors = [
     { name = "Marius Smytzek", email = "marius.smytzek@cispa.de" },
-    { name = "Martin Eberlein", email = "ebermart@informatik.hu-berlin.de" },
+    { name = "Martin Eberlein", email = "martin.eberlein@hu-berlin.de" },
 ]
 description = "jAST: Analyzing and Modifying Java ASTs with Python"
 readme = "README.md"

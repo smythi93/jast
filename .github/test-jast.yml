@@ -1,0 +1,39 @@
+name: Test jast
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.12"
+    - name: Install dependencies
+      run: |
+        sudo apt-get update && sudo apt-get install -y python3-dev
+        pip install --upgrade pip
+        pip install -e .[test]
+    - name: Test with pytest
+      run: |
+        python3 -m pytest --html=report.html --self-contained-html --cov-report xml:coverage.xml --cov-report term --cov-config=.coveragerc --cov=jast tests/
+        python3 -m coverage lcov
+    - uses: actions/upload-artifact@v3
+      with:
+        name: Test Report
+        path: report.html
+    - name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: coverage.lcov
