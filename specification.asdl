@@ -1,6 +1,9 @@
+-- builtin types are:
+-- identifier, int, float, bool, char, string
+
 module Java
 {
-    mod = CompilationUnit(Package package, Import* imports, declaration* types)
+    mod = CompilationUnit(Package? package, Import* imports, declaration* types)
         | ModularUnit(Import* imports, Module types)
 
     declaration = EmptyDecl()
@@ -32,8 +35,8 @@ module Java
         attributes (int lineno, int col_offset, int end_lineno, int end_col_offset)
 
     stmt = Empty()
-        | Block(stmt* statements)
-        | Compound(stmt* statements)
+        | Block(stmt* body)
+        | Compound(stmt* body)
 
         | LocalClass(Class decl)
         | LocalInterface(Interface decl)
@@ -64,14 +67,14 @@ module Java
         | Synch(expr lock, Block body)
         attributes (int lineno, int col_offset, int end_lineno, int end_col_offset)
 
-    expr = lambda(identifier | identifier* | params args, expr | Block body)
+    expr = Lambda((identifier | identifier* | params) args, (expr | Block) body)
         | Assign(expr target, operator? op, expr value)
         | IfExp(expr test, expr body, expr orelse)
         | BinOp(expr left, operator op, expr right)
-        | InstanceOf(expr value, jtype type)
+        | InstanceOf(expr value, jtype | pattern type)
         | UnaryOp(unaryop op, expr operand)
         | PostOp(expr operand, operator op)
-        | Cast(Annotation* annotations, jtype type, expr value)
+        | Cast(Annotation* annotations, typebound type, expr value)
         | NewObject(typeargs? type_args, jtype type, typeargs? template_args, expr* args, declaration* body)
         | NewArray(jtype type, expr* expr_dims, dim* dims, arrayinit? initializer)
         | SwitchExp(expr value, switchexprule* rules)
@@ -85,6 +88,7 @@ module Java
         | Member(expr value, expr member)
         | Call(expr func, expr* args)
         | Reference(expr | jtype type, typeargs? type_args, identifier id, bool new)
+        | Match(jtype type, identifier id)
         attributes (int lineno, int col_offset, int end_lineno, int end_col_offset)
 
     operator = Or() | And() | BitOr() | BitXor() | BitAnd() | Eq() | NotEq() | Lt() | LtE() | Gt() | GtE()
@@ -99,8 +103,8 @@ module Java
     recordcomponent = (jtype type, identifier id)
 
     switchlabel = Case(expr value) | DefaultCase()
-    switchblock = (switchgroup* groups, switchlabel* labels)
     switchgroup = (switchlabel* labels, stmt* statements)
+    switchblock = (switchgroup* groups, switchlabel* labels)
 
     catch = (modifier* modifiers, qname* excs, identifier id, Block body)
 
@@ -111,8 +115,44 @@ module Java
 
     arrayinit = ((expr | arrayinit)* values)
 
+    receiver = (jtype type, identifier* identifiers)
+    param = (modifier* modifiers, jtype type, variabledeclaratorid id)
+    arity = (modifier* modifiers, jtype type, Annotation* annotations, variabledeclaratorid id)
     params = (receiver receiver_param, (param | arity)* parameters)
-    receiver = (modifier* modifiers, jtype type, identifier id)
+
+    qname = (identifier* identifiers)
+
+    literal = IntLiteral(int value, bool long) | FloatLiteral(float value, bool double) | BoolLiteral(bool value)
+        | CharLiteral(char value) | StringLiteral(string value) | TextBlock(string value) | NullLiteral()
+
+    modifier = Abstract() | Default() | Default() | Final() | Native() | NonSealed() | Private() | Protected()
+        | Public() | Sealed() | Static() | Strictfp() | Synchronized() | Transient() | Transitive() | Volatile()
+        | Annotation(qname name, (elementvaluepair | elementarrayinit | Annotation | expr)* elements)
 
 
+    elementvaluepair = (identifier id, (elementarrayinit | Annotation | expr) value)
+    elementarrayinit = ((elementarrayinit | Annotation | expr)* values)
+
+    jtype = Void() | Var() | Boolean() | Byte() | Short() | Int() | Long() | Char() | Float() | Double()
+        | Wildcard(Annotation* annotations, wildcardbound? bound)
+        | Coit(Annotation* annotations, identifier id, typeargs? type_args)
+        | ClassType(Annotation* annotations, Coit+ coits)
+        | ArrayType(Annotation* annotations, jtype type, dim* dims)
+
+
+    wildcardbound = (jtype type, bool extends, bool super_)
+
+    typeargs = (jtype* types)
+
+    dim = (Annotation* annotations)
+
+    variabledeclaratorid = (identifier id, dim* dims)
+    declarator = (variabledeclaratorid id, expr? value)
+
+    typebound = (Annotation* annotations, jtype* types)
+    typeparam = (Annotation* annotations, identifier id, typebound? bound)
+    typeparams = (typeparam* params)
+
+    pattern = (modifier* modifiers, jtype type, Annotation* annotations, identifier id)
+    guardedpattern = (pattern pattern, expr* conditions)
 }

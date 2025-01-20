@@ -237,12 +237,12 @@ class JASTConverter(JavaParserVisitor):
             **self._get_location_rule(ctx),
         )
 
-    def visitTypeBound(self, ctx: JavaParser.TypeBoundContext) -> jast.TypeBound:
+    def visitTypeBound(self, ctx: JavaParser.TypeBoundContext) -> jast.typebound:
         annotations = [
             self.visitAnnotation(annotation) for annotation in ctx.annotation()
         ]
         bounds = [self.visitTypeType(type_type) for type_type in ctx.typeType()]
-        return jast.TypeBound(
+        return jast.typebound(
             annotations=annotations,
             bounds=bounds,
             **self._get_location_rule(ctx),
@@ -413,11 +413,11 @@ class JASTConverter(JavaParserVisitor):
             **self._get_location_rule(ctx),
         )
 
-    def visitDims(self, ctx: JavaParser.DimsContext) -> List[jast.Dim]:
+    def visitDims(self, ctx: JavaParser.DimsContext) -> List[jast.dim]:
         return [self.visitDim(dim) for dim in ctx.dim()]
 
-    def visitDim(self, ctx: JavaParser.DimContext) -> jast.Dim:
-        return jast.Dim(
+    def visitDim(self, ctx: JavaParser.DimContext) -> jast.dim:
+        return jast.dim(
             annotations=[
                 self.visitAnnotation(annotation) for annotation in ctx.annotation()
             ],
@@ -647,7 +647,7 @@ class JASTConverter(JavaParserVisitor):
         )
         return jast.Coit(
             id=identifier,
-            type_arguments=type_arguments,
+            type_args=type_arguments,
             **self._get_location_rule(ctx),
         )
 
@@ -657,7 +657,7 @@ class JASTConverter(JavaParserVisitor):
                 self.visitAnnotation(annotation) for annotation in ctx.annotation()
             ]
             if ctx.typeType():
-                bound = jast.WildcardBound(
+                bound = jast.wildcardbound(
                     type=self.visitTypeType(ctx.typeType()),
                     extends=ctx.EXTENDS() is not None,
                     super_=ctx.SUPER() is not None,
@@ -804,13 +804,13 @@ class JASTConverter(JavaParserVisitor):
 
     def visitIntegerLiteral(
         self, ctx: JavaParser.IntegerLiteralContext
-    ) -> jast.IntegerLiteral:
+    ) -> jast.IntLiteral:
         text = ctx.getText()
         long = "l" in text or "L" in text
         text = text.replace("l", "").replace("L", "")
         if ctx.OCT_LITERAL():
             text[0:1] = "0o"
-        return jast.IntegerLiteral(
+        return jast.IntLiteral(
             value=eval(text),
             long=long,
             **self._get_location_rule(ctx),
@@ -849,7 +849,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitElementValuePairs(
         self, ctx: JavaParser.ElementValuePairsContext
-    ) -> List[jast.ElementValuePair]:
+    ) -> List[jast.elementvaluepair]:
         return [
             self.visitElementValuePair(elementValuePair)
             for elementValuePair in ctx.elementValuePair()
@@ -857,10 +857,10 @@ class JASTConverter(JavaParserVisitor):
 
     def visitElementValuePair(
         self, ctx: JavaParser.ElementValuePairContext
-    ) -> jast.ElementValuePair:
+    ) -> jast.elementvaluepair:
         name = self.visitIdentifier(ctx.identifier())
         value = self.visitElementValue(ctx.elementValue())
-        return jast.ElementValuePair(
+        return jast.elementvaluepair(
             name=name, value=value, **self._get_location_rule(ctx)
         )
 
@@ -876,8 +876,8 @@ class JASTConverter(JavaParserVisitor):
 
     def visitElementValueArrayInitializer(
         self, ctx: JavaParser.ElementValueArrayInitializerContext
-    ) -> jast.ElementValueArrayInitializer:
-        return jast.ElementValueArrayInitializer(
+    ) -> jast.elementarrayinit:
+        return jast.elementarrayinit(
             values=[
                 self.visitElementValue(elementValue)
                 for elementValue in ctx.elementValue()
@@ -1017,12 +1017,12 @@ class JASTConverter(JavaParserVisitor):
                 **self._get_location_rule(ctx),
             )
         elif ctx.USES():
-            return jast.UsesDirective(
+            return jast.Uses(
                 name=name,
                 **self._get_location_rule(ctx),
             )
         else:
-            return jast.ProvidesDirective(
+            return jast.Provides(
                 name=name,
                 with_=self.visitQualifiedName(ctx.qualifiedName(1)),
                 **self._get_location_rule(ctx),
@@ -1523,7 +1523,7 @@ class JASTConverter(JavaParserVisitor):
                 annotations=[
                     self.visitAnnotation(annotation) for annotation in ctx.annotation()
                 ],
-                type=jast.TypeBound(
+                type=jast.typebound(
                     types=[self.visitTypeType(typeType) for typeType in ctx.typeType()],
                     **self._get_location_rule(ctx),
                 ),
@@ -1537,7 +1537,7 @@ class JASTConverter(JavaParserVisitor):
     ) -> jast.expr:
         if ctx.bop:
             if ctx.MUL():
-                op = jast.Mul()
+                op = jast.Mult()
             elif ctx.DIV():
                 op = jast.Div()
             else:
@@ -1774,8 +1774,8 @@ class JASTConverter(JavaParserVisitor):
         else:
             return self.visitLambdaExpression(ctx.lambdaExpression())
 
-    def visitPattern(self, ctx: JavaParser.PatternContext) -> jast.Pattern:
-        return jast.Pattern(
+    def visitPattern(self, ctx: JavaParser.PatternContext) -> jast.pattern:
+        return jast.pattern(
             modifiers=[
                 self.visitVariableModifier(modifier)
                 for modifier in ctx.variableModifier()
@@ -1990,13 +1990,13 @@ class JASTConverter(JavaParserVisitor):
 
     def visitGuardedPattern(
         self, ctx: JavaParser.GuardedPatternContext
-    ) -> jast.GuardedPattern:
+    ) -> jast.guardedpattern:
         if ctx.LPAREN():
             return self.visitGuardedPattern(ctx.guardedPattern())
         elif ctx.identifier():
             start = self._get_location_rule(ctx)
             end = self._get_location_rule(ctx.identifier())
-            pattern = jast.Pattern(
+            pattern = jast.pattern(
                 modifiers=[
                     self.visitVariableModifier(modifier)
                     for modifier in ctx.variableModifier()
@@ -2011,7 +2011,7 @@ class JASTConverter(JavaParserVisitor):
                 end_lineno=end["end_lineno"],
                 end_col_offset=end["end_col_offset"],
             )
-            return jast.GuardedPattern(
+            return jast.guardedpattern(
                 pattern=pattern,
                 conditions=[
                     self.visitExpression(condition) for condition in ctx.expression()
@@ -2040,7 +2040,7 @@ class JASTConverter(JavaParserVisitor):
                 self.visitAnnotation(annotation) for annotation in ctx.annotation()
             ],
             id=self.visitIdentifier(ctx.identifier()),
-            type_arguments=self.visitTypeArguments(ctx.typeArguments())
+            type_args=self.visitTypeArguments(ctx.typeArguments())
             if ctx.typeArguments()
             else None,
             **self._get_location_rule(ctx),
@@ -2084,9 +2084,7 @@ class JASTConverter(JavaParserVisitor):
     def visitCoitDiamond(self, ctx: JavaParser.CoitDiamondContext) -> jast.Coit:
         return jast.Coit(
             id=self.visitIdentifier(ctx.identifier()),
-            type_arguments=self.visitTypeArgumentsOrDiamond(
-                ctx.typeArgumentsOrDiamond()
-            )
+            type_args=self.visitTypeArgumentsOrDiamond(ctx.typeArgumentsOrDiamond())
             if ctx.typeArgumentsOrDiamond()
             else None,
             **self._get_location_rule(ctx),

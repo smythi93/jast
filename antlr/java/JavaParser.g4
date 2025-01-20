@@ -591,7 +591,7 @@ resource
     | qualifiedName
     ;
 
-/** Matches cases then statements, both of which are mandatory.
+/** Matches cases then body, both of which are mandatory.
  *  To handle empty cases at the end, we add switchLabel* to statement.
  */
 

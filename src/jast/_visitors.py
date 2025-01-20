@@ -1,3 +1,4 @@
+from copy import copy
 from typing import Any
 
 from jast._jast import JAST
@@ -90,7 +91,7 @@ class JNodeKeepTransformer(JNodeTransformer):
     """
 
     def generic_visit(self, node: JAST):
-        node = node.copy()
+        node = copy(node)
         for field, old_value in node:
             if isinstance(old_value, list):
                 new_values = []

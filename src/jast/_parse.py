@@ -83,7 +83,7 @@ def parse(src: str, mode: ParseMode | str | int = ParseMode.UNIT) -> JAST:
     :param mode:    The parse mode used to identify the java code.
                     The default is `ParseMode.UNIT` which is used to parse a complete Java compilation unit.
                     Other modes are `ParseMode.DECL`, `ParseMode.STMT`, and `ParseMode.EXPR`, for parsing
-                    Java declarations, statements, and expressions, respectively.
+                    Java declarations, body, and expressions, respectively.
     :return:        The jAST representing the Java source code.
     """
     return _parser.parse(src, mode)

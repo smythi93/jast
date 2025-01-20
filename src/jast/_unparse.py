@@ -132,7 +132,7 @@ class _Unparser(JNodeVisitor):
         elif node.extends:
             return "extends " + self.visit(node.type)
         else:
-            raise ValueError("WildcardBound must have either super or extends")
+            raise ValueError("wildcardbound must have either super or extends")
 
     def visit_Wildcard(self, node):
         annotations = " ".join(
@@ -652,7 +652,7 @@ class _Unparser(JNodeVisitor):
             s = " " * self._current_level * self._indent
         else:
             s = " "
-        return s.join([self.visit(stmt) for stmt in node.statements])
+        return s.join([self.visit(stmt) for stmt in node.body])
 
     def visit_Empty(self, node):
         self._ignore_indent_block = False

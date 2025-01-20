@@ -116,7 +116,7 @@ class literal(_JAST, abc.ABC):
         self.value = value
 
 
-class IntegerLiteral(literal):
+class IntLiteral(literal):
     """
     Represents an integer literal in the Java AST.
     """
@@ -280,7 +280,7 @@ class Default(modifier):
     """
 
 
-class ElementValuePair(_JAST):
+class elementvaluepair(_JAST):
     """
     Represents an element-value pair in the Java AST.
 
@@ -288,12 +288,17 @@ class ElementValuePair(_JAST):
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, id: identifier = None, value: "element" = None, **kwargs):
+    def __init__(
+        self,
+        id: identifier = None,
+        value: Union["elementarrayinit", "Annotation", "expr"] = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         if id is None:
-            raise ValueError("label is required for ElementValuePair")
+            raise ValueError("label is required for elementvaluepair")
         if value is None:
-            raise ValueError("value is required for ElementValuePair")
+            raise ValueError("value is required for elementvaluepair")
         self.id = id
         self.value = value
 
@@ -302,14 +307,18 @@ class ElementValuePair(_JAST):
         yield "value", self.value
 
 
-class ElementValueArrayInitializer(_JAST):
+class elementarrayinit(_JAST):
     """
     Represents an element-value array initializer in the Java AST.
 
     { <value>, <value>, ... }
     """
 
-    def __init__(self, values: List["element"] = None, **kwargs):
+    def __init__(
+        self,
+        values: List[Union["elementarrayinit", "Annotation", "expr"]] = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.values = values or []
 
@@ -327,7 +336,9 @@ class Annotation(modifier):
     def __init__(
         self,
         name: qname = None,
-        elements: List[Union[ElementValuePair, "element"]] = None,
+        elements: List[
+            Union[elementvaluepair, elementarrayinit, "Annotation", "expr"]
+        ] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -340,12 +351,6 @@ class Annotation(modifier):
         yield "qname", self.name
         if self.elements:
             yield "elements", self.elements
-
-
-"""
-Represents a jtype for element values in the Java AST.
-"""
-element = Union[ElementValueArrayInitializer, Annotation, "value"]
 
 
 # Types
@@ -370,7 +375,7 @@ class Var(jtype):
     """
 
 
-class PrimitiveType(jtype, abc.ABC):
+class primitivetype(jtype, abc.ABC):
     """
     Abstract base class for all primitive types in the Java AST.
     """
@@ -384,55 +389,55 @@ class PrimitiveType(jtype, abc.ABC):
             yield "annotations", self.annotations
 
 
-class Boolean(PrimitiveType):
+class Boolean(primitivetype):
     """
     Represents the boolean primitive jtype in the Java AST.
     """
 
 
-class Byte(PrimitiveType):
+class Byte(primitivetype):
     """
     Represents the byte primitive jtype in the Java AST.
     """
 
 
-class Short(PrimitiveType):
+class Short(primitivetype):
     """
     Represents the short primitive jtype in the Java AST.
     """
 
 
-class Int(PrimitiveType):
+class Int(primitivetype):
     """
     Represents the int primitive jtype in the Java AST.
     """
 
 
-class Long(PrimitiveType):
+class Long(primitivetype):
     """
     Represents the long primitive jtype in the Java AST.
     """
 
 
-class Char(PrimitiveType):
+class Char(primitivetype):
     """
     Represents the char primitive jtype in the Java AST.
     """
 
 
-class Float(PrimitiveType):
+class Float(primitivetype):
     """
     Represents the float primitive jtype in the Java AST.
     """
 
 
-class Double(PrimitiveType):
+class Double(primitivetype):
     """
     Represents the double primitive jtype in the Java AST.
     """
 
 
-class WildcardBound(_JAST):
+class wildcardbound(_JAST):
     """
     Represents a wildcard bound in the Java AST.
 
@@ -449,14 +454,14 @@ class WildcardBound(_JAST):
     ):
         super().__init__(**kwargs)
         if type is None:
-            raise ValueError("jtype is required for WildcardBound")
+            raise ValueError("jtype is required for wildcardbound")
         if extends == super_:
             raise ValueError(
-                "extends and super_ are mutually exclusive for WildcardBound"
+                "extends and super_ are mutually exclusive for wildcardbound"
             )
         self.type = type
         self.extends = extends
-        self.super = super_
+        self.super_ = super_
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "jtype", self.type
@@ -472,7 +477,7 @@ class Wildcard(jtype):
     def __init__(
         self,
         annotations: List[Annotation] = None,
-        bound: WildcardBound = None,
+        bound: wildcardbound = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -515,7 +520,7 @@ class Coit(jtype):
         self,
         annotations: List[Annotation] = None,
         id: identifier = None,
-        type_arguments: typeargs = None,
+        type_args: typeargs = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -523,14 +528,14 @@ class Coit(jtype):
             raise ValueError("label is required")
         self.annotations = annotations or []
         self.id = id
-        self.type_arguments = type_arguments
+        self.type_args = type_args
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
             yield "annotations", self.annotations
         yield "label", self.id
-        if self.type_arguments:
-            yield "type_args", self.type_arguments
+        if self.type_args:
+            yield "type_args", self.type_args
 
 
 class ClassType(jtype):
@@ -558,7 +563,7 @@ class ClassType(jtype):
         yield "coits", self.coits
 
 
-class Dim(_JAST):
+class dim(_JAST):
     """
     Represents a dimension in the Java AST.
 
@@ -586,7 +591,7 @@ class ArrayType(jtype):
         self,
         annotations: List[Annotation] = None,
         type: jtype = None,
-        dims: List[Dim] = None,
+        dims: List[dim] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -612,7 +617,7 @@ class variabledeclaratorid(_JAST):
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, id: identifier = None, dims: List[Dim] = None, **kwargs):
+    def __init__(self, id: identifier = None, dims: List[dim] = None, **kwargs):
         super().__init__(**kwargs)
         if id is None:
             raise ValueError("label is required for variabledeclaratorid")
@@ -628,7 +633,7 @@ class variabledeclaratorid(_JAST):
 # jtype Parameters
 
 
-class TypeBound(_JAST):
+class typebound(_JAST):
     """
     Represents a jtype bound in the Java AST.
 
@@ -643,7 +648,7 @@ class TypeBound(_JAST):
     ):
         super().__init__(**kwargs)
         if not types:
-            raise ValueError("types is required for TypeBound")
+            raise ValueError("types is required for typebound")
         self.annotations = annotations or []
         self.types = types
 
@@ -663,7 +668,7 @@ class typeparam(_JAST):
         self,
         annotations: List[Annotation] = None,
         id: identifier = None,
-        bound: TypeBound = None,
+        bound: typebound = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -698,10 +703,10 @@ class typeparams(_JAST):
         yield "args", self.parameters
 
 
-# Pattern
+# pattern
 
 
-class Pattern(_JAST):
+class pattern(_JAST):
     """
     Represents a pattern in the Java AST.
 
@@ -719,9 +724,9 @@ class Pattern(_JAST):
     ):
         super().__init__(**kwargs)
         if type is None:
-            raise ValueError("jtype is required for Pattern")
+            raise ValueError("jtype is required for pattern")
         if id is None:
-            raise ValueError("label is required for Pattern")
+            raise ValueError("label is required for pattern")
         self.modifiers = modifiers or []
         self.type = type
         self.annotations = annotations or []
@@ -736,7 +741,7 @@ class Pattern(_JAST):
         yield "label", self.id
 
 
-class GuardedPattern(_JAST):
+class guardedpattern(_JAST):
     """
     Represents a guarded pattern in the Java AST.
 
@@ -745,15 +750,15 @@ class GuardedPattern(_JAST):
 
     def __init__(
         self,
-        pattern: Pattern = None,
+        pattern: pattern = None,
         conditions: List["expr"] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if pattern is None:
-            raise ValueError("pattern is required for GuardedPattern")
+            raise ValueError("pattern is required for guardedpattern")
         if conditions is None:
-            raise ValueError("condition is required for GuardedPattern")
+            raise ValueError("condition is required for guardedpattern")
         self.pattern = pattern
         self.conditions = conditions
 
@@ -899,7 +904,7 @@ class Sub(operator):
     """
 
 
-class Mul(operator):
+class Mult(operator):
     """
     Represents the multiplication operator in the Java AST.
 
@@ -1132,7 +1137,7 @@ class InstanceOf(expr):
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, value: expr = None, type: jtype | Pattern = None, **kwargs):
+    def __init__(self, value: expr = None, type: jtype | pattern = None, **kwargs):
         super().__init__(**kwargs)
         if value is None:
             raise ValueError("value is required for InstanceOf")
@@ -1199,14 +1204,14 @@ class Cast(expr):
     def __init__(
         self,
         annotations: List[Annotation] = None,
-        type: TypeBound = None,
+        type: typebound = None,
         value: expr = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         if type is None:
             raise ValueError("jtype is required for Cast")
-        if expr is None:
+        if value is None:
             raise ValueError("value is required for Cast")
         self.annotations = annotations or []
         self.type = type
@@ -1215,7 +1220,7 @@ class Cast(expr):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
             yield "annotations", self.annotations
-        yield "jtype", self.type
+        yield "type", self.type
         yield "value", self.value
 
 
@@ -1270,7 +1275,7 @@ class NewArray(expr):
         self,
         type: jtype = None,
         expr_dims: List[expr] = None,
-        dims: List[Dim] = None,
+        dims: List[dim] = None,
         initializer: "arrayinit" = None,
         **kwargs,
     ):
@@ -1322,7 +1327,7 @@ class switchexprule(_JAST):
     def __init__(
         self,
         label: switchexplabel = None,
-        cases: List[expr | GuardedPattern] = None,
+        cases: List[expr | guardedpattern] = None,
         arrow: bool = False,
         body: List["stmt"] = None,
         **kwargs,
@@ -1734,7 +1739,7 @@ class params(_JAST):
 
 class stmt(_JAST, abc.ABC):
     """
-    Abstract base class for all statements in the Java AST.
+    Abstract base class for all body in the Java AST.
     """
 
 
@@ -1768,12 +1773,12 @@ class Compound(stmt):
     <statement> <statement> ...
     """
 
-    def __init__(self, statements: List[stmt] = None, **kwargs):
+    def __init__(self, body: List[stmt] = None, **kwargs):
         super().__init__(**kwargs)
-        self.statements = statements or []
+        self.body = body or []
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "statements", self.statements
+        yield "body", self.body
 
 
 class LocalClass(stmt):
@@ -1955,27 +1960,27 @@ class switchlabel(_JAST, abc.ABC):
 
 class Match(expr):
     """
-    Represents a match for switch statements in the Java AST.
+    Represents a match for switch body in the Java AST.
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, type: jtype = None, ident: identifier = None, **kwargs):
+    def __init__(self, type: jtype = None, id: identifier = None, **kwargs):
         super().__init__(**kwargs)
         if type is None:
             raise ValueError("jtype is required for Match")
-        if ident is None:
-            raise ValueError("ident is required for Match")
+        if id is None:
+            raise ValueError("id is required for Match")
         self.type = type
-        self.ident = ident
+        self.id = id
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "jtype", self.type
-        yield "ident", self.ident
+        yield "id", self.id
 
 
 class Case(switchlabel):
     """
-    Represents a case label for switch statements in the Java AST.
+    Represents a case label for switch body in the Java AST.
 
     case <guard>:
     """
@@ -1992,7 +1997,7 @@ class Case(switchlabel):
 
 class DefaultCase(switchlabel):
     """
-    Represents a default label for switch statements in the Java AST.
+    Represents a default label for switch body in the Java AST.
 
     default:
     """
@@ -2032,13 +2037,13 @@ class switchgroup(_JAST):
         if not labels:
             raise ValueError("labels is required for switchgroup")
         if not statements:
-            raise ValueError("statements is required for switchgroup")
+            raise ValueError("body is required for switchgroup")
         self.labels = labels
         self.statements = statements
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "labels", self.labels
-        yield "statements", self.statements
+        yield "body", self.statements
 
 
 class switchblock(_JAST):
@@ -2581,7 +2586,7 @@ class Opens(directive):
             yield "to", self.to
 
 
-class UsesDirective(directive):
+class Uses(directive):
     """
     Represents an uses directive in the Java AST.
 
@@ -2595,14 +2600,14 @@ class UsesDirective(directive):
     ):
         super().__init__(**kwargs)
         if name is None:
-            raise ValueError("qname is required for UsesDirective")
+            raise ValueError("qname is required for Uses")
         self.name = name
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "qname", self.name
 
 
-class ProvidesDirective(directive):
+class Provides(directive):
     """
     Represents a provides directive in the Java AST.
 
@@ -2617,9 +2622,9 @@ class ProvidesDirective(directive):
     ):
         super().__init__(**kwargs)
         if name is None:
-            raise ValueError("jtype is required for ProvidesDirective")
+            raise ValueError("jtype is required for Provides")
         if not with_:
-            raise ValueError("with_ is required for ProvidesDirective")
+            raise ValueError("with_ is required for Provides")
         self.name = name
         self.with_ = with_
 
@@ -2735,7 +2740,7 @@ class Method(declaration):
         return_type: jtype = None,
         id: identifier = None,
         parameters: params = None,
-        dims: List[Dim] = None,
+        dims: List[dim] = None,
         throws: List[qname] = None,
         body: Block = None,
         **kwargs,
