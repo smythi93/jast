@@ -750,20 +750,20 @@ class guardedpattern(_JAST):
 
     def __init__(
         self,
-        pattern: pattern = None,
+        value: pattern = None,
         conditions: List["expr"] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        if pattern is None:
+        if value is None:
             raise ValueError("pattern is required for guardedpattern")
         if conditions is None:
             raise ValueError("condition is required for guardedpattern")
-        self.pattern = pattern
+        self.value = value
         self.conditions = conditions
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "pattern", self.pattern
+        yield "value", self.value
         yield "conditions", self.conditions
 
 
@@ -1512,11 +1512,11 @@ class Subscript(expr):
             raise ValueError("value is required for Subscript")
         if index is None:
             raise ValueError("index is required for Subscript")
-        self.expr = value
+        self.value = value
         self.index = index
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "value", self.expr
+        yield "value", self.value
         yield "index", self.index
 
 
@@ -2900,7 +2900,7 @@ class AnnotationMethod(declaration):
         modifiers: List[modifier] = None,
         type: jtype = None,
         id: identifier = None,
-        default: element = None,
+        default: elementarrayinit | Annotation | expr = None,
         **kwargs,
     ):
         super().__init__(**kwargs)

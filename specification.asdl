@@ -14,7 +14,8 @@ module Java
         | Method(modifier* modifiers, typeparams? type_params, Annotation* annotations, jtype return_type,
                  identifier id, params parameters, dim* dims, qname* throws, Block? body)
         | Constructor(modifier* modifiers, typeparams? type_params, identifier id, params? parameters, Block? body)
-        | AnnotationMethod(modifier* modifiers, jtype type, identifier id, element? default_value)
+        | AnnotationMethod(modifier* modifiers, jtype type, identifier id,
+                           (elementarrayinit | Annotation | expr)? default_value)
         | Initializer(bool static, Block body)
         | Class(modifier* modifiers, identifier id, typeparams? type_params, jtype? extends, jtype* implements,
                 jtype* permits, declaration* body)
