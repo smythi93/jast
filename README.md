@@ -95,7 +95,7 @@ module Java
         | Assign(expr target, operator? op, expr value)
         | IfExp(expr test, expr body, expr orelse)
         | BinOp(expr left, operator op, expr right)
-        | InstanceOf(expr value, jtype | pattern type)
+        | InstanceOf(expr value, (jtype | pattern) type)
         | UnaryOp(unaryop op, expr operand)
         | PostOp(expr operand, operator op)
         | Cast(Annotation* annotations, typebound type, expr value)
@@ -111,7 +111,7 @@ module Java
         | Subscript(expr value, expr index)
         | Member(expr value, expr member)
         | Call(expr func, expr* args)
-        | Reference(expr | jtype type, typeargs? type_args, identifier id, bool new)
+        | Reference((expr | jtype )type, typeargs? type_args, identifier id, bool new)
         | Match(jtype type, identifier id)
         attributes (int lineno, int col_offset, int end_lineno, int end_col_offset)
 
@@ -144,12 +144,10 @@ module Java
     arity = (modifier* modifiers, jtype type, Annotation* annotations, variabledeclaratorid id)
     params = (receiver receiver_param, (param | arity)* parameters)
 
-    qname = (identifier* identifiers)
-
     literal = IntLiteral(int value, bool long) | FloatLiteral(float value, bool double) | BoolLiteral(bool value)
         | CharLiteral(char value) | StringLiteral(string value) | TextBlock(string value) | NullLiteral()
 
-    modifier = Abstract() | Default() | Default() | Final() | Native() | NonSealed() | Private() | Protected()
+    modifier = Abstract() | Default() | Final() | Native() | NonSealed() | Private() | Protected()
         | Public() | Sealed() | Static() | Strictfp() | Synchronized() | Transient() | Transitive() | Volatile()
         | Annotation(qname name, (elementvaluepair | elementarrayinit | Annotation | expr)* elements)
 
@@ -179,8 +177,9 @@ module Java
 
     pattern = (modifier* modifiers, jtype type, Annotation* annotations, identifier id)
     guardedpattern = (pattern pattern, expr* conditions)
-}
 
+    qname = (identifier* identifiers)
+}
 ``` 
 
 ## Installation
