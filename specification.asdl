@@ -74,9 +74,25 @@ module Java
         | Cast(Annotation* annotations, jtype type, expr value)
         | NewObject(typeargs? type_args, jtype type, typeargs? template_args, expr* args, declaration* body)
         | NewArray(jtype type, expr* expr_dims, dim* dims, arrayinit? initializer)
+        | SwitchExp(expr value, switchexprule* rules)
+        | This(expr*? args)
+        | Super(typeargs? type_args. identifier? id, expr*? args)
+        | Constant(literal value)
+        | Name(identifier id)
+        | ClassExpr(jtype type)
+        | ExplicitGenericInvocation(typeargs? type_args, expr value)
+        | Subscript(expr value, expr index)
+        | Member(expr value, expr member)
+        | Call(expr func, expr* args)
+        | Reference(expr | jtype type, typeargs? type_args, identifier id, bool new)
+        attributes (int lineno, int col_offset, int end_lineno, int end_col_offset)
 
+    operator = Or() | And() | BitOr() | BitXor() | BitAnd() | Eq() | NotEq() | Lt() | LtE() | Gt() | GtE()
+        | LShift() | RShift() | URShift() | Add() | Sub() | Mult() | Div() | Mod()
 
+    unaryop = PreInc() | PreDec() | UAdd() | USub() | Invert() | Not()
 
+    postop = PostInc() | PostDec()
 
     enumconstant = (Annotation* annotations, identifier id, expr* arguments, Block? body)
 
@@ -89,4 +105,14 @@ module Java
     catch = (modifier* modifiers, qname* excs, identifier id, Block body)
 
     resource = (modifier* modifiers, jtype type, declarator variable)
+
+    switchexplabel = ExpCase() | ExpDefault()
+    switchexprule = (switchexplabel label, (expr | guardedpattern)* cases, bool arrow, stmt* body)
+
+    arrayinit = ((expr | arrayinit)* values)
+
+    params = (receiver receiver_param, (param | arity)* parameters)
+    receiver = (modifier* modifiers, jtype type, identifier id)
+
+
 }

@@ -31,7 +31,7 @@ class ParseMode(enum.Enum):
     """
     Parse a Java value.
     """
-    EXPR = "expr"
+    EXPR = "value"
 
 
 class _SimpleErrorListener(ErrorListener):

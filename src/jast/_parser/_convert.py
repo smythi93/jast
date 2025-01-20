@@ -3,7 +3,7 @@ from typing import List, Dict, Optional
 from antlr4.ParserRuleContext import ParserRuleContext
 
 import jast._jast as jast
-from jast import TypeArguments
+from jast import typeargs
 from jast._parser.JavaParser import JavaParser
 from jast._parser.JavaParserVisitor import JavaParserVisitor
 
@@ -693,7 +693,7 @@ class JASTConverter(JavaParserVisitor):
             else None
         )
         return jast.params(
-            receiver_parameter=receiver_parameter,
+            receiver_param=receiver_parameter,
             parameters=parameters,
             **self._get_location_rule(ctx),
         )
@@ -778,7 +778,7 @@ class JASTConverter(JavaParserVisitor):
             **self._get_location_rule(ctx),
         )
 
-    def visitLiteral(self, ctx: JavaParser.LiteralContext) -> jast.Literal:
+    def visitLiteral(self, ctx: JavaParser.LiteralContext) -> jast.literal:
         if ctx.integerLiteral():
             return self.visitIntegerLiteral(ctx.integerLiteral())
         elif ctx.floatLiteral():
@@ -1469,8 +1469,8 @@ class JASTConverter(JavaParserVisitor):
                 **self._get_location_rule(ctx.identifier()),
             )
         return jast.Call(
-            function=function,
-            arguments=self.visitArguments(ctx.arguments()),
+            func=function,
+            args=self.visitArguments(ctx.arguments()),
             level=16,
             **self._get_location_rule(ctx),
         )
@@ -1872,7 +1872,7 @@ class JASTConverter(JavaParserVisitor):
                 ctx.explicitGenericInvocationSuffix()
             )
         return jast.ExplicitGenericInvocation(
-            type_arguments=self.visitNonWildcardTypeArguments(
+            type_args=self.visitNonWildcardTypeArguments(
                 ctx.nonWildcardTypeArguments()
             ),
             expression=expression,
@@ -1881,7 +1881,7 @@ class JASTConverter(JavaParserVisitor):
         )
 
     def visitArrayAccessExpression(self, ctx: JavaParser.ArrayAccessExpressionContext):
-        return jast.ArrayAccess(
+        return jast.Subscript(
             epxr=self.visit(ctx.primary()),
             index=self.visitExpression(ctx.expression()),
             level=16,
@@ -1912,7 +1912,7 @@ class JASTConverter(JavaParserVisitor):
         else:
             expr = self.visitExplicitGenericInvocation(ctx.explicitGenericInvocation())
         return jast.Member(
-            expr=self.visit(ctx.primary()),
+            value=self.visit(ctx.primary()),
             member=expr,
             level=16,
             **self._get_location_rule(ctx),
@@ -1934,7 +1934,7 @@ class JASTConverter(JavaParserVisitor):
             expr = self.visitClassType(ctx.classType())
         return jast.Reference(
             expr=expr,
-            type_arguments=self.visitTypeArguments(ctx.typeArguments())
+            type_args=self.visitTypeArguments(ctx.typeArguments())
             if ctx.typeArguments()
             else None,
             id=self.visitIdentifier(ctx.identifier()) if ctx.identifier() else None,
@@ -1949,7 +1949,7 @@ class JASTConverter(JavaParserVisitor):
         if ctx.primary():
             return self.visit(ctx.primary())
         else:
-            return jast.SwitchExpr(
+            return jast.SwitchExp(
                 expression=self.visitParExpression(ctx.parExpression()),
                 rules=[
                     self.visitSwitchLabeledRule(switchRule)
@@ -1961,7 +1961,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitSwitchLabeledRule(
         self, ctx: JavaParser.SwitchLabeledRuleContext
-    ) -> jast.SwitchExprRule:
+    ) -> jast.switchexprule:
         if ctx.CASE():
             if ctx.NULL_LITERAL():
                 cases = [
@@ -1976,12 +1976,12 @@ class JASTConverter(JavaParserVisitor):
                 cases = self.visitExpressionList(ctx.expressionList())
             else:
                 cases = [self.visitGuardedPattern(ctx.guardedPattern())]
-            label = jast.ExprCase()
+            label = jast.ExpCase()
         else:
             cases = []
             label = jast.DefaultCase()
         body = self.visitSwitchRuleOutcome(ctx.switchRuleOutcome())
-        return jast.SwitchExprRule(
+        return jast.switchexprule(
             label=label,
             cases=cases,
             body=body,
@@ -2129,7 +2129,7 @@ class JASTConverter(JavaParserVisitor):
         self, ctx: JavaParser.ExplicitGenericInvocationContext
     ) -> jast.ExplicitGenericInvocation:
         return jast.ExplicitGenericInvocation(
-            type_arguments=self.visitNonWildcardTypeArguments(
+            type_args=self.visitNonWildcardTypeArguments(
                 ctx.nonWildcardTypeArguments()
             ),
             expression=self.visitExplicitGenericInvocationSuffix(
@@ -2140,9 +2140,9 @@ class JASTConverter(JavaParserVisitor):
 
     def visitTypeArgumentsOrDiamond(
         self, ctx: JavaParser.TypeArgumentsOrDiamondContext
-    ) -> TypeArguments:
+    ) -> typeargs:
         if ctx.LT():
-            return jast.TypeArguments(
+            return jast.typeargs(
                 types=[],
                 **self._get_location_rule(ctx),
             )
@@ -2151,9 +2151,9 @@ class JASTConverter(JavaParserVisitor):
 
     def visitNonWildcardTypeArgumentsOrDiamond(
         self, ctx: JavaParser.NonWildcardTypeArgumentsOrDiamondContext
-    ) -> TypeArguments:
+    ) -> typeargs:
         if ctx.LT():
-            return jast.TypeArguments(
+            return jast.typeargs(
                 types=[],
                 **self._get_location_rule(ctx),
             )
@@ -2163,7 +2163,7 @@ class JASTConverter(JavaParserVisitor):
     def visitNonWildcardTypeArguments(
         self, ctx: JavaParser.NonWildcardTypeArgumentsContext
     ):
-        return jast.TypeArguments(
+        return jast.typeargs(
             types=self.visitTypeList(ctx.typeList()),
             **self._get_location_rule(ctx),
         )
@@ -2208,8 +2208,8 @@ class JASTConverter(JavaParserVisitor):
         else:
             return jast.Double(**self._get_location_rule(ctx))
 
-    def visitTypeArguments(self, ctx: JavaParser.TypeArgumentsContext) -> TypeArguments:
-        return jast.TypeArguments(
+    def visitTypeArguments(self, ctx: JavaParser.TypeArgumentsContext) -> typeargs:
+        return jast.typeargs(
             types=[
                 self.visitTypeArgument(typeArgument)
                 for typeArgument in ctx.typeArgument()
@@ -2219,11 +2219,11 @@ class JASTConverter(JavaParserVisitor):
 
     def visitSuperSuffix(self, ctx: JavaParser.SuperSuffixContext) -> jast.Super:
         return jast.Super(
-            type_arguments=self.visitTypeArguments(ctx.typeArguments())
+            type_args=self.visitTypeArguments(ctx.typeArguments())
             if ctx.typeArguments()
             else None,
             id=self.visitIdentifier(ctx.identifier()) if ctx.identifier() else None,
-            arguments=self.visitArguments(ctx.arguments()) if ctx.arguments() else None,
+            args=self.visitArguments(ctx.arguments()) if ctx.arguments() else None,
             **self._get_location_rule(ctx),
         )
 
@@ -2234,11 +2234,11 @@ class JASTConverter(JavaParserVisitor):
             return self.visitSuperSuffix(ctx.superSuffix())
         else:
             return jast.Call(
-                function=jast.Name(
+                func=jast.Name(
                     id=self.visitIdentifier(ctx.identifier()),
                     **self._get_location_rule(ctx.identifier()),
                 ),
-                arguments=self.visitArguments(ctx.arguments()),
+                args=self.visitArguments(ctx.arguments()),
                 **self._get_location_rule(ctx),
             )
 

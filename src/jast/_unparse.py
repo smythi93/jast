@@ -468,8 +468,8 @@ class _Unparser(JNodeVisitor):
         self._level_can_be_equal = True
         s = self.visit(node.type)
         s += "::"
-        if node.type_arguments:
-            s += self.visit(node.type_arguments)
+        if node.type_args:
+            s += self.visit(node.type_args)
         if node.id:
             s += self.visit(node.id)
         if node.new:
@@ -484,9 +484,9 @@ class _Unparser(JNodeVisitor):
         pre_level = self._current_expr_level
         self._current_expr_level = node.level
         self._level_can_be_equal = True
-        s = self.visit(node.function)
+        s = self.visit(node.func)
         s += "("
-        s += ", ".join([self.visit(arg) for arg in node.arguments])
+        s += ", ".join([self.visit(arg) for arg in node.args])
         s += ")"
         self._current_expr_level = pre_level
         if par:
@@ -498,7 +498,7 @@ class _Unparser(JNodeVisitor):
         pre_level = self._current_expr_level
         self._current_expr_level = node.level
         self._level_can_be_equal = True
-        s = self.visit(node.expr)
+        s = self.visit(node.value)
         s += "."
         self._level_can_be_equal = True
         s += self.visit(node.member)
@@ -532,11 +532,11 @@ class _Unparser(JNodeVisitor):
         s = "super"
         if node.id:
             s += "."
-            if node.type_arguments:
-                s += self.visit(node.type_arguments)
+            if node.type_args:
+                s += self.visit(node.type_args)
             s += self.visit(node.id)
-        if node.arguments is not None:
-            s += f"({', '.join([self.visit(arg) for arg in node.arguments])})"
+        if node.args is not None:
+            s += f"({', '.join([self.visit(arg) for arg in node.args])})"
         return s
 
     def visit_Constant(self, node):
@@ -555,7 +555,7 @@ class _Unparser(JNodeVisitor):
         pass
 
     def visit_DimExpr(self, node):
-        return f"[{self.visit(node.expr)}]"
+        return f"[{self.visit(node.value)}]"
 
     def visit_ExprCase(self, node):
         pass
