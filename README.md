@@ -232,8 +232,8 @@ The following code snippet demonstrates how to print the names of all classes in
 ```python
 # Print the names of all classes
 class NameVisitor(jast.JNodeVisitor):
-    def visit_Identifier(self, node):
-        print(node.qname)
+    def visit_identifier(self, node):
+        print(node)
 
 
 visitor = NameVisitor()
@@ -250,9 +250,9 @@ The following code snippet demonstrates how to modify the tree:
 ```python
 # Modify the tree
 class NameModifier(jast.JNodeTransformer):
-    def visit_Identifier(self, node):
-        if node.qname == "HelloWorld":
-            node.qname = "HelloWorld2"
+    def visit_identifier(self, node):
+        if node == "HelloWorld":
+            return jast.identifier("HelloWorld2")
         return node
 
 
