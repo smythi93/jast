@@ -16,6 +16,173 @@ the trees simpler. The main intention of the helper functions and this
 module in general is to provide an easy-to-use interface for libraries
 that work tightly with Java.
 
+## Formal Specification
+
+A formal specification of the Java abstract syntax tree can be represented in 
+abstract syntax description language (ASDL) as follows:
+
+```asdl
+-- builtin types are:
+-- identifier, int, float, bool, char, string
+
+module Java
+{
+    mod = CompilationUnit(Package? package, Import* imports, declaration* types)
+        | ModularUnit(Import* imports, Module types)
+
+    declaration = EmptyDecl()
+        | Package(Annotation* annotations, qname name)
+        | Import(Annotation* annotations, bool static, qname name, bool on_demand)
+        | Module(bool open, qname name, directive* directives)
+        | Field(modifier* modifiers, jtype type, declarator* declarators)
+        | Method(modifier* modifiers, typeparams? type_params, Annotation* annotations, jtype return_type,
+                 identifier id, params parameters, dim* dims, qname* throws, Block? body)
+        | Constructor(modifier* modifiers, typeparams? type_params, identifier id, params? parameters, Block? body)
+        | AnnotationMethod(modifier* modifiers, jtype type, identifier id, element? default_value)
+        | Initializer(bool static, Block body)
+        | Class(modifier* modifiers, identifier id, typeparams? type_params, jtype? extends, jtype* implements,
+                jtype* permits, declaration* body)
+        | Enum(modifier* modifiers, identifier id, jtype* implements, enumconstant* constants,
+               declaration* body)
+        | Interface(modifier* modifiers, identifier id, typeparams? type_params, jtype* extends, jtype* permits,
+                    declaration* body)
+        | AnnotationDecl(modifier* modifiers, identifier id, jtype* extends, jtype* permits, declaration* body)
+        | Record(modifier* modifiers, identifier id, typeparams? type_params, recordcomponent* components,
+                 jtype* implements, jtype* permits, declaration* body)
+        attributes (int lineno, int col_offset, int end_lineno, int end_col_offset)
+
+    directive = Requires(modifier* modifiers, qname name)
+        | Exports(modifier* modifiers, qname name, qname to)
+        | Opens(modifier* modifiers, qname name, qname to)
+        | Uses(modifier* modifiers, qname name)
+        | Provides(modifier* modifiers, qname name, qname with_)
+        attributes (int lineno, int col_offset, int end_lineno, int end_col_offset)
+
+    stmt = Empty()
+        | Block(stmt* body)
+        | Compound(stmt* body)
+
+        | LocalClass(Class decl)
+        | LocalInterface(Interface decl)
+        | LocalRecord(Record decl)
+        | LocalVariable(modifier* modifiers, jtype type, declarator* variables)
+
+        | Labeled(identifier label, stmt body)
+
+        | If(expr test, stmt body, stmt? orelse)
+        | Switch(expr value, switchblock body)
+        | While(expr test, stmt body)
+        | DoWhile(stmt body, expr test)
+        | For((expr* | LocalVariable)? init, expr? test, expr* update, stmt body)
+        | ForEach(modifier* modifiers, jtype type, identifier id, expr iter, stmt body)
+        | Try(Block body, catch* catches, Block? final)
+        | TryWithResources(Block body,
+                           (resource | qname)* resources,
+                           catch* catches,
+                           Block? final)
+
+        | Assert(expr test, expr? msg)
+        | Throw(expr value)
+        | Expression(expr value)
+        | Return(expr? value)
+        | Yield(expr value)
+        | Break(identifier? label)
+        | Continue(identifier? label)
+        | Synch(expr lock, Block body)
+        attributes (int lineno, int col_offset, int end_lineno, int end_col_offset)
+
+    expr = Lambda((identifier | identifier* | params) args, (expr | Block) body)
+        | Assign(expr target, operator? op, expr value)
+        | IfExp(expr test, expr body, expr orelse)
+        | BinOp(expr left, operator op, expr right)
+        | InstanceOf(expr value, jtype | pattern type)
+        | UnaryOp(unaryop op, expr operand)
+        | PostOp(expr operand, operator op)
+        | Cast(Annotation* annotations, typebound type, expr value)
+        | NewObject(typeargs? type_args, jtype type, typeargs? template_args, expr* args, declaration* body)
+        | NewArray(jtype type, expr* expr_dims, dim* dims, arrayinit? initializer)
+        | SwitchExp(expr value, switchexprule* rules)
+        | This(expr*? args)
+        | Super(typeargs? type_args. identifier? id, expr*? args)
+        | Constant(literal value)
+        | Name(identifier id)
+        | ClassExpr(jtype type)
+        | ExplicitGenericInvocation(typeargs? type_args, expr value)
+        | Subscript(expr value, expr index)
+        | Member(expr value, expr member)
+        | Call(expr func, expr* args)
+        | Reference(expr | jtype type, typeargs? type_args, identifier id, bool new)
+        | Match(jtype type, identifier id)
+        attributes (int lineno, int col_offset, int end_lineno, int end_col_offset)
+
+    operator = Or() | And() | BitOr() | BitXor() | BitAnd() | Eq() | NotEq() | Lt() | LtE() | Gt() | GtE()
+        | LShift() | RShift() | URShift() | Add() | Sub() | Mult() | Div() | Mod()
+
+    unaryop = PreInc() | PreDec() | UAdd() | USub() | Invert() | Not()
+
+    postop = PostInc() | PostDec()
+
+    enumconstant = (Annotation* annotations, identifier id, expr* arguments, Block? body)
+
+    recordcomponent = (jtype type, identifier id)
+
+    switchlabel = Case(expr value) | DefaultCase()
+    switchgroup = (switchlabel* labels, stmt* statements)
+    switchblock = (switchgroup* groups, switchlabel* labels)
+
+    catch = (modifier* modifiers, qname* excs, identifier id, Block body)
+
+    resource = (modifier* modifiers, jtype type, declarator variable)
+
+    switchexplabel = ExpCase() | ExpDefault()
+    switchexprule = (switchexplabel label, (expr | guardedpattern)* cases, bool arrow, stmt* body)
+
+    arrayinit = ((expr | arrayinit)* values)
+
+    receiver = (jtype type, identifier* identifiers)
+    param = (modifier* modifiers, jtype type, variabledeclaratorid id)
+    arity = (modifier* modifiers, jtype type, Annotation* annotations, variabledeclaratorid id)
+    params = (receiver receiver_param, (param | arity)* parameters)
+
+    qname = (identifier* identifiers)
+
+    literal = IntLiteral(int value, bool long) | FloatLiteral(float value, bool double) | BoolLiteral(bool value)
+        | CharLiteral(char value) | StringLiteral(string value) | TextBlock(string value) | NullLiteral()
+
+    modifier = Abstract() | Default() | Default() | Final() | Native() | NonSealed() | Private() | Protected()
+        | Public() | Sealed() | Static() | Strictfp() | Synchronized() | Transient() | Transitive() | Volatile()
+        | Annotation(qname name, (elementvaluepair | elementarrayinit | Annotation | expr)* elements)
+
+
+    elementvaluepair = (identifier id, (elementarrayinit | Annotation | expr) value)
+    elementarrayinit = ((elementarrayinit | Annotation | expr)* values)
+
+    jtype = Void() | Var() | Boolean() | Byte() | Short() | Int() | Long() | Char() | Float() | Double()
+        | Wildcard(Annotation* annotations, wildcardbound? bound)
+        | Coit(Annotation* annotations, identifier id, typeargs? type_args)
+        | ClassType(Annotation* annotations, Coit+ coits)
+        | ArrayType(Annotation* annotations, jtype type, dim* dims)
+
+
+    wildcardbound = (jtype type, bool extends, bool super_)
+
+    typeargs = (jtype* types)
+
+    dim = (Annotation* annotations)
+
+    variabledeclaratorid = (identifier id, dim* dims)
+    declarator = (variabledeclaratorid id, expr? value)
+
+    typebound = (Annotation* annotations, jtype* types)
+    typeparam = (Annotation* annotations, identifier id, typebound? bound)
+    typeparams = (typeparam* params)
+
+    pattern = (modifier* modifiers, jtype type, Annotation* annotations, identifier id)
+    guardedpattern = (pattern pattern, expr* conditions)
+}
+
+``` 
+
 ## Installation
 
 The `jast` module can be installed from the Python Package Index (PyPI)
