@@ -372,7 +372,7 @@ class JavaParserVisitor(ParseTreeVisitor):
     def visitRecordBodyDeclaration(self, ctx: JavaParser.RecordBodyDeclarationContext):
         return self.visitChildren(ctx)
 
-    # Visit a parse tree produced by JavaParser#body.
+    # Visit a parse tree produced by JavaParser#block.
     def visitBlock(self, ctx: JavaParser.BlockContext):
         return self.visitChildren(ctx)
 
@@ -518,7 +518,7 @@ class JavaParserVisitor(ParseTreeVisitor):
     def visitAssignmentExpression(self, ctx: JavaParser.AssignmentExpressionContext):
         return self.visitChildren(ctx)
 
-    # Visit a parse tree produced by JavaParser#value.
+    # Visit a parse tree produced by JavaParser#expression.
     def visitExpression(self, ctx: JavaParser.ExpressionContext):
         return self.visitChildren(ctx)
 
@@ -686,7 +686,7 @@ class JavaParserVisitor(ParseTreeVisitor):
     ):
         return self.visitChildren(ctx)
 
-    # Visit a parse tree produced by JavaParser#args.
+    # Visit a parse tree produced by JavaParser#arguments.
     def visitArguments(self, ctx: JavaParser.ArgumentsContext):
         return self.visitChildren(ctx)
 

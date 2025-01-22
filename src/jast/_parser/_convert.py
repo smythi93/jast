@@ -125,13 +125,13 @@ class JASTConverter(JavaParserVisitor):
 
     def visitModifier(self, ctx: JavaParser.ModifierContext) -> jast.modifier:
         if ctx.NATIVE():
-            return jast.Native(**self._get_location_rule(ctx))
+            return jast.Native()
         elif ctx.SYNCHRONIZED():
-            return jast.Synchronized(**self._get_location_rule(ctx))
+            return jast.Synchronized()
         elif ctx.TRANSIENT():
-            return jast.Transient(**self._get_location_rule(ctx))
+            return jast.Transient()
         elif ctx.VOLATILE():
-            return jast.Volatile(**self._get_location_rule(ctx))
+            return jast.Volatile()
         else:
             return self.visitClassOrInterfaceModifier(ctx.classOrInterfaceModifier())
 
@@ -139,23 +139,23 @@ class JASTConverter(JavaParserVisitor):
         self, ctx: JavaParser.ClassOrInterfaceModifierContext
     ) -> jast.modifier:
         if ctx.PUBLIC():
-            return jast.Public(**self._get_location_rule(ctx))
+            return jast.Public()
         elif ctx.PROTECTED():
-            return jast.Protected(**self._get_location_rule(ctx))
+            return jast.Protected()
         elif ctx.PRIVATE():
-            return jast.Private(**self._get_location_rule(ctx))
+            return jast.Private()
         elif ctx.STATIC():
-            return jast.Static(**self._get_location_rule(ctx))
+            return jast.Static()
         elif ctx.ABSTRACT():
-            return jast.Abstract(**self._get_location_rule(ctx))
+            return jast.Abstract()
         elif ctx.FINAL():
-            return jast.Final(**self._get_location_rule(ctx))
+            return jast.Final()
         elif ctx.STRICTFP():
-            return jast.Strictfp(**self._get_location_rule(ctx))
+            return jast.Strictfp()
         elif ctx.SEALED():
-            return jast.Sealed(**self._get_location_rule(ctx))
+            return jast.Sealed()
         elif ctx.NON_SEALED():
-            return jast.NonSealed(**self._get_location_rule(ctx))
+            return jast.NonSealed()
         else:
             return self.visitAnnotation(ctx.annotation())
 
@@ -163,7 +163,7 @@ class JASTConverter(JavaParserVisitor):
         self, ctx: JavaParser.VariableModifierContext
     ) -> jast.modifier:
         if ctx.FINAL():
-            return jast.Final(**self._get_location_rule(ctx))
+            return jast.Final()
         else:
             return self.visitAnnotation(ctx.annotation())
 
@@ -535,15 +535,15 @@ class JASTConverter(JavaParserVisitor):
         self, ctx: JavaParser.InterfaceMethodModifierContext
     ) -> jast.modifier:
         if ctx.PUBLIC():
-            return jast.Public(**self._get_location_rule(ctx))
+            return jast.Public()
         elif ctx.ABSTRACT():
-            return jast.Abstract(**self._get_location_rule(ctx))
+            return jast.Abstract()
         elif ctx.DEFAULT():
-            return jast.Default(**self._get_location_rule(ctx))
+            return jast.Default()
         elif ctx.STATIC():
-            return jast.Static(**self._get_location_rule(ctx))
+            return jast.Static()
         elif ctx.STRICTFP():
-            return jast.Strictfp(**self._get_location_rule(ctx))
+            return jast.Strictfp()
         else:
             return self.visitAnnotation(ctx.annotation())
 
@@ -774,8 +774,9 @@ class JASTConverter(JavaParserVisitor):
 
     def visitQualifiedName(self, ctx: JavaParser.QualifiedNameContext) -> jast.qname:
         return jast.qname(
-            names=[self.visitIdentifier(identifier) for identifier in ctx.identifier()],
-            **self._get_location_rule(ctx),
+            identifiers=[
+                self.visitIdentifier(identifier) for identifier in ctx.identifier()
+            ]
         )
 
     def visitLiteral(self, ctx: JavaParser.LiteralContext) -> jast.literal:
@@ -809,11 +810,13 @@ class JASTConverter(JavaParserVisitor):
         long = "l" in text or "L" in text
         text = text.replace("l", "").replace("L", "")
         if ctx.OCT_LITERAL():
-            text[0:1] = "0o"
+            text = text[1:]
+            while text.startswith("_"):
+                text = text[1:]
+            text = "0o" + text
         return jast.IntLiteral(
             value=eval(text),
             long=long,
-            **self._get_location_rule(ctx),
         )
 
     def visitFloatLiteral(
@@ -829,7 +832,6 @@ class JASTConverter(JavaParserVisitor):
         return jast.FloatLiteral(
             value=value,
             double=double,
-            **self._get_location_rule(ctx),
         )
 
     def visitAnnotation(self, ctx: JavaParser.AnnotationContext) -> jast.Annotation:
@@ -1036,9 +1038,9 @@ class JASTConverter(JavaParserVisitor):
         self, ctx: JavaParser.RequiresModifierContext
     ) -> jast.modifier:
         if ctx.TRANSITIVE():
-            return jast.Transitive(**self._get_location_rule(ctx))
+            return jast.Transitive()
         else:
-            return jast.Static(**self._get_location_rule(ctx))
+            return jast.Static()
 
     def visitRecordDeclaration(
         self, ctx: JavaParser.RecordDeclarationContext
@@ -2246,11 +2248,11 @@ class JASTConverter(JavaParserVisitor):
         elif ctx.moduleDeclaration():
             return self.visitModuleDeclaration(ctx.moduleDeclaration())
         elif ctx.fieldDeclaration():
-            return self.visitFieldDeclaration(ctx.fieldDeclaration())
+            decl = self.visitFieldDeclaration(ctx.fieldDeclaration())
         elif ctx.methodDeclaration():
-            return self.visitMethodDeclaration(ctx.methodDeclaration())
+            decl = self.visitMethodDeclaration(ctx.methodDeclaration())
         elif ctx.interfaceMethodDeclaration():
-            return self.visitInterfaceMethodDeclaration(
+            decl = self.visitInterfaceMethodDeclaration(
                 ctx.interfaceMethodDeclaration()
             )
         elif ctx.block():
@@ -2260,29 +2262,33 @@ class JASTConverter(JavaParserVisitor):
                 **self._get_location_rule(ctx),
             )
         elif ctx.constructorDeclaration():
-            return self.visitConstructorDeclaration(ctx.constructorDeclaration())
+            decl = self.visitConstructorDeclaration(ctx.constructorDeclaration())
         elif ctx.compactConstructorDeclaration():
-            return self.visitCompactConstructorDeclaration(
+            decl = self.visitCompactConstructorDeclaration(
                 ctx.compactConstructorDeclaration()
             )
         elif ctx.interfaceDeclaration():
-            return self.visitInterfaceDeclaration(ctx.interfaceDeclaration())
+            decl = self.visitInterfaceDeclaration(ctx.interfaceDeclaration())
         elif ctx.annotationMethodDeclaration():
-            return self.visitAnnotationMethodDeclaration(
+            decl = self.visitAnnotationMethodDeclaration(
                 ctx.annotationMethodDeclaration()
             )
         elif ctx.annotationConstantDeclaration():
-            return self.visitAnnotationConstantDeclaration(
+            decl = self.visitAnnotationConstantDeclaration(
                 ctx.annotationConstantDeclaration()
             )
         elif ctx.annotationTypeDeclaration():
-            return self.visitAnnotationTypeDeclaration(ctx.annotationTypeDeclaration())
+            decl = self.visitAnnotationTypeDeclaration(ctx.annotationTypeDeclaration())
         elif ctx.classDeclaration():
-            return self.visitClassDeclaration(ctx.classDeclaration())
+            decl = self.visitClassDeclaration(ctx.classDeclaration())
         elif ctx.enumDeclaration():
-            return self.visitEnumDeclaration(ctx.enumDeclaration())
+            decl = self.visitEnumDeclaration(ctx.enumDeclaration())
         else:
-            return self.visitRecordDeclaration(ctx.recordDeclaration())
+            decl = self.visitRecordDeclaration(ctx.recordDeclaration())
+        if ctx.modifier():
+            modifiers = [self.visitModifier(modifier) for modifier in ctx.modifier()]
+            setattr(decl, "modifiers", modifiers)
+        return decl
 
     def visitStatementStart(self, ctx: JavaParser.StatementStartContext) -> jast.stmt:
         return self.visitBlockStatement(ctx.blockStatement())

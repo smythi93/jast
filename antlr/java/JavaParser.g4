@@ -49,19 +49,19 @@ declarationStart
     : packageDeclaration EOF
     | importDeclaration EOF
     | moduleDeclaration EOF
-    | fieldDeclaration EOF
-    | methodDeclaration EOF
-    | interfaceMethodDeclaration EOF
+    | modifier* fieldDeclaration EOF
+    | modifier* methodDeclaration EOF
+    | modifier* interfaceMethodDeclaration EOF
     | STATIC? block EOF
-    | constructorDeclaration EOF
-    | compactConstructorDeclaration EOF
-    | interfaceDeclaration EOF
-    | annotationMethodDeclaration EOF
-    | annotationConstantDeclaration EOF
-    | annotationTypeDeclaration EOF
-    | classDeclaration EOF
-    | enumDeclaration EOF
-    | recordDeclaration EOF
+    | modifier* constructorDeclaration EOF
+    | modifier* compactConstructorDeclaration EOF
+    | modifier* annotationMethodDeclaration EOF
+    | modifier* annotationConstantDeclaration EOF
+    | modifier* interfaceDeclaration EOF
+    | modifier* annotationTypeDeclaration EOF
+    | modifier* classDeclaration EOF
+    | modifier* enumDeclaration EOF
+    | modifier* recordDeclaration EOF
     ;
 
 statementStart

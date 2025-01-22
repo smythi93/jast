@@ -11,7 +11,7 @@ class JAST(abc.ABC):
     Abstract base class for all JAST classes.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         """
         Fallback constructor for all JAST classes.
         :param kwargs: keyword args
@@ -53,6 +53,7 @@ class _JAST(JAST, abc.ABC):
         col_offset: int = None,
         end_lineno: int = None,
         end_col_offset: int = None,
+        *args,
         **kwargs,
     ):
         """
@@ -64,7 +65,7 @@ class _JAST(JAST, abc.ABC):
         :param end_col_offset:  The ending column offset of the JAST class.
         :param kwargs:          keyword args
         """
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         self.lineno = lineno
         self.col_offset = col_offset
         self.end_lineno = end_lineno
@@ -74,27 +75,31 @@ class _JAST(JAST, abc.ABC):
 # Identifiers
 
 
-class identifier(_JAST, str):
+class identifier(JAST, str):
     """
     Represents an identifier in the Java AST.
     """
 
+    def __init__(self, value: str, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.value = value
+
     def __new__(cls, *args, **kwargs):
-        return str.__new__(cls, *args, **kwargs)
+        return str.__new__(identifier, *args, **kwargs)
 
 
 # Names
 
 
-class qname(_JAST):
+class qname(JAST):
     """
     Represents a qualified qname in the Java AST.
 
     <identifier>.<identifier>.<identifier>...
     """
 
-    def __init__(self, identifiers: List[identifier] = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, identifiers: List[identifier] = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if not identifiers:
             raise ValueError("identifier is required for qname")
         self.identifiers = identifiers
@@ -106,70 +111,102 @@ class qname(_JAST):
 # Literals
 
 
-class literal(_JAST, abc.ABC):
+class literal(JAST, abc.ABC):
     """
     Abstract base class for all literal values in the Java AST.
     """
 
-    def __init__(self, value: Any, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, value: Any, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.value = value
 
 
-class IntLiteral(literal):
+class IntLiteral(literal, int):
     """
     Represents an integer literal in the Java AST.
     """
 
-    def __init__(self, value: int, long: bool = False, **kwargs):
-        super().__init__(value, **kwargs)
+    def __init__(self, value: int, long: bool = False, *args, **kwargs):
+        super().__init__(value, *args, **kwargs)
         self.long = long
 
+    def __new__(cls, value, *args, **kwargs):
+        obj = int.__new__(cls, value)
+        IntLiteral.__init__(obj, value, *args, **kwargs)
+        return obj
 
-class FloatLiteral(literal):
+
+class FloatLiteral(literal, float):
     """
     Represents a float literal in the Java AST.
     """
 
-    def __init__(self, value: float, double: bool = False, **kwargs):
-        super().__init__(value, **kwargs)
+    def __init__(self, value: float, double: bool = False, *args, **kwargs):
+        super().__init__(value, *args, **kwargs)
         self.double = double
 
+    def __new__(cls, value, *args, **kwargs):
+        obj = float.__new__(cls, value)
+        FloatLiteral.__init__(obj, value, *args, **kwargs)
+        return obj
 
-class BoolLiteral(literal):
+
+# noinspection PyFinal
+class BoolLiteral(literal, int):
     """
     Represents a boolean literal in the Java AST.
     """
 
-    def __init__(self, value: bool, **kwargs):
-        super().__init__(value, **kwargs)
+    def __init__(self, value: bool, *args, **kwargs):
+        super().__init__(value, *args, **kwargs)
+
+    def __new__(cls, value, *args, **kwargs):
+        obj = int.__new__(cls, value)
+        BoolLiteral.__init__(obj, value, **kwargs)
+        return obj
 
 
-class CharLiteral(literal):
+class CharLiteral(literal, str):
     """
     Represents a character literal in the Java AST.
     """
 
-    def __init__(self, value: str, **kwargs):
-        super().__init__(value, **kwargs)
+    def __init__(self, value: str, *args, **kwargs):
+        super().__init__(value, *args, **kwargs)
+
+    def __new__(cls, value, *args, **kwargs):
+        assert len(value) == 1, "CharLiteral must be a single character"
+        obj = str.__new__(cls, value)
+        CharLiteral.__init__(obj, value, *args, **kwargs)
+        return obj
 
 
-class StringLiteral(literal):
+class StringLiteral(literal, str):
     """
     Represents a string literal in the Java AST.
     """
 
-    def __init__(self, value: str, **kwargs):
-        super().__init__(value, **kwargs)
+    def __init__(self, value: str, *args, **kwargs):
+        super().__init__(value, *args, **kwargs)
+
+    def __new__(cls, value, *args, **kwargs):
+        obj = str.__new__(cls, value)
+        StringLiteral.__init__(obj, value, *args, **kwargs)
+        return obj
 
 
-class TextBlock(literal):
+class TextBlock(literal, str):
     """
     Represents a text body literal in the Java AST.
     """
 
-    def __init__(self, value: str, **kwargs):
-        super().__init__(value, **kwargs)
+    def __init__(self, value: str, *args, **kwargs):
+        super().__init__(value, *args, **kwargs)
+
+    def __new__(cls, value, *args, **kwargs):
+        obj = str.__new__(cls, value)
+        TextBlock.__init__(obj, value, *args, **kwargs)
+        return obj
 
 
 class NullLiteral(literal):
@@ -177,28 +214,40 @@ class NullLiteral(literal):
     Represents a null literal in the Java AST.
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(None, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(None, *args, **kwargs)
 
 
 # Modifiers
 
 
-class modifier(_JAST, abc.ABC):
+class modifier(JAST, abc.ABC):
     """
     Abstract base class for all modifiers in the Java AST.
     """
 
 
-class Transitive(modifier):
+class Abstract(modifier):
     """
-    Represents the transitive modifier in the Java AST.
+    Represents the abstract modifier in the Java AST.
     """
 
 
-class Static(modifier):
+class Default(modifier):
     """
-    Represents the static modifier in the Java AST.
+    Represents the default modifier in the Java AST.
+    """
+
+
+class Final(modifier):
+    """
+    Represents the final modifier in the Java AST.
+    """
+
+
+class Native(modifier):
+    """
+    Represents the native modifier in the Java AST.
     """
 
 
@@ -220,18 +269,6 @@ class Private(modifier):
     """
 
 
-class Abstract(modifier):
-    """
-    Represents the abstract modifier in the Java AST.
-    """
-
-
-class Final(modifier):
-    """
-    Represents the final modifier in the Java AST.
-    """
-
-
 class Sealed(modifier):
     """
     Represents the sealed modifier in the Java AST.
@@ -244,21 +281,15 @@ class NonSealed(modifier):
     """
 
 
+class Static(modifier):
+    """
+    Represents the static modifier in the Java AST.
+    """
+
+
 class Strictfp(modifier):
     """
     Represents the strictfp modifier in the Java AST.
-    """
-
-
-class Transient(modifier):
-    """
-    Represents the transient modifier in the Java AST.
-    """
-
-
-class Volatile(modifier):
-    """
-    Represents the volatile modifier in the Java AST.
     """
 
 
@@ -268,15 +299,21 @@ class Synchronized(modifier):
     """
 
 
-class Native(modifier):
+class Transient(modifier):
     """
-    Represents the native modifier in the Java AST.
+    Represents the transient modifier in the Java AST.
     """
 
 
-class Default(modifier):
+class Transitive(modifier):
     """
-    Represents the default modifier in the Java AST.
+    Represents the transitive modifier in the Java AST.
+    """
+
+
+class Volatile(modifier):
+    """
+    Represents the volatile modifier in the Java AST.
     """
 
 
@@ -292,9 +329,10 @@ class elementvaluepair(_JAST):
         self,
         id: identifier = None,
         value: Union["elementarrayinit", "Annotation", "expr"] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if id is None:
             raise ValueError("label is required for elementvaluepair")
         if value is None:
@@ -317,9 +355,10 @@ class elementarrayinit(_JAST):
     def __init__(
         self,
         values: List[Union["elementarrayinit", "Annotation", "expr"]] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         self.values = values or []
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -339,9 +378,10 @@ class Annotation(modifier):
         elements: List[
             Union[elementvaluepair, elementarrayinit, "Annotation", "expr"]
         ] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if name is None:
             raise ValueError("qname is required for Annotation")
         self.name = name
@@ -380,8 +420,8 @@ class primitivetype(jtype, abc.ABC):
     Abstract base class for all primitive types in the Java AST.
     """
 
-    def __init__(self, annotations: List[Annotation] = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, annotations: List[Annotation] = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.annotations = annotations or []
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -450,9 +490,10 @@ class wildcardbound(_JAST):
         type: jtype = None,
         extends: bool = False,
         super_: bool = False,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if type is None:
             raise ValueError("jtype is required for wildcardbound")
         if extends == super_:
@@ -478,9 +519,10 @@ class Wildcard(jtype):
         self,
         annotations: List[Annotation] = None,
         bound: wildcardbound = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         self.annotations = annotations or []
         self.bound = bound
 
@@ -498,8 +540,8 @@ class typeargs(_JAST):
     < <jtype>, <jtype>, ... >
     """
 
-    def __init__(self, types: List[jtype] = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, types: List[jtype] = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if types is None:
             raise ValueError("types is required for typeargs")
         self.types = types
@@ -521,9 +563,10 @@ class Coit(jtype):
         annotations: List[Annotation] = None,
         id: identifier = None,
         type_args: typeargs = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if id is None:
             raise ValueError("label is required")
         self.annotations = annotations or []
@@ -549,9 +592,10 @@ class ClassType(jtype):
         self,
         annotations: List[Annotation] = None,
         coits: List[Coit] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if not coits:
             raise ValueError("coits is required")
         self.annotations = annotations or []
@@ -570,8 +614,8 @@ class dim(_JAST):
     []
     """
 
-    def __init__(self, annotations: List[Annotation] = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, annotations: List[Annotation] = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.annotations = annotations or []
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -592,9 +636,10 @@ class ArrayType(jtype):
         annotations: List[Annotation] = None,
         type: jtype = None,
         dims: List[dim] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if type is None:
             raise ValueError("jtype is required")
         self.annotations = annotations or []
@@ -617,8 +662,8 @@ class variabledeclaratorid(_JAST):
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, id: identifier = None, dims: List[dim] = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, id: identifier = None, dims: List[dim] = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if id is None:
             raise ValueError("label is required for variabledeclaratorid")
         self.id = id
@@ -644,9 +689,10 @@ class typebound(_JAST):
         self,
         annotations: List[Annotation] = None,
         types: List[jtype] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if not types:
             raise ValueError("types is required for typebound")
         self.annotations = annotations or []
@@ -669,9 +715,10 @@ class typeparam(_JAST):
         annotations: List[Annotation] = None,
         id: identifier = None,
         bound: typebound = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if id is None:
             raise ValueError("label is required")
         self.annotations = annotations or []
@@ -693,8 +740,8 @@ class typeparams(_JAST):
     < <jtype-parameter>, <jtype-parameter>, ... >
     """
 
-    def __init__(self, parameters: List[typeparam] = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, parameters: List[typeparam] = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if not parameters:
             raise ValueError("args is required for typeparams")
         self.parameters = parameters
@@ -720,9 +767,10 @@ class pattern(_JAST):
         type: jtype = None,
         annotations: List[Annotation] = None,
         id: identifier = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if type is None:
             raise ValueError("jtype is required for pattern")
         if id is None:
@@ -752,9 +800,10 @@ class guardedpattern(_JAST):
         self,
         value: pattern = None,
         conditions: List["expr"] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if value is None:
             raise ValueError("pattern is required for guardedpattern")
         if conditions is None:
@@ -1008,8 +1057,8 @@ class expr(_JAST, abc.ABC):
     Abstract base class for all expressions in the Java AST.
     """
 
-    def __init__(self, level: int = 0, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, level: int = 0, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.level = level
 
 
@@ -1025,9 +1074,10 @@ class Lambda(expr):
         self,
         args: identifier | List[identifier] | "params" = None,
         body: Union[expr, "Block"] = None,
+        *vargs,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*vargs, **kwargs)
         if args is None:
             raise ValueError("args is required for Lambda")
         if body is None:
@@ -1054,9 +1104,10 @@ class Assign(expr):
         target: expr = None,
         op: operator = None,
         value: expr = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if target is None:
             raise ValueError("target is required for Assign")
         if value is None:
@@ -1083,9 +1134,10 @@ class IfExp(expr):
         test: expr = None,
         body: expr = None,
         orelse: expr = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if test is None:
             raise ValueError("test is required for IfExp")
         if body is None:
@@ -1110,9 +1162,14 @@ class BinOp(expr):
     """
 
     def __init__(
-        self, left: expr = None, op: operator = None, right: expr = None, **kwargs
+        self,
+        left: expr = None,
+        op: operator = None,
+        right: expr = None,
+        *args,
+        **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if left is None:
             raise ValueError("left is required for BinOp")
         if op is None:
@@ -1137,8 +1194,10 @@ class InstanceOf(expr):
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, value: expr = None, type: jtype | pattern = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self, value: expr = None, type: jtype | pattern = None, *args, **kwargs
+    ):
+        super().__init__(*args, **kwargs)
         if value is None:
             raise ValueError("value is required for InstanceOf")
         if type is None:
@@ -1158,8 +1217,8 @@ class UnaryOp(expr):
     <op> <operand>
     """
 
-    def __init__(self, op: unaryop = None, operand: expr = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, op: unaryop = None, operand: expr = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if op is None:
             raise ValueError("op is required for UnaryOp")
         if operand is None:
@@ -1179,8 +1238,8 @@ class PostOp(expr):
     <operand> <op>
     """
 
-    def __init__(self, operand: expr = None, op: postop = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, operand: expr = None, op: postop = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if operand is None:
             raise ValueError("value is required for PostOp")
         if op is None:
@@ -1206,9 +1265,10 @@ class Cast(expr):
         annotations: List[Annotation] = None,
         type: typebound = None,
         value: expr = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if type is None:
             raise ValueError("jtype is required for Cast")
         if value is None:
@@ -1239,9 +1299,10 @@ class NewObject(expr):
         template_args: typeargs = None,
         args: List[expr] = None,
         body: List["declaration"] = None,
+        *vargs,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*vargs, **kwargs)
         if not type:
             raise ValueError("jtype is required for ObjectCreation")
         self.type_args = type_args
@@ -1277,9 +1338,10 @@ class NewArray(expr):
         expr_dims: List[expr] = None,
         dims: List[dim] = None,
         initializer: "arrayinit" = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if type is None:
             raise ValueError("jtype is required for ArrayCreation")
         if expr_dims and initializer:
@@ -1330,9 +1392,10 @@ class switchexprule(_JAST):
         cases: List[expr | guardedpattern] = None,
         arrow: bool = False,
         body: List["stmt"] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if label is None:
             raise ValueError("label is required for switchexprule")
         if not cases:
@@ -1359,9 +1422,10 @@ class SwitchExp(expr):
         self,
         value: expr = None,
         rules: List[switchexprule] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if value is None:
             raise ValueError("value is required for SwitchExp")
         self.value = value
@@ -1384,9 +1448,10 @@ class This(expr):
     def __init__(
         self,
         arguments: List[expr] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         self.arguments = arguments
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -1407,9 +1472,10 @@ class Super(expr):
         type_args: typeargs = None,
         id: identifier = None,
         args: List[expr] = None,
+        *vargs,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*vargs, **kwargs)
         self.type_args = type_args
         self.id = id
         self.args = args
@@ -1430,8 +1496,8 @@ class Constant(expr):
     <value>
     """
 
-    def __init__(self, value: literal = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, value: literal = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if value is None:
             raise ValueError("literal is required for Constant")
         self.value = value
@@ -1448,8 +1514,8 @@ class Name(expr):
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, id: identifier = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, id: identifier = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if id is None:
             raise ValueError("label is required for Name")
         self.id = id
@@ -1466,8 +1532,8 @@ class ClassExpr(expr):
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, type: jtype = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, type: jtype = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if type is None:
             raise ValueError("jtype is required for ClassExpr")
         self.type = type
@@ -1485,9 +1551,10 @@ class ExplicitGenericInvocation(expr):
         self,
         type_args: typeargs = None,
         value: expr = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if value is None:
             raise ValueError("value is required for ExplicitGenericInvocation")
         self.type_args = type_args
@@ -1506,8 +1573,8 @@ class Subscript(expr):
     <value>[<index>]
     """
 
-    def __init__(self, value: expr = None, index: expr = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, value: expr = None, index: expr = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if value is None:
             raise ValueError("value is required for Subscript")
         if index is None:
@@ -1527,8 +1594,8 @@ class Member(expr):
     <value>.<member>
     """
 
-    def __init__(self, value: expr = None, member: expr = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, value: expr = None, member: expr = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if value is None:
             raise ValueError("value is required for Member")
         if member is None:
@@ -1552,9 +1619,10 @@ class Call(expr):
         self,
         func: expr = None,
         args: List[expr] = None,
+        *vargs,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*vargs, **kwargs)
         if func is None:
             raise ValueError("value is required for Call")
         self.func = func
@@ -1580,9 +1648,10 @@ class Reference(expr):
         type_args: typeargs = None,
         id: identifier = None,
         new: bool = False,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if type is None:
             raise ValueError("jtype is required for Reference")
         if new and identifier:
@@ -1610,8 +1679,8 @@ class arrayinit(_JAST):
     { <value>, <value>, ... }
     """
 
-    def __init__(self, values: List[Union[expr, "arrayinit"]] = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, values: List[Union[expr, "arrayinit"]] = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.values = values or []
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -1631,9 +1700,10 @@ class receiver(_JAST):
         self,
         type: jtype = None,
         identifiers: List[identifier] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if type is None:
             raise ValueError("jtype is required for receiver")
         self.type = type
@@ -1658,9 +1728,10 @@ class param(_JAST):
         modifiers: List[modifier] = None,
         type: jtype = None,
         id: variabledeclaratorid = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if type is None:
             raise ValueError("jtype is required for param")
         if id is None:
@@ -1688,9 +1759,10 @@ class arity(_JAST):
         type: jtype = None,
         annotations: List[Annotation] = None,
         id: variabledeclaratorid = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if type is None:
             raise ValueError("jtype is required for arity")
         if id is None:
@@ -1721,9 +1793,10 @@ class params(_JAST):
         self,
         receiver_param: receiver = None,
         parameters: List[param | arity] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         self.receiver_parameter = receiver_param
         self.parameters = parameters or []
 
@@ -1758,8 +1831,8 @@ class Block(stmt):
     { <statement> <statement> ... }
     """
 
-    def __init__(self, body: List[stmt] = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, body: List[stmt] = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.body = body or []
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -1773,8 +1846,8 @@ class Compound(stmt):
     <statement> <statement> ...
     """
 
-    def __init__(self, body: List[stmt] = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, body: List[stmt] = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.body = body or []
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -1788,8 +1861,8 @@ class LocalClass(stmt):
     class { <decl> <decl> ... }
     """
 
-    def __init__(self, decl: "Class" = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, decl: "Class" = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if decl is None:
             raise ValueError("decl is required for LocalClass")
         self.declaration = decl
@@ -1805,8 +1878,8 @@ class LocalInterface(stmt):
     interface { <decl> <decl> ... }
     """
 
-    def __init__(self, decl: "Interface" = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, decl: "Interface" = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if decl is None:
             raise ValueError("decl is required for LocalInterface")
         self.declaration = decl
@@ -1822,8 +1895,8 @@ class LocalRecord(stmt):
     record { <decl> <decl> ... }
     """
 
-    def __init__(self, decl: "Record" = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, decl: "Record" = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if decl is None:
             raise ValueError("decl is required for LocalRecord")
         self.declaration = decl
@@ -1845,9 +1918,10 @@ class LocalVariable(stmt):
         modifiers: List[modifier] = None,
         type: jtype = None,
         declarators: List["declarator"] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if type is None:
             raise ValueError("jtype is required for LocalVariable")
         if not declarators:
@@ -1871,8 +1945,8 @@ class Labeled(stmt):
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, label: identifier = None, body: stmt = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, label: identifier = None, body: stmt = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if label is None:
             raise ValueError("label is required for LabeledStatement")
         if body is None:
@@ -1892,8 +1966,8 @@ class Expression(stmt):
     <value>;
     """
 
-    def __init__(self, value: expr = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, value: expr = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if value is None:
             raise ValueError("value is required for ExpressionStatement")
         self.value = value
@@ -1914,9 +1988,10 @@ class If(stmt):
         test: expr = None,
         body: stmt = None,
         orelse: stmt = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if test is None:
             raise ValueError("test is required for IfStatement")
         if body is None:
@@ -1939,8 +2014,8 @@ class Assert(stmt):
     assert <test> [ : <msg> ];
     """
 
-    def __init__(self, test: expr = None, msg: expr = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, test: expr = None, msg: expr = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if test is None:
             raise ValueError("condition is required for AssertStatement")
         self.test = test
@@ -1964,8 +2039,8 @@ class Match(expr):
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, type: jtype = None, id: identifier = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, type: jtype = None, id: identifier = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if type is None:
             raise ValueError("jtype is required for Match")
         if id is None:
@@ -1985,8 +2060,8 @@ class Case(switchlabel):
     case <guard>:
     """
 
-    def __init__(self, guard: expr = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, guard: expr = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if not guard:
             raise ValueError("constants is required for Case")
         self.guard = guard
@@ -2010,8 +2085,8 @@ class Throw(stmt):
     throw <exc>;
     """
 
-    def __init__(self, exc: expr = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, exc: expr = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if exc is None:
             raise ValueError("value is required for ThrowStatement")
         self.exc = exc
@@ -2031,9 +2106,10 @@ class switchgroup(_JAST):
         self,
         labels: List[switchlabel] = None,
         statements: List[stmt] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if not labels:
             raise ValueError("labels is required for switchgroup")
         if not statements:
@@ -2057,9 +2133,10 @@ class switchblock(_JAST):
         self,
         groups: List[switchgroup] = None,
         labels: List[switchlabel] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         self.groups = groups or []
         self.labels = labels or []
 
@@ -2075,8 +2152,8 @@ class Switch(stmt):
     switch (<subject>) { <body> }
     """
 
-    def __init__(self, subject: expr = None, body: switchblock = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, subject: expr = None, body: switchblock = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if subject is None:
             raise ValueError("value is required for SwitchStatement")
         if not body:
@@ -2096,8 +2173,8 @@ class While(stmt):
     while (<test>) <body>
     """
 
-    def __init__(self, test: expr = None, body: stmt = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, test: expr = None, body: stmt = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if test is None:
             raise ValueError("test is required for WhileStatement")
         if body is None:
@@ -2117,8 +2194,8 @@ class DoWhile(stmt):
     do <body> while (<test>)
     """
 
-    def __init__(self, body: stmt = None, test: expr = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, body: stmt = None, test: expr = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if body is None:
             raise ValueError("statement is required for DoWhileStatement")
         if test is None:
@@ -2144,9 +2221,10 @@ class For(stmt):
         test: expr = None,
         update: List[expr] = None,
         body: stmt = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if body is None:
             raise ValueError("statement is required for ForStatement")
         self.init = init or []
@@ -2179,9 +2257,10 @@ class ForEach(stmt):
         id: variabledeclaratorid = None,
         iter: expr = None,
         body: stmt = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if type is None:
             raise ValueError("jtype is required for ForEachStatement")
         if id is None:
@@ -2213,8 +2292,8 @@ class Break(stmt):
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, label: identifier = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, label: identifier = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.label = label
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -2230,8 +2309,8 @@ class Continue(stmt):
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, label: identifier = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, label: identifier = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.label = label
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -2246,8 +2325,8 @@ class Return(stmt):
     return [<value>];
     """
 
-    def __init__(self, value: expr = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, value: expr = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.value = value
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -2262,8 +2341,8 @@ class Synch(stmt):
     synchronized (<lock>) <body>
     """
 
-    def __init__(self, lock: expr = None, block: Block = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, lock: expr = None, block: Block = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if lock is None:
             raise ValueError("value is required for SynchronizedStatement")
         if block is None:
@@ -2290,9 +2369,10 @@ class catch(_JAST):
         excs: List[qname] = None,
         id: identifier = None,
         body: Block = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if not excs:
             raise ValueError("excs is required for catch")
         if id is None:
@@ -2324,9 +2404,10 @@ class Try(stmt):
         body: Block = None,
         catches: List[catch] = None,
         final: Block = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if body is None:
             raise ValueError("body is required for TryStatement")
         if not catches and not final:
@@ -2356,9 +2437,10 @@ class resource(_JAST):
         modifiers: List[modifier] = None,
         type: jtype = None,
         variable: "declarator" = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if type is None:
             raise ValueError("jtype is required for resource")
         if declarator is None:
@@ -2387,9 +2469,10 @@ class TryWithResources(stmt):
         body: Block = None,
         catches: List[catch] = None,
         final: Block = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if not resources:
             raise ValueError("resources is required for TryWithResourcesStatement")
         if body is None:
@@ -2415,8 +2498,8 @@ class Yield(stmt):
     yield <value>;
     """
 
-    def __init__(self, value: expr = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, value: expr = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if value is None:
             raise ValueError("value is required for YieldStatement")
         self.value = value
@@ -2442,8 +2525,8 @@ class EmptyDecl(declaration):
     ;
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
 # Package decl
@@ -2457,9 +2540,9 @@ class Package(declaration):
     """
 
     def __init__(
-        self, annotations: List[Annotation] = None, name: qname = None, **kwargs
+        self, annotations: List[Annotation] = None, name: qname = None, *args, **kwargs
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if name is None:
             raise ValueError("qname is required for Package")
         self.annotations = annotations or []
@@ -2489,9 +2572,10 @@ class Import(declaration):
         static: bool = False,
         name: qname = None,
         on_demand: bool = False,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if name is None:
             raise ValueError("qname is required for Import")
         self.static = static
@@ -2522,9 +2606,10 @@ class Requires(directive):
         self,
         modifiers: List[modifier] = None,
         name: qname = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if name is None:
             raise ValueError("qname is required for Requires")
         self.modifiers = modifiers
@@ -2547,9 +2632,10 @@ class Exports(directive):
         self,
         name: qname = None,
         to: qname = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if name is None:
             raise ValueError("qname is required for Exports")
         self.name = name
@@ -2572,9 +2658,10 @@ class Opens(directive):
         self,
         name: qname = None,
         to: qname = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if name is None:
             raise ValueError("qname is required for Opens")
         self.name = name
@@ -2596,9 +2683,10 @@ class Uses(directive):
     def __init__(
         self,
         name: qname = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if name is None:
             raise ValueError("qname is required for Uses")
         self.name = name
@@ -2618,9 +2706,10 @@ class Provides(directive):
         self,
         name: qname = None,
         with_: qname = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if name is None:
             raise ValueError("jtype is required for Provides")
         if not with_:
@@ -2646,9 +2735,10 @@ class Module(declaration):
         open: bool = False,
         name: qname = None,
         directives: List[directive] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if not name:
             raise ValueError("qname is required for Module")
         self.open = open
@@ -2676,9 +2766,10 @@ class declarator(_JAST):
         self,
         id: variabledeclaratorid = None,
         initializer: expr | arrayinit = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if id is None:
             raise ValueError("id_ is required for declarator")
         self.id = id
@@ -2703,9 +2794,10 @@ class Field(declaration):
         modifiers: List[modifier] = None,
         type: jtype = None,
         declarators: List[declarator] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if type is None:
             raise ValueError("jtype is required for Field")
         if not declarators:
@@ -2743,9 +2835,10 @@ class Method(declaration):
         dims: List[dim] = None,
         throws: List[qname] = None,
         body: Block = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if return_type is None:
             raise ValueError("return_type is required for Method")
         if id is None:
@@ -2797,9 +2890,10 @@ class Constructor(declaration):
         id: identifier = None,
         parameters: params = None,
         body: Block = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if id is None:
             raise ValueError("label is required for Constructor")
         self.modifiers = modifiers or []
@@ -2831,8 +2925,8 @@ class Initializer(declaration):
     static { <statement> <statement> ... }
     """
 
-    def __init__(self, body: Block = None, static: bool = False, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, body: Block = None, static: bool = False, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if body is None:
             raise ValueError("body is required for Initializer")
         self.body = body
@@ -2861,9 +2955,10 @@ class Interface(declaration):
         extends: List[jtype] = None,
         permits: List[jtype] = None,
         body: List[declaration] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if id is None:
             raise ValueError("qname is required for Interface")
         self.modifiers = modifiers or []
@@ -2901,9 +2996,10 @@ class AnnotationMethod(declaration):
         type: jtype = None,
         id: identifier = None,
         default: elementarrayinit | Annotation | expr = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if type is None:
             raise ValueError("jtype is required for AnnotationMethod")
         if id is None:
@@ -2937,9 +3033,10 @@ class AnnotationDecl(declaration):
         extends: List[jtype] = None,
         permits: List[jtype] = None,
         body: List[declaration] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if id is None:
             raise ValueError("qname is required for AnnotationInterfaceDeclaration")
         self.modifiers = modifiers or []
@@ -2980,9 +3077,10 @@ class Class(declaration):
         implements: List[jtype] = None,
         permits: List[jtype] = None,
         body: List[declaration] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if id is None:
             raise ValueError("qname is required for Class")
         self.modifiers = modifiers or []
@@ -3023,9 +3121,10 @@ class enumconstant(_JAST):
         id: identifier = None,
         arguments: List[expr] = None,
         body: Block = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if id is None:
             raise ValueError("qname is required for enumconstant")
         self.annotations = annotations or []
@@ -3058,9 +3157,10 @@ class Enum(declaration):
         implements: List[jtype] = None,
         constants: List[enumconstant] = None,
         body: List[declaration] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if id is None:
             raise ValueError("qname is required for Enum")
         self.modifiers = modifiers or []
@@ -3089,8 +3189,8 @@ class recordcomponent(_JAST):
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, type: jtype = None, id: identifier = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, type: jtype = None, id: identifier = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if type is None:
             raise ValueError("jtype is required for recordcomponent")
         if id is None:
@@ -3121,9 +3221,10 @@ class Record(Class):
         components: List[recordcomponent] = None,
         implements: List[jtype] = None,
         body: List[declaration] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if id is None:
             raise ValueError("qname is required for Record")
         self.modifiers = modifiers or []
@@ -3169,9 +3270,10 @@ class CompilationUnit(mod):
         package: Package = None,
         imports: List[Import] = None,
         declarations: List[declaration] = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         self.package = package
         self.imports = imports or []
         self.declarations = declarations or []
@@ -3195,9 +3297,10 @@ class ModularUnit(mod):
         self,
         imports: List[Import] = None,
         module: Module = None,
+        *args,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         if not module:
             raise ValueError("module is required for ModularUnit")
         self.imports = imports or []
