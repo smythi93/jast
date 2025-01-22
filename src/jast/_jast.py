@@ -334,14 +334,14 @@ class elementvaluepair(_JAST):
     ):
         super().__init__(*args, **kwargs)
         if id is None:
-            raise ValueError("label is required for elementvaluepair")
+            raise ValueError("id is required for elementvaluepair")
         if value is None:
             raise ValueError("value is required for elementvaluepair")
         self.id = id
         self.value = value
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "label", self.id
+        yield "id", self.id
         yield "value", self.value
 
 
@@ -388,7 +388,7 @@ class Annotation(modifier):
         self.elements = elements
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "qname", self.name
+        yield "name", self.name
         if self.elements:
             yield "elements", self.elements
 

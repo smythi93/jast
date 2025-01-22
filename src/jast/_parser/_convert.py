@@ -863,7 +863,7 @@ class JASTConverter(JavaParserVisitor):
         name = self.visitIdentifier(ctx.identifier())
         value = self.visitElementValue(ctx.elementValue())
         return jast.elementvaluepair(
-            name=name, value=value, **self._get_location_rule(ctx)
+            id=name, value=value, **self._get_location_rule(ctx)
         )
 
     def visitElementValue(

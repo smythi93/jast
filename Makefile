@@ -54,15 +54,16 @@ PARSER_G4 = antlr/java/JavaParser.g4
 PARSERS = \
 	$(PARSER)/JavaLexer.py \
 	$(PARSER)/JavaParser.py \
-	$(PARSER)/JavaParserVisitor.py\
-	$(PARSER)/JavaParserListener.py
+	$(PARSER)/JavaParserVisitor.py
 
 parser: $(PARSERS)
 
 $(PARSERS) &: $(LEXER_G4) $(PARSER_G4)
 	$(ANTLR) -Dlanguage=Python3 -Xexact-output-dir -o $(PARSER) \
 		-visitor $(LEXER_G4) $(PARSER_G4)
+	rm $(PARSER)/JavaParserListener.py
 	$(BLACK) src
+
 
 
 ## Test

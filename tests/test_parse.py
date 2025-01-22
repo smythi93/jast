@@ -203,3 +203,39 @@ class TestParse(unittest.TestCase):
         self._test_modifier_class(
             jast.parse("volatile class A {}", jast.ParseMode.DECL), jast.Volatile
         )
+
+    def test_Annotation(self):
+        tree = jast.parse(
+            "@foo({1, 42}) @bar(x=1, y=42) class A {}", jast.ParseMode.DECL
+        )
+        self.assertIsInstance(tree, jast.Class)
+        self.assertEqual(2, len(tree.modifiers))
+        annotation = tree.modifiers[0]
+        self.assertIsInstance(annotation, jast.Annotation)
+        self.assertEqual("foo", jast.unparse(annotation.name))
+        self.assertEqual(1, len(annotation.elements))
+        element = annotation.elements[0]
+        self.assertIsInstance(element, jast.elementarrayinit)
+        self.assertEqual(2, len(element.values))
+        self.assertIsInstance(element.values[0], jast.Constant)
+        self.assertIsInstance(element.values[0].value, jast.IntLiteral)
+        self.assertEqual(1, element.values[0].value.value)
+        self.assertIsInstance(element.values[1], jast.Constant)
+        self.assertIsInstance(element.values[1].value, jast.IntLiteral)
+        self.assertEqual(42, element.values[1].value.value)
+        annotation = tree.modifiers[1]
+        self.assertIsInstance(annotation, jast.Annotation)
+        self.assertEqual("bar", jast.unparse(annotation.name))
+        self.assertEqual(2, len(annotation.elements))
+        element = annotation.elements[0]
+        self.assertIsInstance(element, jast.elementvaluepair)
+        self.assertEqual("x", element.id)
+        self.assertIsInstance(element.value, jast.Constant)
+        self.assertIsInstance(element.value.value, jast.IntLiteral)
+        self.assertEqual(1, element.value.value)
+        element = annotation.elements[1]
+        self.assertIsInstance(element, jast.elementvaluepair)
+        self.assertEqual("y", element.id)
+        self.assertIsInstance(element.value, jast.Constant)
+        self.assertIsInstance(element.value.value, jast.IntLiteral)
+        self.assertEqual(42, element.value.value)

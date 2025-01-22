@@ -91,7 +91,7 @@ class _Unparser(JNodeVisitor):
         return "volatile"
 
     def visit_elementvaluepair(self, node: jast.elementvaluepair) -> str:
-        return f"{self.visit(node.id)} = {self.visit(node.value)}"
+        return f"{self.visit(node.id)}={self.visit(node.value)}"
 
     def visit_elementarrayinit(self, node: jast.elementarrayinit) -> str:
         return f"{{{', '.join([self.visit(value) for value in node.values])}}}"
@@ -191,7 +191,7 @@ class _Unparser(JNodeVisitor):
         return f"{type_} {identifier}"
 
     def visit_guardedpattern(self, node: jast.guardedpattern) -> str:
-        pattern = self.visit(node.pattern)
+        pattern = self.visit(node.value)
         condition = " && ".join([self.visit(cond) for cond in node.conditions])
         if condition:
             return f"{pattern} && {condition}"

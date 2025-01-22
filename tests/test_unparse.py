@@ -109,3 +109,29 @@ class TestUnparse(unittest.TestCase):
     def test_Volatile(self):
         tree = jast.Volatile()
         self.assertEqual("volatile", jast.unparse(tree))
+
+    def test_elementvaluepair(self):
+        elementvaluepair = jast.elementvaluepair(
+            jast.identifier("foo"), jast.Constant(jast.IntLiteral(42))
+        )
+        self.assertEqual("foo=42", jast.unparse(elementvaluepair))
+
+    def test_elementarrayinit(self):
+        elementarrayinit = jast.elementarrayinit(
+            [jast.Constant(jast.IntLiteral(1)), jast.Constant(jast.IntLiteral(42))]
+        )
+        self.assertEqual("{1, 42}", jast.unparse(elementarrayinit))
+
+    def test_Annotation(self):
+        tree = jast.Annotation(
+            jast.qname([jast.identifier("foo")]),
+            [
+                jast.elementvaluepair(
+                    jast.identifier("x"), jast.Constant(jast.IntLiteral(1))
+                ),
+                jast.elementvaluepair(
+                    jast.identifier("y"), jast.Constant(jast.IntLiteral(42))
+                ),
+            ],
+        )
+        self.assertEqual("@foo(x=1, y=42)", jast.unparse(tree))
