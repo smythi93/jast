@@ -232,3 +232,14 @@ class TestConstructors(unittest.TestCase):
         self.assertIsInstance(value.value, jast.IntLiteral)
         self.assertEqual(42, value.value)
         self._test_iteration(annotation)
+
+    def test_Annotation_error(self):
+        self.assertRaises(
+            ValueError,
+            jast.Annotation,
+            elements=[
+                jast.elementvaluepair(
+                    jast.identifier("foo"), jast.Constant(jast.IntLiteral(42))
+                )
+            ],
+        )
