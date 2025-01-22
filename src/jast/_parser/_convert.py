@@ -1138,7 +1138,7 @@ class JASTConverter(JavaParserVisitor):
             declarators = [
                 jast.declarator(
                     id=jast.variabledeclaratorid(
-                        id=self.visitIdentifier(ctx.identifier().identifier()),
+                        id=self.visitIdentifier(ctx.identifier()),
                         **self._get_location_rule(ctx.identifier()),
                     ),
                     initializer=self.visitExpression(ctx.expression()),

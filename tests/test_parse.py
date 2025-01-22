@@ -239,3 +239,53 @@ class TestParse(unittest.TestCase):
         self.assertIsInstance(element.value, jast.Constant)
         self.assertIsInstance(element.value.value, jast.IntLiteral)
         self.assertEqual(42, element.value.value)
+
+    def test_Void(self):
+        tree = jast.parse("void foo() {}", jast.ParseMode.DECL)
+        self.assertIsInstance(tree, jast.Method)
+        self.assertIsInstance(tree.return_type, jast.Void)
+
+    def test_Var(self):
+        tree = jast.parse("var x = 42;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.LocalVariable)
+        self.assertIsInstance(tree.type, jast.Var)
+
+    def test_Boolean(self):
+        tree = jast.parse("boolean foo() {}", jast.ParseMode.DECL)
+        self.assertIsInstance(tree, jast.Method)
+        self.assertIsInstance(tree.return_type, jast.Boolean)
+
+    def test_Byte(self):
+        tree = jast.parse("byte foo() {}", jast.ParseMode.DECL)
+        self.assertIsInstance(tree, jast.Method)
+        self.assertIsInstance(tree.return_type, jast.Byte)
+
+    def test_Short(self):
+        tree = jast.parse("short foo() {}", jast.ParseMode.DECL)
+        self.assertIsInstance(tree, jast.Method)
+        self.assertIsInstance(tree.return_type, jast.Short)
+
+    def test_Int(self):
+        tree = jast.parse("int foo() {}", jast.ParseMode.DECL)
+        self.assertIsInstance(tree, jast.Method)
+        self.assertIsInstance(tree.return_type, jast.Int)
+
+    def test_Long(self):
+        tree = jast.parse("long foo() {}", jast.ParseMode.DECL)
+        self.assertIsInstance(tree, jast.Method)
+        self.assertIsInstance(tree.return_type, jast.Long)
+
+    def test_Char(self):
+        tree = jast.parse("char foo() {}", jast.ParseMode.DECL)
+        self.assertIsInstance(tree, jast.Method)
+        self.assertIsInstance(tree.return_type, jast.Char)
+
+    def test_Float(self):
+        tree = jast.parse("float foo() {}", jast.ParseMode.DECL)
+        self.assertIsInstance(tree, jast.Method)
+        self.assertIsInstance(tree.return_type, jast.Float)
+
+    def test_Double(self):
+        tree = jast.parse("double foo() {}", jast.ParseMode.DECL)
+        self.assertIsInstance(tree, jast.Method)
+        self.assertIsInstance(tree.return_type, jast.Double)

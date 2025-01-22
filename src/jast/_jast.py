@@ -397,7 +397,7 @@ class Annotation(modifier):
 
 
 # noinspection PyShadowingBuiltins
-class jtype(_JAST, abc.ABC):
+class jtype(JAST, abc.ABC):
     """
     Abstract base class for all types in the Java AST.
     """

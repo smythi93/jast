@@ -135,3 +135,43 @@ class TestUnparse(unittest.TestCase):
             ],
         )
         self.assertEqual("@foo(x=1, y=42)", jast.unparse(tree))
+
+    def test_Void(self):
+        tree = jast.Void()
+        self.assertEqual("void", jast.unparse(tree))
+
+    def test_Var(self):
+        tree = jast.Var()
+        self.assertEqual("var", jast.unparse(tree))
+
+    def test_Boolean(self):
+        tree = jast.Boolean()
+        self.assertEqual("boolean", jast.unparse(tree))
+
+    def test_Byte(self):
+        tree = jast.Byte()
+        self.assertEqual("byte", jast.unparse(tree))
+
+    def test_Short(self):
+        tree = jast.Short()
+        self.assertEqual("short", jast.unparse(tree))
+
+    def test_Int(self):
+        tree = jast.Int()
+        self.assertEqual("int", jast.unparse(tree))
+
+    def test_Long(self):
+        tree = jast.Long()
+        self.assertEqual("long", jast.unparse(tree))
+
+    def test_Char(self):
+        tree = jast.Char()
+        self.assertEqual("char", jast.unparse(tree))
+
+    def test_Float(self):
+        tree = jast.Float()
+        self.assertEqual("float", jast.unparse(tree))
+
+    def test_Double(self):
+        tree = jast.Double()
+        self.assertEqual("double", jast.unparse(tree))

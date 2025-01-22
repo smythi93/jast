@@ -243,3 +243,71 @@ class TestConstructors(unittest.TestCase):
                 )
             ],
         )
+
+    def test_Void(self):
+        void = jast.Void()
+        self.assertIsInstance(void, jast.Void)
+        self.assertIsInstance(void, jast.JAST)
+        self._test_iteration(void)
+
+    def test_Var(self):
+        var = jast.Var()
+        self.assertIsInstance(var, jast.Var)
+        self.assertIsInstance(var, jast.JAST)
+        self._test_iteration(var)
+
+    def test_Boolean(self):
+        boolean = jast.Boolean()
+        self.assertIsInstance(boolean, jast.Boolean)
+        self.assertIsInstance(boolean, jast.JAST)
+        self._test_iteration(boolean)
+
+    def test_Byte(self):
+        byte = jast.Byte()
+        self.assertIsInstance(byte, jast.Byte)
+        self.assertIsInstance(byte, jast.JAST)
+        self._test_iteration(byte)
+
+    def test_Short(self):
+        short = jast.Short()
+        self.assertIsInstance(short, jast.Short)
+        self.assertIsInstance(short, jast.JAST)
+        self._test_iteration(short)
+
+    def test_Int(self):
+        int_ = jast.Int()
+        self.assertIsInstance(int_, jast.Int)
+        self.assertIsInstance(int_, jast.JAST)
+        self._test_iteration(int_)
+
+    def test_Long(self):
+        long = jast.Long()
+        self.assertIsInstance(long, jast.Long)
+        self.assertIsInstance(long, jast.JAST)
+        self._test_iteration(long)
+
+    def test_Char(self):
+        char = jast.Char()
+        self.assertIsInstance(char, jast.Char)
+        self.assertIsInstance(char, jast.JAST)
+        self._test_iteration(char)
+
+    def test_Float(self):
+        float_ = jast.Float()
+        self.assertIsInstance(float_, jast.Float)
+        self.assertIsInstance(float_, jast.JAST)
+        self._test_iteration(float_)
+
+    def test_Double(self):
+        double = jast.Double()
+        self.assertIsInstance(double, jast.Double)
+        self.assertIsInstance(double, jast.JAST)
+        self._test_iteration(double)
+
+    def test_Int_annotation(self):
+        int_ = jast.Int([jast.Annotation(jast.qname([jast.identifier("foo")]))])
+        self.assertIsInstance(int_, jast.Int)
+        self.assertIsInstance(int_, jast.JAST)
+        self.assertEqual(1, len(int_.annotations))
+        self.assertIsInstance(int_.annotations[0], jast.Annotation)
+        self._test_iteration(int_)
