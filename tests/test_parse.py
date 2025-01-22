@@ -289,3 +289,95 @@ class TestParse(unittest.TestCase):
         tree = jast.parse("double foo() {}", jast.ParseMode.DECL)
         self.assertIsInstance(tree, jast.Method)
         self.assertIsInstance(tree.return_type, jast.Double)
+
+    def _test_Wildcard(self, tree, extends, super_):
+        self.assertIsInstance(tree, jast.LocalVariable)
+        self.assertIsInstance(tree.type, jast.ClassType)
+        self.assertEqual(1, len(tree.type.coits))
+        coit = tree.type.coits[0]
+        self.assertIsInstance(coit, jast.Coit)
+        self.assertEqual("List", coit.id)
+        self.assertEqual(1, len(coit.type_args.types))
+        type_arg = coit.type_args.types[0]
+        self.assertIsInstance(type_arg, jast.Wildcard)
+        if extends or super_:
+            self.assertIsNotNone(type_arg.bound)
+            self.assertIsInstance(type_arg.bound, jast.wildcardbound)
+            if extends:
+                self.assertTrue(type_arg.bound.extends)
+                self.assertFalse(type_arg.bound.super_)
+            else:
+                self.assertFalse(type_arg.bound.extends)
+                self.assertTrue(type_arg.bound.super_)
+            self.assertIsInstance(type_arg.bound.type, jast.ClassType)
+            self.assertEqual(1, len(type_arg.bound.type.coits))
+            coit = type_arg.bound.type.coits[0]
+            self.assertIsInstance(coit, jast.Coit)
+            self.assertEqual("Int", coit.id)
+        else:
+            self.assertIsNone(type_arg.bound)
+
+    def test_Wildcard(self):
+        self._test_Wildcard(
+            jast.parse("List<?> list;", jast.ParseMode.STMT), False, False
+        )
+
+    def test_Wildcard_extends(self):
+        self._test_Wildcard(
+            jast.parse("List<? extends Int> list;", jast.ParseMode.STMT), True, False
+        )
+
+    def test_Wildcard_super(self):
+        self._test_Wildcard(
+            jast.parse("List<? super Int> list;", jast.ParseMode.STMT), False, True
+        )
+
+    def test_typeargs(self):
+        tree = jast.parse("List<int, boolean> list;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.LocalVariable)
+        self.assertIsInstance(tree.type, jast.ClassType)
+        self.assertEqual(1, len(tree.type.coits))
+        coit = tree.type.coits[0]
+        self.assertIsInstance(coit, jast.Coit)
+        self.assertEqual("List", coit.id)
+        self.assertEqual(2, len(coit.type_args.types))
+        self.assertIsInstance(coit.type_args.types[0], jast.Int)
+        self.assertIsInstance(coit.type_args.types[1], jast.Boolean)
+
+    def test_ClassType(self):
+        tree = jast.parse("List.ArrayList<int> list;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.LocalVariable)
+        self.assertIsInstance(tree.type, jast.ClassType)
+        self.assertEqual(2, len(tree.type.coits))
+        self.assertIsInstance(tree.type.coits[0], jast.Coit)
+        self.assertEqual("List", tree.type.coits[0].id)
+        self.assertIsNone(tree.type.coits[0].type_args)
+        self.assertIsInstance(tree.type.coits[1], jast.Coit)
+        self.assertEqual("ArrayList", tree.type.coits[1].id)
+        self.assertIsNotNone(tree.type.coits[1].type_args)
+        self.assertEqual(1, len(tree.type.coits[1].type_args.types))
+        self.assertIsInstance(tree.type.coits[1].type_args.types[0], jast.Int)
+
+    def test_Coit_annotation(self):
+        tree = jast.parse("List.@foo()ArrayList::<int>new", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Reference)
+        self.assertIsInstance(tree.type, jast.ClassType)
+        self.assertEqual(2, len(tree.type.coits))
+        self.assertIsInstance(tree.type.coits[0], jast.Coit)
+        self.assertEqual("List", tree.type.coits[0].id)
+        self.assertIsInstance(tree.type.coits[1], jast.Coit)
+        self.assertEqual("ArrayList", tree.type.coits[1].id)
+        self.assertIsNotNone(tree.type.coits[1].annotations)
+        self.assertEqual(1, len(tree.type.coits[1].annotations))
+        annotation = tree.type.coits[1].annotations[0]
+        self.assertIsInstance(annotation, jast.Annotation)
+        self.assertEqual("foo", jast.unparse(annotation.name))
+
+    def test_ArrayType(self):
+        tree = jast.parse("int[][] array;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.LocalVariable)
+        self.assertIsInstance(tree.type, jast.ArrayType)
+        self.assertIsInstance(tree.type.type, jast.Int)
+        self.assertEqual(2, len(tree.type.dims))
+        self.assertIsInstance(tree.type.dims[0], jast.dim)
+        self.assertIsInstance(tree.type.dims[1], jast.dim)

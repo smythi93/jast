@@ -97,6 +97,8 @@ class _Unparser(JNodeVisitor):
         return f"{{{', '.join([self.visit(value) for value in node.values])}}}"
 
     def visit_Annotation(self, node: jast.Annotation) -> str:
+        if node.elements is None:
+            return f"@{self.visit(node.name)}"
         return f"@{self.visit(node.name)}({', '.join([self.visit(value) for value in node.elements])})"
 
     def visit_Void(self, node: jast.Void) -> str:
@@ -141,7 +143,7 @@ class _Unparser(JNodeVisitor):
         annotations = " ".join(
             [self.visit(annotation) for annotation in node.annotations]
         )
-        bound = self.visit(node.bound) if node.bound else ""
+        bound = " " + self.visit(node.bound) if node.bound else ""
         if annotations:
             return f"{annotations} ?{bound}"
         return f"?{bound}"
@@ -149,11 +151,39 @@ class _Unparser(JNodeVisitor):
     def visit_typeargs(self, node: jast.typeargs) -> str:
         return f"<{', '.join([self.visit(type_arg) for type_arg in node.types])}>"
 
+    def visit_Coit(self, node: jast.Coit) -> str:
+        annotations = " ".join(
+            [self.visit(annotation) for annotation in node.annotations]
+        )
+        type_args = self.visit_typeargs(node.type_args) if node.type_args else ""
+        if annotations:
+            annotations += " "
+        return f"{annotations}{self.visit_identifier(node.id)}{type_args}"
+
+    def visit_ClassType(self, node: jast.ClassType) -> str:
+        annotations = " ".join(
+            [self.visit(annotation) for annotation in node.annotations]
+        )
+        if annotations:
+            annotations += " "
+        types = ".".join([self.visit_Coit(identifier) for identifier in node.coits])
+        return f"{annotations}{types}"
+
     def visit_ArrayType(self, node: jast.ArrayType) -> str:
-        return f"{self.visit(node.type)}{''.join([self.visit(dims) for dims in node.dims])}"
+        annotations = " ".join(
+            [self.visit(annotation) for annotation in node.annotations]
+        )
+        if annotations:
+            return f"{annotations} {self.visit(node.type)}{''.join([self.visit(dim) for dim in node.dims])}"
+        return (
+            f"{self.visit(node.type)}{''.join([self.visit(dim) for dim in node.dims])}"
+        )
 
     def visit_dim(self, node: jast.dim) -> str:
-        return "[]"
+        annotations = " ".join(
+            [self.visit(annotation) for annotation in node.annotations]
+        )
+        return f"{annotations}[]"
 
     def visit_typebound(self, node: jast.typebound) -> str:
         annotations = " ".join(

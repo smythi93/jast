@@ -1933,7 +1933,7 @@ class JASTConverter(JavaParserVisitor):
         else:
             expr = self.visitClassType(ctx.classType())
         return jast.Reference(
-            expr=expr,
+            type=expr,
             type_args=self.visitTypeArguments(ctx.typeArguments())
             if ctx.typeArguments()
             else None,

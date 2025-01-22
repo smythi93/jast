@@ -311,3 +311,112 @@ class TestConstructors(unittest.TestCase):
         self.assertEqual(1, len(int_.annotations))
         self.assertIsInstance(int_.annotations[0], jast.Annotation)
         self._test_iteration(int_)
+
+    def test_wildcardbound(self):
+        wildcardbound = jast.wildcardbound(jast.Int(), extends=True)
+        self.assertIsInstance(wildcardbound, jast.wildcardbound)
+        self.assertIsInstance(wildcardbound, jast.JAST)
+        self.assertIsInstance(wildcardbound.type, jast.Int)
+        self.assertTrue(wildcardbound.extends)
+        self.assertFalse(wildcardbound.super_)
+        self._test_iteration(wildcardbound)
+
+    def test_wildcardbound_error(self):
+        self.assertRaises(ValueError, jast.wildcardbound, extends=True)
+        self.assertRaises(ValueError, jast.wildcardbound, jast.Int())
+        self.assertRaises(ValueError, jast.wildcardbound, jast.Int(), True, True)
+
+    def test_Wildcard(self):
+        wildcard = jast.Wildcard(
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            bound=jast.wildcardbound(jast.Int(), extends=True),
+        )
+        self.assertIsInstance(wildcard, jast.Wildcard)
+        self.assertIsInstance(wildcard, jast.JAST)
+        self.assertEqual(1, len(wildcard.annotations))
+        self.assertIsInstance(wildcard.annotations[0], jast.Annotation)
+        self.assertIsInstance(wildcard.bound, jast.wildcardbound)
+        self._test_iteration(wildcard)
+
+    def test_typeargs(self):
+        typeargs = jast.typeargs([jast.Int(), jast.Boolean()])
+        self.assertIsInstance(typeargs, jast.typeargs)
+        self.assertIsInstance(typeargs, jast.JAST)
+        self.assertEqual(2, len(typeargs.types))
+        self.assertIsInstance(typeargs.types[0], jast.Int)
+        self.assertIsInstance(typeargs.types[1], jast.Boolean)
+        self._test_iteration(typeargs)
+
+    def test_typeargs_error(self):
+        self.assertRaises(ValueError, jast.typeargs)
+
+    def test_Coit(self):
+        coit = jast.Coit(
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            id=jast.identifier("foo"),
+            type_args=jast.typeargs([jast.Int(), jast.Boolean()]),
+        )
+        self.assertIsInstance(coit, jast.Coit)
+        self.assertIsInstance(coit, jast.JAST)
+        self.assertEqual(1, len(coit.annotations))
+        self.assertIsInstance(coit.annotations[0], jast.Annotation)
+        self.assertIsInstance(coit.id, jast.identifier)
+        self.assertEqual("foo", coit.id)
+        self.assertIsInstance(coit.type_args, jast.typeargs)
+        self._test_iteration(coit)
+
+    def test_Coit_error(self):
+        self.assertRaises(
+            ValueError, jast.Coit, typeargs=jast.typeargs([jast.Int(), jast.Boolean()])
+        )
+
+    def test_ClassType(self):
+        class_type = jast.ClassType(
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            coits=[
+                jast.Coit(
+                    id=jast.identifier("foo"),
+                    type_args=jast.typeargs([jast.Int(), jast.Boolean()]),
+                ),
+                jast.Coit(
+                    id=jast.identifier("bar"),
+                ),
+            ],
+        )
+        self.assertIsInstance(class_type, jast.ClassType)
+        self.assertIsInstance(class_type, jast.JAST)
+        self.assertEqual(1, len(class_type.annotations))
+        self.assertIsInstance(class_type.annotations[0], jast.Annotation)
+        self.assertEqual(2, len(class_type.coits))
+        self.assertIsInstance(class_type.coits[0], jast.Coit)
+        self.assertIsInstance(class_type.coits[1], jast.Coit)
+        self._test_iteration(class_type)
+
+    def test_ClassType_error(self):
+        self.assertRaises(ValueError, jast.ClassType)
+        self.assertRaises(ValueError, jast.ClassType, coits=[])
+
+    def test_dim(self):
+        dim = jast.dim(
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))]
+        )
+        self.assertIsInstance(dim, jast.dim)
+        self.assertIsInstance(dim, jast.JAST)
+        self.assertEqual(1, len(dim.annotations))
+        self._test_iteration(dim)
+
+    def test_ArrayType(self):
+        array_type = jast.ArrayType(
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            type=jast.Int(),
+            dims=[jast.dim(), jast.dim()],
+        )
+        self.assertIsInstance(array_type, jast.ArrayType)
+        self.assertIsInstance(array_type, jast.JAST)
+        self.assertEqual(1, len(array_type.annotations))
+        self.assertIsInstance(array_type.annotations[0], jast.Annotation)
+        self.assertIsInstance(array_type.type, jast.Int)
+        self.assertEqual(2, len(array_type.dims))
+        self.assertIsInstance(array_type.dims[0], jast.dim)
+        self.assertIsInstance(array_type.dims[1], jast.dim)
+        self._test_iteration(array_type)

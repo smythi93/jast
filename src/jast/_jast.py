@@ -477,7 +477,7 @@ class Double(primitivetype):
     """
 
 
-class wildcardbound(_JAST):
+class wildcardbound(JAST):
     """
     Represents a wildcard bound in the Java AST.
 
@@ -505,7 +505,7 @@ class wildcardbound(_JAST):
         self.super_ = super_
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "jtype", self.type
+        yield "type", self.type
 
 
 class Wildcard(jtype):
@@ -533,7 +533,7 @@ class Wildcard(jtype):
             yield "bound", self.bound
 
 
-class typeargs(_JAST):
+class typeargs(JAST):
     """
     Represents jtype args in the Java AST.
 
@@ -568,7 +568,7 @@ class Coit(jtype):
     ):
         super().__init__(*args, **kwargs)
         if id is None:
-            raise ValueError("label is required")
+            raise ValueError("id is required")
         self.annotations = annotations or []
         self.id = id
         self.type_args = type_args
@@ -576,7 +576,7 @@ class Coit(jtype):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
             yield "annotations", self.annotations
-        yield "label", self.id
+        yield "id", self.id
         if self.type_args:
             yield "type_args", self.type_args
 
@@ -649,7 +649,7 @@ class ArrayType(jtype):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
             yield "annotations", self.annotations
-        yield "jtype", self.type
+        yield "type", self.type
         if self.dims:
             yield "dims", self.dims
 
@@ -1653,8 +1653,8 @@ class Reference(expr):
     ):
         super().__init__(*args, **kwargs)
         if type is None:
-            raise ValueError("jtype is required for Reference")
-        if new and identifier:
+            raise ValueError("type is required for Reference")
+        if new and id:
             raise ValueError("new and label are mutually exclusive for Reference")
         self.type = type
         self.type_args = type_args
@@ -1662,7 +1662,7 @@ class Reference(expr):
         self.new = new
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "jtype", self.type
+        yield "type", self.type
         if self.type_args:
             yield "type_args", self.type_args
         if self.id:

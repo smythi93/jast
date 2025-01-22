@@ -175,3 +175,63 @@ class TestUnparse(unittest.TestCase):
     def test_Double(self):
         tree = jast.Double()
         self.assertEqual("double", jast.unparse(tree))
+
+    def test_wildcardbound_extends(self):
+        tree = jast.wildcardbound(jast.Int(), extends=True)
+        self.assertEqual("extends int", jast.unparse(tree))
+
+    def test_wildcardbound_super(self):
+        tree = jast.wildcardbound(jast.Int(), super_=True)
+        self.assertEqual("super int", jast.unparse(tree))
+
+    def test_Wildcard_bound(self):
+        tree = jast.Wildcard(
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            bound=jast.wildcardbound(jast.Int(), extends=True),
+        )
+        self.assertEqual("@foo ? extends int", jast.unparse(tree))
+
+    def test_Wildcard_unbound(self):
+        tree = jast.Wildcard()
+        self.assertEqual("?", jast.unparse(tree))
+
+    def test_typeargs(self):
+        tree = jast.typeargs([jast.Int(), jast.Boolean()])
+        self.assertEqual("<int, boolean>", jast.unparse(tree))
+
+    def test_Coit(self):
+        tree = jast.Coit(
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            id=jast.identifier("bar"),
+            type_args=jast.typeargs([jast.Int(), jast.Boolean()]),
+        )
+        self.assertEqual("@foo bar<int, boolean>", jast.unparse(tree))
+
+    def test_ClassType(self):
+        class_type = jast.ClassType(
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            coits=[
+                jast.Coit(
+                    id=jast.identifier("bar"),
+                    type_args=jast.typeargs([jast.Int(), jast.Boolean()]),
+                ),
+                jast.Coit(
+                    id=jast.identifier("baz"),
+                ),
+            ],
+        )
+        self.assertEqual("@foo bar<int, boolean>.baz", jast.unparse(class_type))
+
+    def test_dim(self):
+        dim = jast.dim(
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))]
+        )
+        self.assertEqual("@foo[]", jast.unparse(dim))
+
+    def test_ArrayType(self):
+        array_type = jast.ArrayType(
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            type=jast.Int(),
+            dims=[jast.dim(), jast.dim()],
+        )
+        self.assertEqual("@foo int[][]", jast.unparse(array_type))

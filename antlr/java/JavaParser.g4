@@ -767,7 +767,7 @@ primary
     )                                                               #MemberReferenceExpression
     // Method calls and method references are part of primary, and hence level 16 precedence
     | methodCall                                                    #MethodCallExpression
-    | primary '::' typeArguments? identifier                     #MethodReferenceExpression
+    | primary '::' typeArguments? identifier                        #MethodReferenceExpression
     | typeType '::' (typeArguments? identifier | NEW)               #MethodReferenceExpression
     | classType '::' typeArguments? NEW                             #MethodReferenceExpression
     ;
