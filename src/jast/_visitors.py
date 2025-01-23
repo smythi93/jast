@@ -91,24 +91,4 @@ class JNodeKeepTransformer(JNodeTransformer):
     """
 
     def generic_visit(self, node: JAST):
-        node = copy(node)
-        for field, old_value in node:
-            if isinstance(old_value, list):
-                new_values = []
-                for value in old_value:
-                    if isinstance(value, JAST):
-                        value = self.visit(value)
-                        if value is None:
-                            continue
-                        elif not isinstance(value, JAST):
-                            new_values.extend(value)
-                            continue
-                    new_values.append(value)
-                old_value[:] = new_values
-            elif isinstance(old_value, JAST):
-                new_node = self.visit(old_value)
-                if new_node is None:
-                    delattr(node, field)
-                else:
-                    setattr(node, field, new_node)
-        return node
+        return super().generic_visit(copy(node))
