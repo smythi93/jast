@@ -1,8 +1,6 @@
 import unittest
 from typing import List
 
-from charset_normalizer.md import annotations
-
 import jast
 
 
