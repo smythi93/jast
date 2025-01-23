@@ -185,10 +185,17 @@ class _Unparser(JNodeVisitor):
         )
         return f"{annotations}[]"
 
+    def visit_variabledeclaratorid(self, node):
+        return self.visit_identifier(node.id) + "".join(
+            [self.visit(dim) for dim in node.dims]
+        )
+
     def visit_typebound(self, node: jast.typebound) -> str:
         annotations = " ".join(
             [self.visit(annotation) for annotation in node.annotations]
         )
+        if annotations and not annotations.endswith(")"):
+            annotations += " "
         return annotations + " & ".join([self.visit(bound) for bound in node.types])
 
     def visit_typeparam(self, node: jast.typeparam) -> str:

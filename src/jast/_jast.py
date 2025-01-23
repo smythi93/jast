@@ -654,23 +654,23 @@ class ArrayType(jtype):
             yield "dims", self.dims
 
 
-class variabledeclaratorid(_JAST):
+class variabledeclaratorid(JAST):
     """
     Represents a variable declarator label in the Java AST.
 
-    <label><dim><dim>...
+    <id><dim><dim>...
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(self, id: identifier = None, dims: List[dim] = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if id is None:
-            raise ValueError("label is required for variabledeclaratorid")
+            raise ValueError("id is required for variabledeclaratorid")
         self.id = id
         self.dims = dims or []
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "label", self.id
+        yield "id", self.id
         if self.dims:
             yield "dims", self.dims
 
@@ -678,7 +678,7 @@ class variabledeclaratorid(_JAST):
 # jtype Parameters
 
 
-class typebound(_JAST):
+class typebound(JAST):
     """
     Represents a jtype bound in the Java AST.
 
@@ -702,7 +702,7 @@ class typebound(_JAST):
         yield "types", self.types
 
 
-class typeparam(_JAST):
+class typeparam(JAST):
     """
     Represents a jtype parameter in the Java AST.
 
@@ -720,34 +720,34 @@ class typeparam(_JAST):
     ):
         super().__init__(*args, **kwargs)
         if id is None:
-            raise ValueError("label is required")
+            raise ValueError("id is required")
         self.annotations = annotations or []
         self.id = id
-        self.bound = bound or []
+        self.bound = bound
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
             yield "annotations", self.annotations
-        yield "label", self.id
+        yield "id", self.id
         if self.bound:
             yield "bound", self.bound
 
 
-class typeparams(_JAST):
+class typeparams(JAST):
     """
     Represents jtype args in the Java AST.
 
-    < <jtype-parameter>, <jtype-parameter>, ... >
+    < <parameter>, <parameter>, ... >
     """
 
     def __init__(self, parameters: List[typeparam] = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not parameters:
-            raise ValueError("args is required for typeparams")
+            raise ValueError("parameters is required for typeparams")
         self.parameters = parameters
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "args", self.parameters
+        yield "parameters", self.parameters
 
 
 # pattern
@@ -3085,7 +3085,7 @@ class Class(declaration):
             raise ValueError("qname is required for Class")
         self.modifiers = modifiers or []
         self.id = id
-        self.type_params = type_params or []
+        self.type_params = type_params
         self.extends = extends
         self.implements = implements or []
         self.permits = permits or []

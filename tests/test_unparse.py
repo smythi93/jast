@@ -235,3 +235,39 @@ class TestUnparse(unittest.TestCase):
             dims=[jast.dim(), jast.dim()],
         )
         self.assertEqual("@foo int[][]", jast.unparse(array_type))
+
+    def test_variabledeclaratorid(self):
+        tree = jast.variabledeclaratorid(
+            jast.identifier("foo"),
+        )
+        self.assertEqual("foo", jast.unparse(tree))
+
+    def test_variabledeclaratorid_dims(self):
+        tree = jast.variabledeclaratorid(
+            jast.identifier("foo"), dims=[jast.dim(), jast.dim()]
+        )
+        self.assertEqual("foo[][]", jast.unparse(tree))
+
+    def test_typebound(self):
+        tree = jast.typebound(
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            types=[jast.Int(), jast.Boolean()],
+        )
+        self.assertEqual("@foo int & boolean", jast.unparse(tree))
+
+    def test_typeparam(self):
+        tree = jast.typeparam(
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            id=jast.identifier("bar"),
+            bound=jast.typebound(types=[jast.Int(), jast.Boolean()]),
+        )
+        self.assertEqual("@foo bar extends int & boolean", jast.unparse(tree))
+
+    def test_typeparams(self):
+        tree = jast.typeparams(
+            [
+                jast.typeparam(id=jast.identifier("foo")),
+                jast.typeparam(id=jast.identifier("bar")),
+            ]
+        )
+        self.assertEqual("<foo, bar>", jast.unparse(tree))

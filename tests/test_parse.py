@@ -381,3 +381,47 @@ class TestParse(unittest.TestCase):
         self.assertEqual(2, len(tree.type.dims))
         self.assertIsInstance(tree.type.dims[0], jast.dim)
         self.assertIsInstance(tree.type.dims[1], jast.dim)
+
+    def test_variabledeclaratorid(self):
+        tree = jast.parse("int x, y[][];", jast.ParseMode.DECL)
+        self.assertIsInstance(tree, jast.Field)
+        self.assertEqual(2, len(tree.declarators))
+        self.assertIsInstance(tree.declarators[0], jast.declarator)
+        x = tree.declarators[0].id
+        self.assertIsInstance(x, jast.variabledeclaratorid)
+        self.assertEqual("x", x.id)
+        self.assertEqual(0, len(x.dims))
+        y = tree.declarators[1].id
+        self.assertIsInstance(y, jast.variabledeclaratorid)
+        self.assertEqual("y", y.id)
+        self.assertEqual(2, len(y.dims))
+        self.assertIsInstance(y.dims[0], jast.dim)
+        self.assertIsInstance(y.dims[1], jast.dim)
+
+    def test_typeparams(self):
+        tree = jast.parse(
+            "class A<@foo B, C extends @bar int & float> {}", jast.ParseMode.DECL
+        )
+        self.assertIsInstance(tree, jast.Class)
+        self.assertIsNotNone(tree.type_params)
+        self.assertIsInstance(tree.type_params, jast.typeparams)
+        self.assertEqual(2, len(tree.type_params.parameters))
+        b = tree.type_params.parameters[0]
+        self.assertIsInstance(b, jast.typeparam)
+        self.assertEqual(1, len(b.annotations))
+        self.assertIsInstance(b.annotations[0], jast.Annotation)
+        self.assertEqual("foo", jast.unparse(b.annotations[0].name))
+        self.assertIsNone(b.annotations[0].elements)
+        self.assertEqual("B", b.id)
+        self.assertIsNone(b.bound)
+        c = tree.type_params.parameters[1]
+        self.assertIsInstance(c, jast.typeparam)
+        self.assertEqual(0, len(c.annotations))
+        self.assertEqual("C", c.id)
+        self.assertIsNotNone(c.bound)
+        self.assertEqual(1, len(c.bound.annotations))
+        self.assertIsInstance(c.bound.annotations[0], jast.Annotation)
+        self.assertEqual("bar", jast.unparse(c.bound.annotations[0].name))
+        self.assertEqual(2, len(c.bound.types))
+        self.assertIsInstance(c.bound.types[0], jast.Int)
+        self.assertIsInstance(c.bound.types[1], jast.Float)

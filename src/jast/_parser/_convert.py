@@ -190,7 +190,7 @@ class JASTConverter(JavaParserVisitor):
         body = self.visitClassBody(ctx.classBody())
         return jast.Class(
             id=identifier,
-            type_parameters=type_parameters,
+            type_params=type_parameters,
             extends=extends,
             implements=implements,
             permits=permits,
@@ -233,7 +233,7 @@ class JASTConverter(JavaParserVisitor):
         return jast.typeparam(
             annotations=annotations,
             id=identifier,
-            type_bound=type_bound,
+            bound=type_bound,
             **self._get_location_rule(ctx),
         )
 
@@ -244,7 +244,7 @@ class JASTConverter(JavaParserVisitor):
         bounds = [self.visitTypeType(type_type) for type_type in ctx.typeType()]
         return jast.typebound(
             annotations=annotations,
-            bounds=bounds,
+            types=bounds,
             **self._get_location_rule(ctx),
         )
 

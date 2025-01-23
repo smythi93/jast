@@ -1,6 +1,8 @@
 import unittest
 from typing import List
 
+from charset_normalizer.md import annotations
+
 import jast
 
 
@@ -420,3 +422,80 @@ class TestConstructors(unittest.TestCase):
         self.assertIsInstance(array_type.dims[0], jast.dim)
         self.assertIsInstance(array_type.dims[1], jast.dim)
         self._test_iteration(array_type)
+
+    def test_variabledeclaratorid(self):
+        variabledeclaratorid = jast.variabledeclaratorid(
+            jast.identifier("foo"), [jast.dim(), jast.dim()]
+        )
+        self.assertIsInstance(variabledeclaratorid, jast.variabledeclaratorid)
+        self.assertIsInstance(variabledeclaratorid, jast.JAST)
+        self.assertEqual("foo", variabledeclaratorid.id)
+        self.assertEqual(2, len(variabledeclaratorid.dims))
+        self.assertIsInstance(variabledeclaratorid.dims[0], jast.dim)
+        self.assertIsInstance(variabledeclaratorid.dims[1], jast.dim)
+        self._test_iteration(variabledeclaratorid)
+
+    def test_variabledeclaratorid_error(self):
+        self.assertRaises(ValueError, jast.variabledeclaratorid, dims=[jast.dim()])
+
+    def test_typebound(self):
+        typebound = jast.typebound(
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            types=[jast.Int(), jast.Boolean()],
+        )
+        self.assertIsInstance(typebound, jast.typebound)
+        self.assertIsInstance(typebound, jast.JAST)
+        self.assertEqual(1, len(typebound.annotations))
+        self.assertIsInstance(typebound.annotations[0], jast.Annotation)
+        self.assertEqual(2, len(typebound.types))
+        self.assertIsInstance(typebound.types[0], jast.Int)
+        self.assertIsInstance(typebound.types[1], jast.Boolean)
+        self._test_iteration(typebound)
+
+    def test_typebound_error(self):
+        self.assertRaises(ValueError, jast.typebound, types=[])
+        self.assertRaises(
+            ValueError,
+            jast.typebound,
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+        )
+
+    def test_typeparam(self):
+        typeparam = jast.typeparam(
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            id=jast.identifier("foo"),
+            bound=jast.typebound(types=[jast.Int(), jast.Boolean()]),
+        )
+        self.assertIsInstance(typeparam, jast.typeparam)
+        self.assertIsInstance(typeparam, jast.JAST)
+        self.assertEqual(1, len(typeparam.annotations))
+        self.assertIsInstance(typeparam.annotations[0], jast.Annotation)
+        self.assertEqual("foo", typeparam.id)
+        self.assertIsInstance(typeparam.bound, jast.typebound)
+        self._test_iteration(typeparam)
+
+    def test_typeparam_error(self):
+        self.assertRaises(
+            ValueError,
+            jast.typeparam,
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            bound=jast.typebound(types=[jast.Int(), jast.Boolean()]),
+        )
+
+    def test_typeparams(self):
+        typeparams = jast.typeparams(
+            [
+                jast.typeparam(id=jast.identifier("foo")),
+                jast.typeparam(id=jast.identifier("bar")),
+            ]
+        )
+        self.assertIsInstance(typeparams, jast.typeparams)
+        self.assertIsInstance(typeparams, jast.JAST)
+        self.assertEqual(2, len(typeparams.parameters))
+        self.assertIsInstance(typeparams.parameters[0], jast.typeparam)
+        self.assertIsInstance(typeparams.parameters[1], jast.typeparam)
+        self._test_iteration(typeparams)
+
+    def test_typeparams_error(self):
+        self.assertRaises(ValueError, jast.typeparams, parameters=[])
+        self.assertRaises(ValueError, jast.typeparams)
