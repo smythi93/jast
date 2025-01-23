@@ -229,9 +229,9 @@ class _Unparser(JNodeVisitor):
 
     def visit_guardedpattern(self, node: jast.guardedpattern) -> str:
         pattern = self.visit(node.value)
-        condition = " && ".join([self.visit(cond) for cond in node.conditions])
+        condition = ") && ".join([self.visit(cond) for cond in node.conditions])
         if condition:
-            return f"{pattern} && {condition}"
+            return "(" * max(len(node.conditions) - 1, 0) + f"{pattern} && {condition}"
         return pattern
 
     def visit_Or(self, node: jast.Or) -> str:

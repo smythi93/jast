@@ -271,3 +271,35 @@ class TestUnparse(unittest.TestCase):
             ]
         )
         self.assertEqual("<foo, bar>", jast.unparse(tree))
+
+    def test_pattern(self):
+        tree = jast.pattern(
+            modifiers=[jast.Final()],
+            type=jast.Int(),
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            id=jast.identifier("bar"),
+        )
+        self.assertEqual("final int @foo bar", jast.unparse(tree))
+
+    def test_guardedpattern(self):
+        tree = jast.guardedpattern(
+            value=jast.pattern(
+                type=jast.Int(),
+                id=jast.identifier("bar"),
+            ),
+            conditions=[
+                jast.Constant(jast.BoolLiteral(True)),
+                jast.Constant(jast.IntLiteral(42)),
+            ],
+        )
+        self.assertEqual("(int bar && true) && 42", jast.unparse(tree))
+
+    def test_guardedpattern_no_conditions(self):
+        tree = jast.guardedpattern(
+            value=jast.pattern(
+                type=jast.Int(),
+                id=jast.identifier("bar"),
+            ),
+            conditions=[],
+        )
+        self.assertEqual("int bar", jast.unparse(tree))

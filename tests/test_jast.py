@@ -497,3 +497,54 @@ class TestConstructors(unittest.TestCase):
     def test_typeparams_error(self):
         self.assertRaises(ValueError, jast.typeparams, parameters=[])
         self.assertRaises(ValueError, jast.typeparams)
+
+    def test_pattern(self):
+        pattern = jast.pattern(
+            modifiers=[jast.Final()],
+            type=jast.Int(),
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            id=jast.identifier("bar"),
+        )
+        self.assertIsInstance(pattern, jast.pattern)
+        self.assertIsInstance(pattern, jast.JAST)
+        self.assertEqual(1, len(pattern.modifiers))
+        self.assertIsInstance(pattern.modifiers[0], jast.Final)
+        self.assertIsInstance(pattern.type, jast.Int)
+        self.assertEqual(1, len(pattern.annotations))
+        self.assertIsInstance(pattern.annotations[0], jast.Annotation)
+        self.assertEqual("bar", pattern.id)
+        self._test_iteration(pattern)
+
+    def test_pattern_error(self):
+        self.assertRaises(ValueError, jast.pattern, id=jast.identifier("bar"))
+        self.assertRaises(ValueError, jast.pattern, type=jast.Int())
+
+    def test_guardedpattern(self):
+        guardedpattern = jast.guardedpattern(
+            value=jast.pattern(
+                type=jast.Int(),
+                id=jast.identifier("bar"),
+            ),
+            conditions=[
+                jast.Constant(jast.BoolLiteral(True)),
+                jast.Constant(jast.IntLiteral(42)),
+            ],
+        )
+        self.assertIsInstance(guardedpattern, jast.guardedpattern)
+        self.assertIsInstance(guardedpattern, jast.JAST)
+        self.assertIsInstance(guardedpattern.value, jast.pattern)
+        self.assertEqual(2, len(guardedpattern.conditions))
+        boolean = guardedpattern.conditions[0]
+        self.assertIsInstance(boolean, jast.Constant)
+        self.assertTrue(boolean.value.value)
+        number = guardedpattern.conditions[1]
+        self.assertIsInstance(number, jast.Constant)
+        self.assertEqual(42, number.value)
+        self._test_iteration(guardedpattern)
+
+    def test_guardedpattern_error(self):
+        self.assertRaises(
+            ValueError,
+            jast.guardedpattern,
+            conditions=[jast.Constant(jast.BoolLiteral(True))],
+        )

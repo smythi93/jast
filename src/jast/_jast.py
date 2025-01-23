@@ -753,7 +753,7 @@ class typeparams(JAST):
 # pattern
 
 
-class pattern(_JAST):
+class pattern(JAST):
     """
     Represents a pattern in the Java AST.
 
@@ -772,9 +772,9 @@ class pattern(_JAST):
     ):
         super().__init__(*args, **kwargs)
         if type is None:
-            raise ValueError("jtype is required for pattern")
+            raise ValueError("type is required for pattern")
         if id is None:
-            raise ValueError("label is required for pattern")
+            raise ValueError("id is required for pattern")
         self.modifiers = modifiers or []
         self.type = type
         self.annotations = annotations or []
@@ -783,13 +783,13 @@ class pattern(_JAST):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "jtype", self.type
+        yield "type", self.type
         if self.annotations:
             yield "annotations", self.annotations
-        yield "label", self.id
+        yield "id", self.id
 
 
-class guardedpattern(_JAST):
+class guardedpattern(JAST):
     """
     Represents a guarded pattern in the Java AST.
 
@@ -806,14 +806,13 @@ class guardedpattern(_JAST):
         super().__init__(*args, **kwargs)
         if value is None:
             raise ValueError("pattern is required for guardedpattern")
-        if conditions is None:
-            raise ValueError("condition is required for guardedpattern")
         self.value = value
-        self.conditions = conditions
+        self.conditions = conditions or []
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "value", self.value
-        yield "conditions", self.conditions
+        if self.conditions:
+            yield "conditions", self.conditions
 
 
 # Operators

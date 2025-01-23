@@ -425,3 +425,45 @@ class TestParse(unittest.TestCase):
         self.assertEqual(2, len(c.bound.types))
         self.assertIsInstance(c.bound.types[0], jast.Int)
         self.assertIsInstance(c.bound.types[1], jast.Float)
+
+    def test_pattern(self):
+        tree = jast.parse("x instanceof final int @foo y", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.InstanceOf)
+        pattern = tree.type
+        self.assertIsInstance(pattern, jast.pattern)
+        self.assertEqual(1, len(pattern.modifiers))
+        self.assertIsInstance(pattern.modifiers[0], jast.Final)
+        self.assertIsInstance(pattern.type, jast.Int)
+        self.assertEqual(1, len(pattern.annotations))
+        self.assertIsInstance(pattern.annotations[0], jast.Annotation)
+        self.assertEqual("foo", jast.unparse(pattern.annotations[0].name))
+        self.assertIsInstance(pattern.id, jast.identifier)
+        self.assertEqual("y", pattern.id)
+
+    def test_guardedpattern(self):
+        tree = jast.parse(
+            "switch (x) {case (final int @foo y && true) && 42: ;}", jast.ParseMode.EXPR
+        )
+        self.assertIsInstance(tree, jast.SwitchExp)
+        self.assertEqual(1, len(tree.rules))
+        rule = tree.rules[0]
+        self.assertEqual(1, len(rule.cases))
+        guardedpattern = rule.cases[0]
+        self.assertIsInstance(guardedpattern, jast.guardedpattern)
+        pattern = guardedpattern.value
+        self.assertIsInstance(pattern, jast.pattern)
+        self.assertEqual(1, len(pattern.modifiers))
+        self.assertIsInstance(pattern.modifiers[0], jast.Final)
+        self.assertIsInstance(pattern.type, jast.Int)
+        self.assertEqual(1, len(pattern.annotations))
+        self.assertIsInstance(pattern.annotations[0], jast.Annotation)
+        self.assertEqual("foo", jast.unparse(pattern.annotations[0].name))
+        self.assertIsInstance(pattern.id, jast.identifier)
+        self.assertEqual("y", pattern.id)
+        self.assertEqual(2, len(guardedpattern.conditions))
+        self.assertIsInstance(guardedpattern.conditions[0], jast.Constant)
+        self.assertIsInstance(guardedpattern.conditions[0].value, jast.BoolLiteral)
+        self.assertTrue(guardedpattern.conditions[0].value.value)
+        self.assertIsInstance(guardedpattern.conditions[1], jast.Constant)
+        self.assertIsInstance(guardedpattern.conditions[1].value, jast.IntLiteral)
+        self.assertEqual(42, guardedpattern.conditions[1].value.value)
