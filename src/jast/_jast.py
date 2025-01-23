@@ -818,7 +818,7 @@ class guardedpattern(JAST):
 # Operators
 
 
-class operator(abc.ABC):
+class operator(JAST, abc.ABC):
     """
     Abstract base class for all binary operators in the Java AST.
     """
@@ -976,7 +976,7 @@ class Mod(operator):
     """
 
 
-class unaryop(abc.ABC):
+class unaryop(JAST, abc.ABC):
     """
     Abstract base class for all unary operators in the Java AST.
     """
@@ -1030,7 +1030,7 @@ class Not(unaryop):
     """
 
 
-class postop(abc.ABC):
+class postop(JAST, abc.ABC):
     """
     Abstract base class for all post operators in the Java AST.
     """
