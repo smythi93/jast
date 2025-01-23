@@ -1221,7 +1221,7 @@ class UnaryOp(expr):
         if op is None:
             raise ValueError("op is required for UnaryOp")
         if operand is None:
-            raise ValueError("value is required for UnaryOp")
+            raise ValueError("operand is required for UnaryOp")
         self.op = op
         self.operand = operand
 
@@ -1240,7 +1240,7 @@ class PostOp(expr):
     def __init__(self, operand: expr = None, op: postop = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if operand is None:
-            raise ValueError("value is required for PostOp")
+            raise ValueError("operand is required for PostOp")
         if op is None:
             raise ValueError("op is required for PostOp")
         self.operand = operand

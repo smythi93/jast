@@ -303,3 +303,111 @@ class TestUnparse(unittest.TestCase):
             conditions=[],
         )
         self.assertEqual("int bar", jast.unparse(tree))
+
+    def test_Or(self):
+        tree = jast.Or()
+        self.assertEqual("||", jast.unparse(tree))
+
+    def test_And(self):
+        tree = jast.And()
+        self.assertEqual("&&", jast.unparse(tree))
+
+    def test_BitOr(self):
+        tree = jast.BitOr()
+        self.assertEqual("|", jast.unparse(tree))
+
+    def test_BitAnd(self):
+        tree = jast.BitAnd()
+        self.assertEqual("&", jast.unparse(tree))
+
+    def test_BitXor(self):
+        tree = jast.BitXor()
+        self.assertEqual("^", jast.unparse(tree))
+
+    def test_Eq(self):
+        tree = jast.Eq()
+        self.assertEqual("==", jast.unparse(tree))
+
+    def test_NotEq(self):
+        tree = jast.NotEq()
+        self.assertEqual("!=", jast.unparse(tree))
+
+    def test_Lt(self):
+        tree = jast.Lt()
+        self.assertEqual("<", jast.unparse(tree))
+
+    def test_LtE(self):
+        tree = jast.LtE()
+        self.assertEqual("<=", jast.unparse(tree))
+
+    def test_Gt(self):
+        tree = jast.Gt()
+        self.assertEqual(">", jast.unparse(tree))
+
+    def test_GtE(self):
+        tree = jast.GtE()
+        self.assertEqual(">=", jast.unparse(tree))
+
+    def test_LShift(self):
+        tree = jast.LShift()
+        self.assertEqual("<<", jast.unparse(tree))
+
+    def test_RShift(self):
+        tree = jast.RShift()
+        self.assertEqual(">>", jast.unparse(tree))
+
+    def test_URShift(self):
+        tree = jast.URShift()
+        self.assertEqual(">>>", jast.unparse(tree))
+
+    def test_Add(self):
+        tree = jast.Add()
+        self.assertEqual("+", jast.unparse(tree))
+
+    def test_Sub(self):
+        tree = jast.Sub()
+        self.assertEqual("-", jast.unparse(tree))
+
+    def test_Mult(self):
+        tree = jast.Mult()
+        self.assertEqual("*", jast.unparse(tree))
+
+    def test_Div(self):
+        tree = jast.Div()
+        self.assertEqual("/", jast.unparse(tree))
+
+    def test_Mod(self):
+        tree = jast.Mod()
+        self.assertEqual("%", jast.unparse(tree))
+
+    def test_PreInc(self):
+        tree = jast.PreInc()
+        self.assertEqual("++", jast.unparse(tree))
+
+    def test_PreDec(self):
+        tree = jast.PreDec()
+        self.assertEqual("--", jast.unparse(tree))
+
+    def test_UAdd(self):
+        tree = jast.UAdd()
+        self.assertEqual("+", jast.unparse(tree))
+
+    def test_USub(self):
+        tree = jast.USub()
+        self.assertEqual("-", jast.unparse(tree))
+
+    def test_Invert(self):
+        tree = jast.Invert()
+        self.assertEqual("~", jast.unparse(tree))
+
+    def test_Not(self):
+        tree = jast.Not()
+        self.assertEqual("!", jast.unparse(tree))
+
+    def test_PostInc(self):
+        tree = jast.PostInc()
+        self.assertEqual("++", jast.unparse(tree))
+
+    def test_PostDec(self):
+        tree = jast.PostDec()
+        self.assertEqual("--", jast.unparse(tree))

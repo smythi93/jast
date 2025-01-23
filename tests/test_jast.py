@@ -548,3 +548,165 @@ class TestConstructors(unittest.TestCase):
             jast.guardedpattern,
             conditions=[jast.Constant(jast.BoolLiteral(True))],
         )
+
+    def test_Or(self):
+        or_ = jast.Or()
+        self.assertIsInstance(or_, jast.Or)
+        self.assertIsInstance(or_, jast.JAST)
+        self._test_iteration(or_)
+
+    def test_And(self):
+        and_ = jast.And()
+        self.assertIsInstance(and_, jast.And)
+        self.assertIsInstance(and_, jast.JAST)
+        self._test_iteration(and_)
+
+    def test_BitOr(self):
+        bit_or = jast.BitOr()
+        self.assertIsInstance(bit_or, jast.BitOr)
+        self.assertIsInstance(bit_or, jast.JAST)
+        self._test_iteration(bit_or)
+
+    def test_BitAnd(self):
+        bit_and = jast.BitAnd()
+        self.assertIsInstance(bit_and, jast.BitAnd)
+        self.assertIsInstance(bit_and, jast.JAST)
+        self._test_iteration(bit_and)
+
+    def test_BitXor(self):
+        bit_xor = jast.BitXor()
+        self.assertIsInstance(bit_xor, jast.BitXor)
+        self.assertIsInstance(bit_xor, jast.JAST)
+        self._test_iteration(bit_xor)
+
+    def test_Eq(self):
+        equal = jast.Eq()
+        self.assertIsInstance(equal, jast.Eq)
+        self.assertIsInstance(equal, jast.JAST)
+        self._test_iteration(equal)
+
+    def test_NotEq(self):
+        not_eq = jast.NotEq()
+        self.assertIsInstance(not_eq, jast.NotEq)
+        self.assertIsInstance(not_eq, jast.JAST)
+        self._test_iteration(not_eq)
+
+    def test_Lt(self):
+        lt = jast.Lt()
+        self.assertIsInstance(lt, jast.Lt)
+        self.assertIsInstance(lt, jast.JAST)
+        self._test_iteration(lt)
+
+    def test_LtE(self):
+        lte = jast.LtE()
+        self.assertIsInstance(lte, jast.LtE)
+        self.assertIsInstance(lte, jast.JAST)
+        self._test_iteration(lte)
+
+    def test_Gt(self):
+        gt = jast.Gt()
+        self.assertIsInstance(gt, jast.Gt)
+        self.assertIsInstance(gt, jast.JAST)
+        self._test_iteration(gt)
+
+    def test_GtE(self):
+        gte = jast.GtE()
+        self.assertIsInstance(gte, jast.GtE)
+        self.assertIsInstance(gte, jast.JAST)
+        self._test_iteration(gte)
+
+    def test_LShift(self):
+        lshift = jast.LShift()
+        self.assertIsInstance(lshift, jast.LShift)
+        self.assertIsInstance(lshift, jast.JAST)
+        self._test_iteration(lshift)
+
+    def test_RShift(self):
+        rshift = jast.RShift()
+        self.assertIsInstance(rshift, jast.RShift)
+        self.assertIsInstance(rshift, jast.JAST)
+        self._test_iteration(rshift)
+
+    def test_URShift(self):
+        u_rshift = jast.URShift()
+        self.assertIsInstance(u_rshift, jast.URShift)
+        self.assertIsInstance(u_rshift, jast.JAST)
+        self._test_iteration(u_rshift)
+
+    def test_Add(self):
+        add = jast.Add()
+        self.assertIsInstance(add, jast.Add)
+        self.assertIsInstance(add, jast.JAST)
+        self._test_iteration(add)
+
+    def test_Sub(self):
+        sub = jast.Sub()
+        self.assertIsInstance(sub, jast.Sub)
+        self.assertIsInstance(sub, jast.JAST)
+        self._test_iteration(sub)
+
+    def test_Mult(self):
+        mult = jast.Mult()
+        self.assertIsInstance(mult, jast.Mult)
+        self.assertIsInstance(mult, jast.JAST)
+        self._test_iteration(mult)
+
+    def test_Div(self):
+        div = jast.Div()
+        self.assertIsInstance(div, jast.Div)
+        self.assertIsInstance(div, jast.JAST)
+        self._test_iteration(div)
+
+    def test_Mod(self):
+        mod = jast.Mod()
+        self.assertIsInstance(mod, jast.Mod)
+        self.assertIsInstance(mod, jast.JAST)
+        self._test_iteration(mod)
+
+    def test_PreInc(self):
+        pre_inc = jast.PreInc()
+        self.assertIsInstance(pre_inc, jast.PreInc)
+        self.assertIsInstance(pre_inc, jast.JAST)
+        self._test_iteration(pre_inc)
+
+    def test_PreDec(self):
+        pre_dec = jast.PreDec()
+        self.assertIsInstance(pre_dec, jast.PreDec)
+        self.assertIsInstance(pre_dec, jast.JAST)
+        self._test_iteration(pre_dec)
+
+    def test_UAdd(self):
+        u_add = jast.UAdd()
+        self.assertIsInstance(u_add, jast.UAdd)
+        self.assertIsInstance(u_add, jast.JAST)
+        self._test_iteration(u_add)
+
+    def test_USub(self):
+        u_sub = jast.USub()
+        self.assertIsInstance(u_sub, jast.USub)
+        self.assertIsInstance(u_sub, jast.JAST)
+        self._test_iteration(u_sub)
+
+    def test_Invert(self):
+        invert = jast.Invert()
+        self.assertIsInstance(invert, jast.Invert)
+        self.assertIsInstance(invert, jast.JAST)
+        self._test_iteration(invert)
+
+    def test_Not(self):
+        not_ = jast.Not()
+        self.assertIsInstance(not_, jast.Not)
+        self.assertIsInstance(not_, jast.JAST)
+        self._test_iteration(not_)
+
+    def test_PostInc(self):
+        post_inc = jast.PostInc()
+        self.assertIsInstance(post_inc, jast.PostInc)
+        self.assertIsInstance(post_inc, jast.JAST)
+        self._test_iteration(post_inc)
+
+    def test_PostDec(self):
+        post_dec = jast.PostDec()
+        self.assertIsInstance(post_dec, jast.PostDec)
+        self.assertIsInstance(post_dec, jast.JAST)
+        self._test_iteration(post_dec)

@@ -1431,7 +1431,7 @@ class JASTConverter(JavaParserVisitor):
             else:
                 op = jast.PostDec()
             return jast.PostOp(
-                expression=self.visitPostfixExpression(ctx.postfixExpression()),
+                operand=self.visitPostfixExpression(ctx.postfixExpression()),
                 op=op,
                 level=15,
                 **self._get_location_rule(ctx),
@@ -1454,7 +1454,7 @@ class JASTConverter(JavaParserVisitor):
             else:
                 op = jast.Not()
             return jast.UnaryOp(
-                expression=self.visitPrefixExpression(ctx.prefixExpression()),
+                operand=self.visitPrefixExpression(ctx.prefixExpression()),
                 op=op,
                 level=14,
                 **self._get_location_rule(ctx),

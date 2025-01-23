@@ -467,3 +467,96 @@ class TestParse(unittest.TestCase):
         self.assertIsInstance(guardedpattern.conditions[1], jast.Constant)
         self.assertIsInstance(guardedpattern.conditions[1].value, jast.IntLiteral)
         self.assertEqual(42, guardedpattern.conditions[1].value.value)
+
+    def _test_operator(self, tree, operator):
+        self.assertIsInstance(tree, jast.BinOp)
+        self.assertIsInstance(tree.op, operator)
+
+    def _test_unaryop(self, tree, operator):
+        self.assertIsInstance(tree, jast.UnaryOp)
+        self.assertIsInstance(tree.op, operator)
+
+    def _test_postop(self, tree, operator):
+        self.assertIsInstance(tree, jast.PostOp)
+        self.assertIsInstance(tree.op, operator)
+
+    def test_Or(self):
+        self._test_operator(jast.parse("x || y", jast.ParseMode.EXPR), jast.Or)
+
+    def test_And(self):
+        self._test_operator(jast.parse("x && y", jast.ParseMode.EXPR), jast.And)
+
+    def test_BitOr(self):
+        self._test_operator(jast.parse("x | y", jast.ParseMode.EXPR), jast.BitOr)
+
+    def test_BitXor(self):
+        self._test_operator(jast.parse("x ^ y", jast.ParseMode.EXPR), jast.BitXor)
+
+    def test_BitAnd(self):
+        self._test_operator(jast.parse("x & y", jast.ParseMode.EXPR), jast.BitAnd)
+
+    def test_Eq(self):
+        self._test_operator(jast.parse("x == y", jast.ParseMode.EXPR), jast.Eq)
+
+    def test_NotEq(self):
+        self._test_operator(jast.parse("x != y", jast.ParseMode.EXPR), jast.NotEq)
+
+    def test_Lt(self):
+        self._test_operator(jast.parse("x < y", jast.ParseMode.EXPR), jast.Lt)
+
+    def test_LtE(self):
+        self._test_operator(jast.parse("x <= y", jast.ParseMode.EXPR), jast.LtE)
+
+    def test_Gt(self):
+        self._test_operator(jast.parse("x > y", jast.ParseMode.EXPR), jast.Gt)
+
+    def test_GtE(self):
+        self._test_operator(jast.parse("x >= y", jast.ParseMode.EXPR), jast.GtE)
+
+    def test_LShift(self):
+        self._test_operator(jast.parse("x << y", jast.ParseMode.EXPR), jast.LShift)
+
+    def test_RShift(self):
+        self._test_operator(jast.parse("x >> y", jast.ParseMode.EXPR), jast.RShift)
+
+    def test_URShift(self):
+        self._test_operator(jast.parse("x >>> y", jast.ParseMode.EXPR), jast.URShift)
+
+    def test_Add(self):
+        self._test_operator(jast.parse("x + y", jast.ParseMode.EXPR), jast.Add)
+
+    def test_Sub(self):
+        self._test_operator(jast.parse("x - y", jast.ParseMode.EXPR), jast.Sub)
+
+    def test_Mult(self):
+        self._test_operator(jast.parse("x * y", jast.ParseMode.EXPR), jast.Mult)
+
+    def test_Div(self):
+        self._test_operator(jast.parse("x / y", jast.ParseMode.EXPR), jast.Div)
+
+    def test_Mod(self):
+        self._test_operator(jast.parse("x % y", jast.ParseMode.EXPR), jast.Mod)
+
+    def test_PreInc(self):
+        self._test_unaryop(jast.parse("++x", jast.ParseMode.EXPR), jast.PreInc)
+
+    def test_PreDec(self):
+        self._test_unaryop(jast.parse("--x", jast.ParseMode.EXPR), jast.PreDec)
+
+    def test_UAdd(self):
+        self._test_unaryop(jast.parse("+x", jast.ParseMode.EXPR), jast.UAdd)
+
+    def test_USub(self):
+        self._test_unaryop(jast.parse("-x", jast.ParseMode.EXPR), jast.USub)
+
+    def test_Invert(self):
+        self._test_unaryop(jast.parse("~x", jast.ParseMode.EXPR), jast.Invert)
+
+    def test_Not(self):
+        self._test_unaryop(jast.parse("!x", jast.ParseMode.EXPR), jast.Not)
+
+    def test_PostInc(self):
+        self._test_postop(jast.parse("x++", jast.ParseMode.EXPR), jast.PostInc)
+
+    def test_PostDec(self):
+        self._test_postop(jast.parse("x--", jast.ParseMode.EXPR), jast.PostDec)
