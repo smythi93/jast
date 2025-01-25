@@ -473,7 +473,7 @@ class _Unparser(JNodeVisitor):
             self.visit(node.target)
             self.write(" ")
             self.visit(node.op)
-            self.write(" ")
+            self.write("= ")
             self.set_precedence(_Precedence.ASSIGN, node.value)
             self.visit(node.value)
 

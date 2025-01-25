@@ -1113,7 +1113,8 @@ class Assign(expr):
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "target", self.target
-        yield "op", self.op
+        if self.op:
+            yield "op", self.op
         yield "value", self.value
 
 

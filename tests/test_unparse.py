@@ -1,5 +1,7 @@
 import unittest
 
+from parameterized import parameterized
+
 import jast
 
 
@@ -459,3 +461,56 @@ class TestUnparse(unittest.TestCase):
             body=jast.Block(body=[jast.Return(jast.Name(jast.identifier("x")))]),
         )
         self.assertEqual("x -> { return x; }", jast.unparse(tree, indent=-1))
+
+    def test_Assign(self):
+        tree = jast.Assign(
+            target=jast.Name(jast.identifier("x")),
+            value=jast.Constant(jast.IntLiteral(42)),
+        )
+        self.assertEqual("x = 42", jast.unparse(tree))
+
+    def test_Assign_parens_left(self):
+        tree = jast.Assign(
+            target=jast.Assign(
+                target=jast.Name(jast.identifier("x")),
+                value=jast.Name(jast.identifier("y")),
+            ),
+            value=jast.Constant(jast.IntLiteral(42)),
+        )
+        self.assertEqual("(x = y) = 42", jast.unparse(tree))
+
+    def test_Assign_parens_right(self):
+        tree = jast.Assign(
+            target=jast.Name(jast.identifier("x")),
+            value=jast.Assign(
+                target=jast.Name(jast.identifier("y")),
+                value=jast.Constant(jast.IntLiteral(42)),
+            ),
+        )
+        self.assertEqual("x = y = 42", jast.unparse(tree))
+
+    def _test_Assign_op(self, tree, op):
+        self.assertEqual(f"x {op}= 42", jast.unparse(tree))
+
+    @parameterized.expand(
+        [
+            (jast.Add(), "+"),
+            (jast.Sub(), "-"),
+            (jast.Mult(), "*"),
+            (jast.Div(), "/"),
+            (jast.Mod(), "%"),
+            (jast.BitAnd(), "&"),
+            (jast.BitOr(), "|"),
+            (jast.BitXor(), "^"),
+            (jast.LShift(), "<<"),
+            (jast.RShift(), ">>"),
+            (jast.URShift(), ">>>"),
+        ]
+    )
+    def test_Assign_op(self, op, rep):
+        tree = jast.Assign(
+            target=jast.Name(jast.identifier("x")),
+            value=jast.Constant(jast.IntLiteral(42)),
+            op=op,
+        )
+        self._test_Assign_op(tree, rep)

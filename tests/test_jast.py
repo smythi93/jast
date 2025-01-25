@@ -739,3 +739,40 @@ class TestConstructors(unittest.TestCase):
             args=jast.params(jast.receiver(jast.Int())),
             body=jast.Constant(jast.IntLiteral(42)),
         ),
+
+    def test_Assign(self):
+        assign = jast.Assign(
+            target=jast.identifier("foo"),
+            value=jast.Constant(jast.IntLiteral(42)),
+        )
+        self.assertIsInstance(assign, jast.Assign)
+        self.assertIsInstance(assign, jast.JAST)
+        self.assertIsInstance(assign.target, jast.identifier)
+        self.assertEqual("foo", assign.target)
+        self.assertIsInstance(assign.value, jast.Constant)
+        self.assertIsInstance(assign.value.value, jast.IntLiteral)
+        self.assertEqual(42, assign.value.value)
+        self.assertIsNone(assign.op)
+        self._test_iteration(assign)
+
+    def test_Assign_op(self):
+        assign = jast.Assign(
+            target=jast.identifier("foo"),
+            value=jast.Constant(jast.IntLiteral(42)),
+            op=jast.Add(),
+        )
+        self.assertIsInstance(assign, jast.Assign)
+        self.assertIsInstance(assign, jast.JAST)
+        self.assertIsInstance(assign.target, jast.identifier)
+        self.assertEqual("foo", assign.target)
+        self.assertIsInstance(assign.value, jast.Constant)
+        self.assertIsInstance(assign.value.value, jast.IntLiteral)
+        self.assertEqual(42, assign.value.value)
+        self.assertIsInstance(assign.op, jast.Add)
+        self._test_iteration(assign)
+
+    def test_Assign_error(self):
+        self.assertRaises(
+            ValueError, jast.Assign, value=jast.Constant(jast.IntLiteral(42))
+        )
+        self.assertRaises(ValueError, jast.Assign, target=jast.identifier("foo"))

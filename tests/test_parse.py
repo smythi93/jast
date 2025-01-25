@@ -1,5 +1,7 @@
 import unittest
 
+from parameterized import parameterized
+
 import jast
 
 
@@ -622,3 +624,60 @@ class TestParse(unittest.TestCase):
         self.assertIsInstance(param.type, jast.Var)
         self.assertIsInstance(param.id, jast.variabledeclaratorid)
         self.assertEqual("y", jast.unparse(param.id))
+
+    def test_Assign(self):
+        tree = jast.parse("x = y", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Assign)
+        self.assertIsInstance(tree.target, jast.Name)
+        self.assertEqual("x", tree.target.id)
+        self.assertIsInstance(tree.value, jast.Name)
+        self.assertEqual("y", tree.value.id)
+
+    def test_Assign_parens_left(self):
+        tree = jast.parse("x = y = z", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Assign)
+        self.assertIsInstance(tree.target, jast.Name)
+        self.assertEqual("x", tree.target.id)
+        self.assertIsInstance(tree.value, jast.Assign)
+        self.assertIsInstance(tree.value.target, jast.Name)
+        self.assertEqual("y", tree.value.target.id)
+        self.assertIsInstance(tree.value.value, jast.Name)
+        self.assertEqual("z", tree.value.value.id)
+
+    def test_Assign_parens_right(self):
+        tree = jast.parse("(x = y) = z", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Assign)
+        self.assertIsInstance(tree.target, jast.Assign)
+        self.assertIsInstance(tree.target.target, jast.Name)
+        self.assertEqual("x", tree.target.target.id)
+        self.assertIsInstance(tree.target.value, jast.Name)
+        self.assertEqual("y", tree.target.value.id)
+        self.assertIsInstance(tree.value, jast.Name)
+        self.assertEqual("z", tree.value.id)
+
+    def _test_assign_op(self, tree, operator):
+        self.assertIsInstance(tree, jast.Assign)
+        self.assertIsInstance(tree, jast.Assign)
+        self.assertIsInstance(tree.target, jast.Name)
+        self.assertEqual("x", tree.target.id)
+        self.assertIsInstance(tree.value, jast.Name)
+        self.assertEqual("y", tree.value.id)
+        self.assertIsInstance(tree.op, operator)
+
+    @parameterized.expand(
+        [
+            ("+", jast.Add),
+            ("-", jast.Sub),
+            ("*", jast.Mult),
+            ("/", jast.Div),
+            ("%", jast.Mod),
+            ("&", jast.BitAnd),
+            ("|", jast.BitOr),
+            ("^", jast.BitXor),
+            ("<<", jast.LShift),
+            (">>", jast.RShift),
+            (">>>", jast.URShift),
+        ]
+    )
+    def test_Assign_op(self, rep, operator):
+        self._test_assign_op(jast.parse(f"x {rep}= y", jast.ParseMode.EXPR), operator)
