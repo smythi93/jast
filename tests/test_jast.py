@@ -776,3 +776,54 @@ class TestConstructors(unittest.TestCase):
             ValueError, jast.Assign, value=jast.Constant(jast.IntLiteral(42))
         )
         self.assertRaises(ValueError, jast.Assign, target=jast.identifier("foo"))
+
+    def test_IfExp(self):
+        if_exp = jast.IfExp(
+            test=jast.Constant(jast.BoolLiteral(True)),
+            body=jast.Constant(jast.IntLiteral(42)),
+            orelse=jast.Constant(jast.IntLiteral(0)),
+        )
+        self.assertIsInstance(if_exp, jast.IfExp)
+        self.assertIsInstance(if_exp, jast.JAST)
+        self.assertIsInstance(if_exp.test, jast.Constant)
+        self.assertIsInstance(if_exp.test.value, jast.BoolLiteral)
+        self.assertTrue(if_exp.test.value)
+        self.assertIsInstance(if_exp.body, jast.Constant)
+        self.assertIsInstance(if_exp.body.value, jast.IntLiteral)
+        self.assertEqual(42, if_exp.body.value)
+        self.assertIsInstance(if_exp.orelse, jast.Constant)
+        self.assertIsInstance(if_exp.orelse.value, jast.IntLiteral)
+        self.assertEqual(0, if_exp.orelse.value)
+        self._test_iteration(if_exp)
+
+    def test_IfExp_error(self):
+        self.assertRaises(
+            ValueError, jast.IfExp, body=jast.Constant(jast.IntLiteral(42))
+        )
+        self.assertRaises(
+            ValueError, jast.IfExp, condition=jast.Constant(jast.BoolLiteral(True))
+        )
+        self.assertRaises(
+            ValueError, jast.IfExp, orelse=jast.Constant(jast.IntLiteral(0))
+        )
+        self.assertRaises(
+            ValueError,
+            jast.IfExp,
+            condition=jast.Constant(
+                jast.BoolLiteral(True), body=jast.Constant(jast.IntLiteral(42))
+            ),
+        )
+        self.assertRaises(
+            ValueError,
+            jast.IfExp,
+            condition=jast.Constant(
+                jast.BoolLiteral(True), orelse=jast.Constant(jast.IntLiteral(0))
+            ),
+        )
+        self.assertRaises(
+            ValueError,
+            jast.IfExp,
+            body=jast.Constant(
+                jast.IntLiteral(42), orelse=jast.Constant(jast.IntLiteral(0))
+            ),
+        )

@@ -514,3 +514,47 @@ class TestUnparse(unittest.TestCase):
             op=op,
         )
         self._test_Assign_op(tree, rep)
+
+    def test_IfExp(self):
+        tree = jast.IfExp(
+            test=jast.Constant(jast.BoolLiteral(True)),
+            body=jast.Constant(jast.IntLiteral(42)),
+            orelse=jast.Constant(jast.IntLiteral(0)),
+        )
+        self.assertEqual("true ? 42 : 0", jast.unparse(tree))
+
+    def test_IfExp_parens_right_body(self):
+        tree = jast.IfExp(
+            test=jast.Constant(jast.BoolLiteral(True)),
+            body=jast.IfExp(
+                test=jast.Constant(jast.BoolLiteral(False)),
+                body=jast.Constant(jast.IntLiteral(42)),
+                orelse=jast.Constant(jast.IntLiteral(0)),
+            ),
+            orelse=jast.Constant(jast.IntLiteral(1)),
+        )
+        self.assertEqual("true ? false ? 42 : 0 : 1", jast.unparse(tree))
+
+    def test_IfExp_parens_right_orelse(self):
+        tree = jast.IfExp(
+            test=jast.Constant(jast.BoolLiteral(True)),
+            body=jast.Constant(jast.IntLiteral(42)),
+            orelse=jast.IfExp(
+                test=jast.Constant(jast.BoolLiteral(False)),
+                body=jast.Constant(jast.IntLiteral(0)),
+                orelse=jast.Constant(jast.IntLiteral(1)),
+            ),
+        )
+        self.assertEqual("true ? 42 : false ? 0 : 1", jast.unparse(tree))
+
+    def test_IfExp_parens_left(self):
+        tree = jast.IfExp(
+            test=jast.IfExp(
+                test=jast.Constant(jast.BoolLiteral(True)),
+                body=jast.Constant(jast.IntLiteral(42)),
+                orelse=jast.Constant(jast.IntLiteral(0)),
+            ),
+            body=jast.Constant(jast.IntLiteral(1)),
+            orelse=jast.Constant(jast.IntLiteral(2)),
+        )
+        self.assertEqual("(true ? 42 : 0) ? 1 : 2", jast.unparse(tree))

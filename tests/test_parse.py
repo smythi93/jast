@@ -681,3 +681,43 @@ class TestParse(unittest.TestCase):
     )
     def test_Assign_op(self, rep, operator):
         self._test_assign_op(jast.parse(f"x {rep}= y", jast.ParseMode.EXPR), operator)
+
+    def test_IfExp(self):
+        tree = jast.parse("x ? y : z", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.IfExp)
+        self.assertIsInstance(tree.test, jast.Name)
+        self.assertEqual("x", tree.test.id)
+        self.assertIsInstance(tree.body, jast.Name)
+        self.assertEqual("y", tree.body.id)
+        self.assertIsInstance(tree.orelse, jast.Name)
+        self.assertEqual("z", tree.orelse.id)
+
+    def test_IfExp_parens_right(self):
+        tree = jast.parse("x ? y : z ? a : b", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.IfExp)
+        self.assertIsInstance(tree.test, jast.Name)
+        self.assertEqual("x", tree.test.id)
+        self.assertIsInstance(tree.body, jast.Name)
+        self.assertEqual("y", tree.body.id)
+        self.assertIsInstance(tree.orelse, jast.IfExp)
+        self.assertIsInstance(tree.orelse.test, jast.Name)
+        self.assertEqual("z", tree.orelse.test.id)
+        self.assertIsInstance(tree.orelse.body, jast.Name)
+        self.assertEqual("a", tree.orelse.body.id)
+        self.assertIsInstance(tree.orelse.orelse, jast.Name)
+        self.assertEqual("b", tree.orelse.orelse.id)
+
+    def test_IfExp_parens_left(self):
+        tree = jast.parse("(x ? y : z) ? a : b", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.IfExp)
+        self.assertIsInstance(tree.test, jast.IfExp)
+        self.assertIsInstance(tree.test.test, jast.Name)
+        self.assertEqual("x", tree.test.test.id)
+        self.assertIsInstance(tree.test.body, jast.Name)
+        self.assertEqual("y", tree.test.body.id)
+        self.assertIsInstance(tree.test.orelse, jast.Name)
+        self.assertEqual("z", tree.test.orelse.id)
+        self.assertIsInstance(tree.body, jast.Name)
+        self.assertEqual("a", tree.body.id)
+        self.assertIsInstance(tree.orelse, jast.Name)
+        self.assertEqual("b", tree.orelse.id)
