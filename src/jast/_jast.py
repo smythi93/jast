@@ -87,6 +87,9 @@ class identifier(JAST, str):
     def __new__(cls, *args, **kwargs):
         return str.__new__(identifier, *args, **kwargs)
 
+    def __copy__(self):
+        return identifier(self.value)
+
 
 # Names
 
@@ -135,6 +138,9 @@ class IntLiteral(literal, int):
         IntLiteral.__init__(obj, value, *args, **kwargs)
         return obj
 
+    def __copy__(self):
+        return IntLiteral(self.value, self.long)
+
 
 class FloatLiteral(literal, float):
     """
@@ -149,6 +155,9 @@ class FloatLiteral(literal, float):
         obj = float.__new__(cls, value)
         FloatLiteral.__init__(obj, value, *args, **kwargs)
         return obj
+
+    def __copy__(self):
+        return FloatLiteral(self.value, self.double)
 
 
 # noinspection PyFinal
@@ -165,6 +174,9 @@ class BoolLiteral(literal, int):
         BoolLiteral.__init__(obj, value, **kwargs)
         return obj
 
+    def __copy__(self):
+        return BoolLiteral(self.value)
+
 
 class CharLiteral(literal, str):
     """
@@ -180,6 +192,9 @@ class CharLiteral(literal, str):
         CharLiteral.__init__(obj, value, *args, **kwargs)
         return obj
 
+    def __copy__(self):
+        return CharLiteral(self.value)
+
 
 class StringLiteral(literal, str):
     """
@@ -194,6 +209,9 @@ class StringLiteral(literal, str):
         StringLiteral.__init__(obj, value, *args, **kwargs)
         return obj
 
+    def __copy__(self):
+        return StringLiteral(self.value)
+
 
 class TextBlock(literal, str):
     """
@@ -207,6 +225,9 @@ class TextBlock(literal, str):
         obj = str.__new__(cls, value)
         TextBlock.__init__(obj, value, *args, **kwargs)
         return obj
+
+    def __copy__(self):
+        return TextBlock(self.value)
 
 
 class NullLiteral(literal):

@@ -421,6 +421,14 @@ class TestConstructors(unittest.TestCase):
         self.assertIsInstance(array_type.dims[1], jast.dim)
         self._test_iteration(array_type)
 
+    def test_ArrayType_error(self):
+        self.assertRaises(
+            ValueError,
+            jast.ArrayType,
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            dims=[jast.dim()],
+        )
+
     def test_variabledeclaratorid(self):
         variabledeclaratorid = jast.variabledeclaratorid(
             jast.identifier("foo"), [jast.dim(), jast.dim()]
@@ -798,25 +806,16 @@ class TestConstructors(unittest.TestCase):
 
     def test_IfExp_error(self):
         self.assertRaises(
-            ValueError, jast.IfExp, body=jast.Constant(jast.IntLiteral(42))
-        )
-        self.assertRaises(
-            ValueError, jast.IfExp, condition=jast.Constant(jast.BoolLiteral(True))
-        )
-        self.assertRaises(
-            ValueError, jast.IfExp, orelse=jast.Constant(jast.IntLiteral(0))
-        )
-        self.assertRaises(
             ValueError,
             jast.IfExp,
-            condition=jast.Constant(
+            test=jast.Constant(
                 jast.BoolLiteral(True), body=jast.Constant(jast.IntLiteral(42))
             ),
         )
         self.assertRaises(
             ValueError,
             jast.IfExp,
-            condition=jast.Constant(
+            test=jast.Constant(
                 jast.BoolLiteral(True), orelse=jast.Constant(jast.IntLiteral(0))
             ),
         )
