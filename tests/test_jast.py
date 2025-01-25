@@ -827,3 +827,40 @@ class TestConstructors(unittest.TestCase):
                 jast.IntLiteral(42), orelse=jast.Constant(jast.IntLiteral(0))
             ),
         )
+
+    def test_BinOp(self):
+        bin_op = jast.BinOp(
+            left=jast.Constant(jast.IntLiteral(42)),
+            op=jast.Add(),
+            right=jast.Constant(jast.IntLiteral(0)),
+        )
+        self.assertIsInstance(bin_op, jast.BinOp)
+        self.assertIsInstance(bin_op, jast.JAST)
+        self.assertIsInstance(bin_op.left, jast.Constant)
+        self.assertIsInstance(bin_op.left.value, jast.IntLiteral)
+        self.assertEqual(42, bin_op.left.value)
+        self.assertIsInstance(bin_op.op, jast.Add)
+        self.assertIsInstance(bin_op.right, jast.Constant)
+        self.assertIsInstance(bin_op.right.value, jast.IntLiteral)
+        self.assertEqual(0, bin_op.right.value)
+        self._test_iteration(bin_op)
+
+    def test_BinOp_error(self):
+        self.assertRaises(
+            ValueError,
+            jast.BinOp,
+            op=jast.Add(),
+            right=jast.Constant(jast.IntLiteral(0)),
+        )
+        self.assertRaises(
+            ValueError,
+            jast.BinOp,
+            left=jast.Constant(jast.IntLiteral(42)),
+            op=jast.Add(),
+        )
+        self.assertRaises(
+            ValueError,
+            jast.BinOp,
+            left=jast.Constant(jast.IntLiteral(42)),
+            right=jast.Constant(jast.IntLiteral(0)),
+        )

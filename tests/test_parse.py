@@ -3,6 +3,12 @@ import unittest
 from parameterized import parameterized
 
 import jast
+from utils import (
+    LEFT_PRECEDENCE_FOR_RIGHT,
+    RIGHT_PRECEDENCE_FOR_LEFT,
+    OPERATORS,
+    OPERATORS_ASSIGN,
+)
 
 
 class TestParse(unittest.TestCase):
@@ -664,22 +670,8 @@ class TestParse(unittest.TestCase):
         self.assertEqual("y", tree.value.id)
         self.assertIsInstance(tree.op, operator)
 
-    @parameterized.expand(
-        [
-            ("+", jast.Add),
-            ("-", jast.Sub),
-            ("*", jast.Mult),
-            ("/", jast.Div),
-            ("%", jast.Mod),
-            ("&", jast.BitAnd),
-            ("|", jast.BitOr),
-            ("^", jast.BitXor),
-            ("<<", jast.LShift),
-            (">>", jast.RShift),
-            (">>>", jast.URShift),
-        ]
-    )
-    def test_Assign_op(self, rep, operator):
+    @parameterized.expand(OPERATORS_ASSIGN)
+    def test_Assign_op(self, _, rep, operator):
         self._test_assign_op(jast.parse(f"x {rep}= y", jast.ParseMode.EXPR), operator)
 
     def test_IfExp(self):
@@ -721,3 +713,70 @@ class TestParse(unittest.TestCase):
         self.assertEqual("a", tree.body.id)
         self.assertIsInstance(tree.orelse, jast.Name)
         self.assertEqual("b", tree.orelse.id)
+
+    # noinspection PyUnusedLocal
+    @parameterized.expand(OPERATORS)
+    def test_BinOp(self, name, rep, operator):
+        tree = jast.parse("x " + rep + " y", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.BinOp)
+        self.assertIsInstance(tree.op, operator)
+        self.assertIsInstance(tree.left, jast.Name)
+        self.assertEqual("x", tree.left.id)
+        self.assertIsInstance(tree.right, jast.Name)
+        self.assertEqual("y", tree.right.id)
+
+    def _test_BinOp_right(self, tree, operator1, operator2):
+        self.assertIsInstance(tree, jast.BinOp)
+        self.assertIsInstance(tree.op, operator1)
+        self.assertIsInstance(tree.left, jast.Name)
+        self.assertEqual("x", tree.left.id)
+        self.assertIsInstance(tree.right, jast.BinOp)
+        self.assertIsInstance(tree.right.op, operator2)
+        self.assertIsInstance(tree.right.left, jast.Name)
+        self.assertEqual("y", tree.right.left.id)
+        self.assertIsInstance(tree.right.right, jast.Name)
+        self.assertEqual("z", tree.right.right.id)
+
+    @parameterized.expand(RIGHT_PRECEDENCE_FOR_LEFT)
+    def test_BinOp_order(self, _, rep1, rep2, operator1, operator2):
+        self._test_BinOp_right(
+            jast.parse(f"x {rep1} y {rep2} z", jast.ParseMode.EXPR),
+            operator1,
+            operator2,
+        )
+
+    @parameterized.expand(LEFT_PRECEDENCE_FOR_RIGHT)
+    def test_BinOp_order_parens(self, _, rep1, rep2, operator1, operator2):
+        self._test_BinOp_right(
+            jast.parse(f"x {rep1} (y {rep2} z)", jast.ParseMode.EXPR),
+            operator1,
+            operator2,
+        )
+
+    def _test_BinOp_left(self, tree, operator1, operator2):
+        self.assertIsInstance(tree, jast.BinOp)
+        self.assertIsInstance(tree.op, operator2)
+        self.assertIsInstance(tree.left, jast.BinOp)
+        self.assertIsInstance(tree.left.op, operator1)
+        self.assertIsInstance(tree.left.left, jast.Name)
+        self.assertEqual("x", tree.left.left.id)
+        self.assertIsInstance(tree.left.right, jast.Name)
+        self.assertEqual("y", tree.left.right.id)
+        self.assertIsInstance(tree.right, jast.Name)
+        self.assertEqual("z", tree.right.id)
+
+    @parameterized.expand(LEFT_PRECEDENCE_FOR_RIGHT)
+    def test_BinOp_reversed(self, _, rep1, rep2, operator1, operator2):
+        self._test_BinOp_left(
+            jast.parse(f"x {rep1} y {rep2} z", jast.ParseMode.EXPR),
+            operator1,
+            operator2,
+        )
+
+    @parameterized.expand(RIGHT_PRECEDENCE_FOR_LEFT)
+    def test_BinOp_reversed_parens(self, _, rep1, rep2, operator1, operator2):
+        self._test_BinOp_left(
+            jast.parse(f"(x {rep1} y) {rep2} z", jast.ParseMode.EXPR),
+            operator1,
+            operator2,
+        )

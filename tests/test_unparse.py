@@ -3,6 +3,7 @@ import unittest
 from parameterized import parameterized
 
 import jast
+from utils import OPERATORS, RIGHT_PRECEDENCE_FOR_LEFT, LEFT_PRECEDENCE_FOR_RIGHT
 
 
 class TestUnparse(unittest.TestCase):
@@ -558,3 +559,64 @@ class TestUnparse(unittest.TestCase):
             orelse=jast.Constant(jast.IntLiteral(2)),
         )
         self.assertEqual("(true ? 42 : 0) ? 1 : 2", jast.unparse(tree))
+
+    @parameterized.expand(OPERATORS)
+    def test_BinOp(self, _, rep, op):
+        tree = jast.BinOp(
+            left=jast.Constant(jast.IntLiteral(1)),
+            op=op(),
+            right=jast.Constant(jast.IntLiteral(2)),
+        )
+        self.assertEqual(f"1 {rep} 2", jast.unparse(tree))
+
+    @parameterized.expand(RIGHT_PRECEDENCE_FOR_LEFT)
+    def test_BinOp_order(self, _, rep1, rep2, operator1, operator2):
+        tree = jast.BinOp(
+            left=jast.Constant(jast.IntLiteral(1)),
+            op=operator1(),
+            right=jast.BinOp(
+                left=jast.Constant(jast.IntLiteral(2)),
+                op=operator2(),
+                right=jast.Constant(jast.IntLiteral(3)),
+            ),
+        )
+        self.assertEqual(f"1 {rep1} 2 {rep2} 3", jast.unparse(tree))
+
+    @parameterized.expand(LEFT_PRECEDENCE_FOR_RIGHT)
+    def test_BinOp_order_parens(self, _, rep1, rep2, operator1, operator2):
+        tree = jast.BinOp(
+            left=jast.Constant(jast.IntLiteral(1)),
+            op=operator1(),
+            right=jast.BinOp(
+                left=jast.Constant(jast.IntLiteral(2)),
+                op=operator2(),
+                right=jast.Constant(jast.IntLiteral(3)),
+            ),
+        )
+        self.assertEqual(f"1 {rep1} (2 {rep2} 3)", jast.unparse(tree))
+
+    @parameterized.expand(LEFT_PRECEDENCE_FOR_RIGHT)
+    def test_BinOp_order_no_parens(self, _, rep1, rep2, operator1, operator2):
+        tree = jast.BinOp(
+            left=jast.BinOp(
+                left=jast.Constant(jast.IntLiteral(1)),
+                op=operator1(),
+                right=jast.Constant(jast.IntLiteral(2)),
+            ),
+            op=operator2(),
+            right=jast.Constant(jast.IntLiteral(3)),
+        )
+        self.assertEqual(f"1 {rep1} 2 {rep2} 3", jast.unparse(tree))
+
+    @parameterized.expand(RIGHT_PRECEDENCE_FOR_LEFT)
+    def test_BinOp_order_no_parens(self, _, rep1, rep2, operator1, operator2):
+        tree = jast.BinOp(
+            left=jast.BinOp(
+                left=jast.Constant(jast.IntLiteral(1)),
+                op=operator1(),
+                right=jast.Constant(jast.IntLiteral(2)),
+            ),
+            op=operator2(),
+            right=jast.Constant(jast.IntLiteral(3)),
+        )
+        self.assertEqual(f"(1 {rep1} 2) {rep2} 3", jast.unparse(tree))
