@@ -7,20 +7,17 @@ from copy import copy
 
 class TestVisitor(unittest.TestCase):
     def setUp(self):
-        self.example = jast.parse(
-            """
-            public class Example {
-            
-                public int add(int a, int b) {
-                    return a + b;
-                }
-                
-                public static void main(String[] args) {
-                    System.out.println(add(27, 55));
-                }
-            }
-            """
-        )
+        self.source = """public class Example {
+    
+    public int add(int a, int b) {
+        return a + b;
+    }
+    
+    public static void main(String[] args) {
+        System.out.println(add(27, 55));
+    }
+}"""
+        self.example = jast.parse(self.source)
 
     def test_IdentifierVisitor(self):
         class IdentifierVisitor(jast.JNodeVisitor):
@@ -116,16 +113,7 @@ class TestVisitor(unittest.TestCase):
         )
         self.assertIsNot(self.example, new_tree)
         self.assertEqual(
-            """public class Example {
-    
-    public int add(int a, int b) {
-        return a + b;
-    }
-    
-    public static void main(String[] args) {
-        System.out.println(add(27, 55));
-    }
-}""",
+            self.source,
             jast.unparse(self.example),
         )
 
@@ -177,3 +165,115 @@ class TestVisitor(unittest.TestCase):
         self.assertIsNot(text_block, new_text_block)
         self.assertEqual(text_block, new_text_block)
         self.assertEqual(text_block.value, new_text_block.value)
+
+    def test_DeleteReturn(self):
+        class DeleteReturn(jast.JNodeTransformer):
+            def visit_Return(self, node):
+                return None
+
+        delete_return = DeleteReturn()
+        new_tree = delete_return.visit(self.example)
+        code = jast.unparse(new_tree)
+        self.assertEqual(
+            """public class Example {
+    
+    public int add(int a, int b) {
+    }
+    
+    public static void main(String[] args) {
+        System.out.println(add(27, 55));
+    }
+}""",
+            code,
+        )
+
+    def test_DeleteReturn_keep(self):
+        class DeleteReturn(jast.JNodeKeepTransformer):
+            def visit_Return(self, node):
+                return None
+
+        delete_return = DeleteReturn()
+        new_tree = delete_return.visit(self.example)
+        code = jast.unparse(new_tree)
+        self.assertEqual(
+            """public class Example {
+    
+    public int add(int a, int b) {
+    }
+    
+    public static void main(String[] args) {
+        System.out.println(add(27, 55));
+    }
+}""",
+            code,
+        )
+        self.assertIsNot(self.example, new_tree)
+        self.assertEqual(
+            self.source,
+            jast.unparse(self.example),
+        )
+
+    def test_DeleteAndAdd(self):
+        class DeleteAndAdd(jast.JNodeTransformer):
+            def __init__(self):
+                self.to_add = None
+
+            def visit_Method(self, node):
+                if node.id == "add":
+                    self.to_add = node
+                    return None
+                elif node.id == "main":
+                    return [node, self.to_add]
+                return node
+
+        delete_and_add = DeleteAndAdd()
+        new_tree = delete_and_add.visit(self.example)
+        code = jast.unparse(new_tree)
+        self.assertEqual(
+            """public class Example {
+    
+    public static void main(String[] args) {
+        System.out.println(add(27, 55));
+    }
+    
+    public int add(int a, int b) {
+        return a + b;
+    }
+}""",
+            code,
+        )
+
+    def test_DeleteAndAdd_keep(self):
+        class DeleteAndAdd(jast.JNodeKeepTransformer):
+            def __init__(self):
+                self.to_add = None
+
+            def visit_Method(self, node):
+                if node.id == "add":
+                    self.to_add = node
+                    return None
+                elif node.id == "main":
+                    return [node, self.to_add]
+                return node
+
+        delete_and_add = DeleteAndAdd()
+        new_tree = delete_and_add.visit(self.example)
+        code = jast.unparse(new_tree)
+        self.assertEqual(
+            """public class Example {
+    
+    public static void main(String[] args) {
+        System.out.println(add(27, 55));
+    }
+    
+    public int add(int a, int b) {
+        return a + b;
+    }
+}""",
+            code,
+        )
+        self.assertIsNot(self.example, new_tree)
+        self.assertEqual(
+            self.source,
+            jast.unparse(self.example),
+        )
