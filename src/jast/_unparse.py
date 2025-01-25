@@ -43,6 +43,7 @@ class _Unparser(JNodeVisitor):
         self._indent = 0
         self._current_expr_level = -1
         self._precedences = {}
+        self._context_newline = False
 
     def unparse(self, node: jast.JAST):
         """
@@ -840,6 +841,7 @@ class _Unparser(JNodeVisitor):
         self.write(";")
 
     def visit_Method(self, node: jast.Method):
+        self.maybe_newline()
         self.fill()
         self.interleave(node.modifiers, " ", " ")
         self.visit(node.return_type)
@@ -858,6 +860,7 @@ class _Unparser(JNodeVisitor):
             self.write(";")
 
     def visit_Class(self, node: jast.Class):
+        self.maybe_newline()
         self.fill()
         self.interleave(node.modifiers, " ", " ")
         self.write("class ")
