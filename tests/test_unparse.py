@@ -178,11 +178,11 @@ class TestUnparse(unittest.TestCase):
 
     def test_wildcardbound_extends(self):
         tree = jast.wildcardbound(jast.Int(), extends=True)
-        self.assertEqual("extends int", jast.unparse(tree))
+        self.assertEqual(" extends int", jast.unparse(tree))
 
     def test_wildcardbound_super(self):
         tree = jast.wildcardbound(jast.Int(), super_=True)
-        self.assertEqual("super int", jast.unparse(tree))
+        self.assertEqual(" super int", jast.unparse(tree))
 
     def test_Wildcard_bound(self):
         tree = jast.Wildcard(
@@ -253,7 +253,7 @@ class TestUnparse(unittest.TestCase):
             annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
             types=[jast.Int(), jast.Boolean()],
         )
-        self.assertEqual("@foo int & boolean", jast.unparse(tree))
+        self.assertEqual(" extends @foo int & boolean", jast.unparse(tree))
 
     def test_typeparam(self):
         tree = jast.typeparam(
@@ -411,3 +411,51 @@ class TestUnparse(unittest.TestCase):
     def test_PostDec(self):
         tree = jast.PostDec()
         self.assertEqual("--", jast.unparse(tree))
+
+    def test_Lambda_identifier(self):
+        tree = jast.Lambda(
+            args=jast.identifier("x"), body=jast.Name(jast.identifier("x"))
+        )
+        self.assertEqual("x -> x", jast.unparse(tree))
+
+    def test_Lambda_identifiers(self):
+        tree = jast.Lambda(
+            args=[jast.identifier("x"), jast.identifier("y")],
+            body=jast.Name(jast.identifier("x")),
+        )
+        self.assertEqual("(x, y) -> x", jast.unparse(tree))
+
+    def test_Lambda_identifiers_empty(self):
+        tree = jast.Lambda(args=[], body=jast.Name(jast.identifier("x")))
+        self.assertEqual("() -> x", jast.unparse(tree))
+
+    def test_Lambda_parameters(self):
+        tree = jast.Lambda(
+            args=jast.params(
+                parameters=[
+                    jast.param(type=jast.Int(), id=jast.variabledeclaratorid("x")),
+                    jast.param(type=jast.Boolean(), id=jast.variabledeclaratorid("y")),
+                ]
+            ),
+            body=jast.Name(jast.identifier("x")),
+        )
+        self.assertEqual("(int x, boolean y) -> x", jast.unparse(tree))
+
+    def test_Lambda_var_parameters(self):
+        tree = jast.Lambda(
+            args=jast.params(
+                parameters=[
+                    jast.param(type=jast.Var(), id=jast.variabledeclaratorid("x")),
+                    jast.param(type=jast.Var(), id=jast.variabledeclaratorid("y")),
+                ]
+            ),
+            body=jast.Name(jast.identifier("x")),
+        )
+        self.assertEqual("(var x, var y) -> x", jast.unparse(tree))
+
+    def test_Lambda_block(self):
+        tree = jast.Lambda(
+            args=jast.identifier("x"),
+            body=jast.Block(body=[jast.Return(jast.Name(jast.identifier("x")))]),
+        )
+        self.assertEqual("x -> { return x; }", jast.unparse(tree, indent=-1))

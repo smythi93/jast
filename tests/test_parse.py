@@ -560,3 +560,65 @@ class TestParse(unittest.TestCase):
 
     def test_PostDec(self):
         self._test_postop(jast.parse("x--", jast.ParseMode.EXPR), jast.PostDec)
+
+    def test_Lambda_identifier(self):
+        tree = jast.parse("x -> x", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Lambda)
+        self.assertIsInstance(tree.args, jast.identifier)
+        self.assertEqual("x", tree.args)
+        self.assertIsInstance(tree.body, jast.Name)
+        self.assertEqual("x", tree.body.id)
+
+    def test_Lambda_identifiers(self):
+        tree = jast.parse("(x, y) -> x", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Lambda)
+        self.assertIsInstance(tree.args, list)
+        self.assertEqual(2, len(tree.args))
+        self.assertIsInstance(tree.args[0], jast.identifier)
+        self.assertEqual("x", tree.args[0])
+        self.assertIsInstance(tree.args[1], jast.identifier)
+        self.assertEqual("y", tree.args[1])
+        self.assertIsInstance(tree.body, jast.Name)
+        self.assertEqual("x", tree.body.id)
+
+    def test_Lambda_identifiers_empty(self):
+        tree = jast.parse("() -> x", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Lambda)
+        self.assertIsInstance(tree.args, list)
+        self.assertEqual(0, len(tree.args))
+        self.assertIsInstance(tree.body, jast.Name)
+        self.assertEqual("x", tree.body.id)
+
+    def test_Lambda_parameters(self):
+        tree = jast.parse("(int x, boolean y) -> x", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Lambda)
+        self.assertIsInstance(tree.args, jast.params)
+        self.assertIsNone(tree.args.receiver_parameter)
+        self.assertEqual(2, len(tree.args.parameters))
+        param = tree.args.parameters[0]
+        self.assertIsInstance(param, jast.param)
+        self.assertIsInstance(param.type, jast.Int)
+        self.assertIsInstance(param.id, jast.variabledeclaratorid)
+        self.assertEqual("x", jast.unparse(param.id))
+        param = tree.args.parameters[1]
+        self.assertIsInstance(param, jast.param)
+        self.assertIsInstance(param.type, jast.Boolean)
+        self.assertIsInstance(param.id, jast.variabledeclaratorid)
+        self.assertEqual("y", jast.unparse(param.id))
+
+    def test_Lambda_var_parameters(self):
+        tree = jast.parse("(var x, var y) -> x", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Lambda)
+        self.assertIsInstance(tree.args, jast.params)
+        self.assertIsNone(tree.args.receiver_parameter)
+        self.assertEqual(2, len(tree.args.parameters))
+        param = tree.args.parameters[0]
+        self.assertIsInstance(param, jast.param)
+        self.assertIsInstance(param.type, jast.Var)
+        self.assertIsInstance(param.id, jast.variabledeclaratorid)
+        self.assertEqual("x", jast.unparse(param.id))
+        param = tree.args.parameters[1]
+        self.assertIsInstance(param, jast.param)
+        self.assertIsInstance(param.type, jast.Var)
+        self.assertIsInstance(param.id, jast.variabledeclaratorid)
+        self.assertEqual("y", jast.unparse(param.id))

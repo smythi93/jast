@@ -710,3 +710,32 @@ class TestConstructors(unittest.TestCase):
         self.assertIsInstance(post_dec, jast.PostDec)
         self.assertIsInstance(post_dec, jast.JAST)
         self._test_iteration(post_dec)
+
+    def test_Lambda(self):
+        lambda_ = jast.Lambda(
+            args=[jast.identifier("foo"), jast.identifier("bar")],
+            body=jast.Constant(jast.IntLiteral(42)),
+        )
+        self.assertIsInstance(lambda_, jast.Lambda)
+        self.assertIsInstance(lambda_, jast.JAST)
+        self.assertEqual(2, len(lambda_.args))
+        self.assertIsInstance(lambda_.args[0], jast.identifier)
+        self.assertIsInstance(lambda_.args[1], jast.identifier)
+        self.assertEqual("foo", lambda_.args[0])
+        self.assertEqual("bar", lambda_.args[1])
+        self.assertIsInstance(lambda_.body, jast.Constant)
+        self.assertIsInstance(lambda_.body.value, jast.IntLiteral)
+        self.assertEqual(42, lambda_.body.value)
+        self._test_iteration(lambda_)
+
+    def test_Lambda_error(self):
+        self.assertRaises(
+            ValueError, jast.Lambda, body=jast.Constant(jast.IntLiteral(42))
+        )
+        self.assertRaises(ValueError, jast.Lambda, args=[jast.identifier("foo")])
+        self.assertRaises(
+            ValueError,
+            jast.Lambda,
+            args=jast.params(jast.receiver(jast.Int())),
+            body=jast.Constant(jast.IntLiteral(42)),
+        ),

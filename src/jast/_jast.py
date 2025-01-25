@@ -317,7 +317,7 @@ class Volatile(modifier):
     """
 
 
-class elementvaluepair(_JAST):
+class elementvaluepair(JAST):
     """
     Represents an element-value pair in the Java AST.
 
@@ -345,7 +345,7 @@ class elementvaluepair(_JAST):
         yield "value", self.value
 
 
-class elementarrayinit(_JAST):
+class elementarrayinit(JAST):
     """
     Represents an element-value array initializer in the Java AST.
 
@@ -607,7 +607,7 @@ class ClassType(jtype):
         yield "coits", self.coits
 
 
-class dim(_JAST):
+class dim(JAST):
     """
     Represents a dimension in the Java AST.
 
@@ -1056,10 +1056,6 @@ class expr(_JAST, abc.ABC):
     Abstract base class for all expressions in the Java AST.
     """
 
-    def __init__(self, level: int = 0, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.level = level
-
 
 class Lambda(expr):
     """
@@ -1380,7 +1376,7 @@ class ExpDefault(switchexplabel):
     """
 
 
-class switchexprule(_JAST):
+class switchexprule(JAST):
     """
     Represents a rule in a switch value in the Java AST.
     """
@@ -1671,7 +1667,7 @@ class Reference(expr):
 # Arrays
 
 
-class arrayinit(_JAST):
+class arrayinit(JAST):
     """
     Represents an array initializer in the Java AST.
 
@@ -1689,7 +1685,7 @@ class arrayinit(_JAST):
 # Parameters
 
 
-class receiver(_JAST):
+class receiver(JAST):
     """
     Represents a receiver parameter in the Java AST.
     """
@@ -1714,7 +1710,7 @@ class receiver(_JAST):
             yield "identifiers", self.identifiers
 
 
-class param(_JAST):
+class param(JAST):
     """
     Represents a parameter in the Java AST.
 
@@ -1746,7 +1742,7 @@ class param(_JAST):
         yield "label", self.id
 
 
-class arity(_JAST):
+class arity(JAST):
     """
     Represents a variable arity parameter in the Java AST.
     """
@@ -1780,7 +1776,7 @@ class arity(_JAST):
         yield "label", self.id
 
 
-class params(_JAST):
+class params(JAST):
     """
     Represents formal args in the Java AST.
 
@@ -2026,7 +2022,7 @@ class Assert(stmt):
             yield "msg", self.msg
 
 
-class switchlabel(_JAST, abc.ABC):
+class switchlabel(JAST, abc.ABC):
     """
     Abstract base class for all switch labels in the Java AST.
     """
@@ -2094,7 +2090,7 @@ class Throw(stmt):
         yield "exc", self.exc
 
 
-class switchgroup(_JAST):
+class switchgroup(JAST):
     """
     Represents a group of switch labels in the Java AST.
 
@@ -2121,7 +2117,7 @@ class switchgroup(_JAST):
         yield "body", self.statements
 
 
-class switchblock(_JAST):
+class switchblock(JAST):
     """
     Represents a body of switch groups and labels in the Java AST.
 
@@ -2354,7 +2350,7 @@ class Synch(stmt):
         yield "body", self.block
 
 
-class catch(_JAST):
+class catch(JAST):
     """
     Represents a catch clause in the Java AST.
 
@@ -2423,7 +2419,7 @@ class Try(stmt):
             yield "final", self.final
 
 
-class resource(_JAST):
+class resource(JAST):
     """
     Represents a resource in the Java AST.
 
@@ -2753,7 +2749,7 @@ class Module(declaration):
 # Field Declarations
 
 
-class declarator(_JAST):
+class declarator(JAST):
     """
     Represents a variable declarator in the Java AST.
 
@@ -2850,7 +2846,7 @@ class Method(declaration):
         self.parameters = parameters
         self.dims = dims or []
         self.throws = throws or []
-        self.body = body or []
+        self.body = body
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
@@ -3106,7 +3102,7 @@ class Class(declaration):
             yield "body", self.body
 
 
-class enumconstant(_JAST):
+class enumconstant(JAST):
     """
     Represents an enum constant in the Java AST.
 
@@ -3180,7 +3176,7 @@ class Enum(declaration):
             yield "body", self.body
 
 
-class recordcomponent(_JAST):
+class recordcomponent(JAST):
     """
     Represents a record component in the Java AST.
 
