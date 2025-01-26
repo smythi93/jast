@@ -1331,7 +1331,7 @@ class NewObject(expr):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.type_args:
             yield "type_args", self.type_args
-        yield "jtype", self.type
+        yield "type", self.type
         if self.template_args:
             yield "template_args", self.template_args
         if self.args:
@@ -1366,12 +1366,12 @@ class NewArray(expr):
                 "expr_dims and initializer are mutually exclusive for ArrayCreation"
             )
         self.type = type
-        self.expr_dims = expr_dims
-        self.dims = dims
+        self.expr_dims = expr_dims or []
+        self.dims = dims or []
         self.initializer = initializer
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "jtype", self.type
+        yield "type", self.type
         if self.expr_dims:
             yield "expr_dims", self.expr_dims
         if self.dims:

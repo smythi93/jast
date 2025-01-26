@@ -91,14 +91,16 @@ class _Unparser(JNodeVisitor):
             self.write(" " * self._indent_spaces * self._indent)
         self.write(text)
 
-    def interleave(self, items, sep, end=""):
+    def interleave(self, items, sep, start="", end=""):
         """
         Interleave a list of items with a separator.
         :param items:   The items to interleave.
         :param sep:     The separator.
+        :param start:   A text to add at the start.
         :param end:     A text to add at the end.
         """
         if items:
+            self.write(start)
             seq = iter(items)
             try:
                 self.visit(next(seq))
@@ -344,21 +346,22 @@ class _Unparser(JNodeVisitor):
         self.traverse(node.dims)
 
     def visit_typebound(self, node: jast.typebound):
-        self.write(" extends ")
         self.traverse(node.annotations, end=" ")
         self.interleave(node.types, " & ")
 
     def visit_typeparam(self, node: jast.typeparam):
         self.traverse(node.annotations, end=" ")
         self.visit_identifier(node.id)
-        self.visit(node.bound)
+        if node.bound:
+            self.write(" extends ")
+            self.visit(node.bound)
 
     def visit_typeparams(self, node: jast.typeparams):
         with self.diamond():
             self.items_view(node.parameters)
 
     def visit_pattern(self, node: jast.pattern):
-        self.interleave(node.modifiers, " ", " ")
+        self.interleave(node.modifiers, " ", end=" ")
         self.visit(node.type)
         self.write(" ")
         self.traverse(node.annotations, end=" ")
@@ -537,22 +540,26 @@ class _Unparser(JNodeVisitor):
             self.write(")")
             if node.body:
                 with self.delimit(" {", "}"):
-                    self.traverse(node.body)
+                    with self.block():
+                        self.traverse(node.body)
+                    self.fill()
 
     def visit_NewArray(self, node: jast.NewArray):
         with self.require_parens(_Precedence.TYPE, node):
             self.write("new ")
             self.visit(node.type)
-            self.traverse(node.expr_dims)
+            self.interleave(node.expr_dims, "][", "[", "]")
             self.traverse(node.dims)
             if node.initializer:
-                self.visit(node.initializer)
+                self.write(" ")
+                self.visit_arrayinit(node.initializer)
 
     def visit_Cast(self, node: jast.Cast):
         with self.require_parens(_Precedence.TYPE, node):
             with self.parens():
                 self.traverse(node.annotations, end=" ")
                 self.visit(node.type)
+            self.write(" ")
             self.set_precedence(_Precedence.TYPE, node.value)
             self.visit(node.value)
 
@@ -646,13 +653,13 @@ class _Unparser(JNodeVisitor):
         self.write("this")
 
     def visit_param(self, node: jast.param):
-        self.interleave(node.modifiers, " ", " ")
+        self.interleave(node.modifiers, " ", end=" ")
         self.visit(node.type)
         self.write(" ")
         self.visit_variabledeclaratorid(node.id)
 
     def visit_arity(self, node: jast.arity):
-        self.interleave(node.modifiers, " ", " ")
+        self.interleave(node.modifiers, " ", end=" ")
         self.visit(node.type)
         self.write(" ")
         self.traverse(node.annotations, end=" ")
@@ -673,7 +680,7 @@ class _Unparser(JNodeVisitor):
 
     def visit_LocalVariable(self, node: jast.LocalVariable):
         self.fill()
-        self.interleave(node.modifiers, " ", " ")
+        self.interleave(node.modifiers, " ", end=" ")
         self.visit(node.type)
         self.write(" ")
         self.items_view(node.declarators)
@@ -834,7 +841,7 @@ class _Unparser(JNodeVisitor):
 
     def visit_Field(self, node: jast.Field):
         self.fill()
-        self.interleave(node.modifiers, " ", " ")
+        self.interleave(node.modifiers, " ", end=" ")
         self.visit(node.type)
         self.write(" ")
         self.items_view(node.declarators)
@@ -843,7 +850,7 @@ class _Unparser(JNodeVisitor):
     def visit_Method(self, node: jast.Method):
         self.fill()
         self.fill()
-        self.interleave(node.modifiers, " ", " ")
+        self.interleave(node.modifiers, " ", end=" ")
         self.visit(node.return_type)
         self.write(" ")
         self.visit_identifier(node.id)
@@ -862,7 +869,7 @@ class _Unparser(JNodeVisitor):
     def visit_Class(self, node: jast.Class):
         self.fill()
         self.fill()
-        self.interleave(node.modifiers, " ", " ")
+        self.interleave(node.modifiers, " ", end=" ")
         self.write("class ")
         self.visit_identifier(node.id)
         self.visit(node.type_params)

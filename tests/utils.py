@@ -164,3 +164,48 @@ RIGHT_PRECEDENCE_FOR_LEFT = [
     ("And_BitOr", "&&", "|", jast.And, jast.BitOr),
     ("Or_And", "||", "&&", jast.Or, jast.And),
 ]
+
+INSTANCEOF_LOWER_PRECEDENCE = [
+    ("Eq", "==", jast.Eq),
+    ("NotEq", "!=", jast.NotEq),
+    ("BitAnd", "&", jast.BitAnd),
+    ("BitXor", "^", jast.BitXor),
+    ("BitOr", "|", jast.BitOr),
+    ("And", "&&", jast.And),
+    ("Or", "||", jast.Or),
+]
+
+INSTANCEOF_SAME_PRECEDENCE = [
+    ("Lt", "<", jast.Lt),
+    ("LtE", "<=", jast.LtE),
+    ("Gt", ">", jast.Gt),
+    ("GtE", ">=", jast.GtE),
+]
+
+INSTANCEOF_HIGHER_PRECEDENCE = [
+    ("LShift", "<<", jast.LShift),
+    ("RShift", ">>", jast.RShift),
+    ("URShift", ">>>", jast.URShift),
+    ("Add", "+", jast.Add),
+    ("Sub", "-", jast.Sub),
+    ("Mult", "*", jast.Mult),
+    ("Div", "/", jast.Div),
+    ("Mod", "%", jast.Mod),
+]
+
+INSTANCEOF_HIGHER_SAME_PRECEDENCE = (
+    INSTANCEOF_SAME_PRECEDENCE + INSTANCEOF_HIGHER_PRECEDENCE
+)
+
+INSTANCEOF_LOWER_SAME_PRECEDENCE = (
+    INSTANCEOF_SAME_PRECEDENCE + INSTANCEOF_LOWER_PRECEDENCE
+)
+
+UNARY_OPERATORS = [
+    ("UAdd", "+", jast.UAdd),
+    ("USub", "-", jast.USub),
+    ("Invert", "~", jast.Invert),
+    ("Not", "!", jast.Not),
+    ("PreInc", "++", jast.PreInc),
+    ("PreDec", "--", jast.PreDec),
+]

@@ -607,7 +607,7 @@ class JASTConverter(JavaParserVisitor):
         self, ctx: JavaParser.ArrayInitializerContext
     ) -> jast.arrayinit:
         return jast.arrayinit(
-            initializers=[
+            values=[
                 self.visitVariableInitializer(variable_initializer)
                 for variable_initializer in ctx.variableInitializer()
             ],
@@ -1468,7 +1468,7 @@ class JASTConverter(JavaParserVisitor):
                 type=jast.typebound(
                     types=[self.visitTypeType(typeType) for typeType in ctx.typeType()],
                 ),
-                expression=self.visitTypeExpression(ctx.typeExpression()),
+                value=self.visitTypeExpression(ctx.typeExpression()),
                 **self._get_location_rule(ctx),
             )
 
@@ -2129,7 +2129,11 @@ class JASTConverter(JavaParserVisitor):
             )
 
     def visitArguments(self, ctx: JavaParser.ArgumentsContext) -> List[jast.expr]:
-        return self.visitExpressionList(ctx.expressionList())
+        return (
+            self.visitExpressionList(ctx.expressionList())
+            if ctx.expressionList()
+            else []
+        )
 
     def visitDeclarationStart(
         self, ctx: JavaParser.DeclarationStartContext

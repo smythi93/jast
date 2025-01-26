@@ -1,9 +1,18 @@
+import itertools
 import unittest
 
 from parameterized import parameterized
 
 import jast
-from utils import OPERATORS, RIGHT_PRECEDENCE_FOR_LEFT, LEFT_PRECEDENCE_FOR_RIGHT
+from utils import (
+    OPERATORS,
+    RIGHT_PRECEDENCE_FOR_LEFT,
+    LEFT_PRECEDENCE_FOR_RIGHT,
+    INSTANCEOF_HIGHER_SAME_PRECEDENCE,
+    INSTANCEOF_LOWER_PRECEDENCE,
+    INSTANCEOF_LOWER_SAME_PRECEDENCE,
+    UNARY_OPERATORS,
+)
 
 
 class TestUnparse(unittest.TestCase):
@@ -256,7 +265,7 @@ class TestUnparse(unittest.TestCase):
             annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
             types=[jast.Int(), jast.Boolean()],
         )
-        self.assertEqual(" extends @foo int & boolean", jast.unparse(tree))
+        self.assertEqual("@foo int & boolean", jast.unparse(tree))
 
     def test_typeparam(self):
         tree = jast.typeparam(
@@ -620,3 +629,266 @@ class TestUnparse(unittest.TestCase):
             right=jast.Constant(jast.IntLiteral(3)),
         )
         self.assertEqual(f"(1 {rep1} 2) {rep2} 3", jast.unparse(tree))
+
+    def test_InstanceOf(self):
+        tree = jast.InstanceOf(
+            value=jast.Name(jast.identifier("x")),
+            type=jast.Int(),
+        )
+        self.assertEqual("x instanceof int", jast.unparse(tree))
+
+    @parameterized.expand(INSTANCEOF_HIGHER_SAME_PRECEDENCE)
+    def test_Instanceof_order(self, _, rep, operator):
+        tree = jast.InstanceOf(
+            value=jast.BinOp(
+                left=jast.Name(jast.identifier("x")),
+                op=operator(),
+                right=jast.Name(jast.identifier("y")),
+            ),
+            type=jast.Int(),
+        )
+        self.assertEqual(f"x {rep} y instanceof int", jast.unparse(tree))
+
+    @parameterized.expand(INSTANCEOF_LOWER_PRECEDENCE)
+    def test_Instanceof_order_parens(self, _, rep, operator):
+        tree = jast.InstanceOf(
+            value=jast.BinOp(
+                left=jast.Name(jast.identifier("x")),
+                op=operator(),
+                right=jast.Name(jast.identifier("y")),
+            ),
+            type=jast.Int(),
+        )
+        self.assertEqual(f"(x {rep} y) instanceof int", jast.unparse(tree))
+
+    def test_InstanceOf_left(self):
+        tree = jast.InstanceOf(
+            value=jast.InstanceOf(
+                value=jast.Name(jast.identifier("x")),
+                type=jast.Int(),
+            ),
+            type=jast.Int(),
+        )
+        self.assertEqual("x instanceof int instanceof int", jast.unparse(tree))
+
+    @parameterized.expand(INSTANCEOF_HIGHER_SAME_PRECEDENCE)
+    def test_Instanceof_reversed(self, _, rep, operator):
+        tree = jast.BinOp(
+            left=jast.Name(jast.identifier("x")),
+            op=operator(),
+            right=jast.InstanceOf(
+                value=jast.Name(jast.identifier("y")),
+                type=jast.Int(),
+            ),
+        )
+        self.assertEqual(f"x {rep} (y instanceof int)", jast.unparse(tree))
+
+    @parameterized.expand(INSTANCEOF_LOWER_PRECEDENCE)
+    def test_Instanceof_reversed_parens(self, _, rep, operator):
+        tree = jast.BinOp(
+            left=jast.Name(jast.identifier("x")),
+            op=operator(),
+            right=jast.InstanceOf(
+                value=jast.Name(jast.identifier("y")),
+                type=jast.Int(),
+            ),
+        )
+        self.assertEqual(f"x {rep} y instanceof int", jast.unparse(tree))
+
+    @parameterized.expand(INSTANCEOF_LOWER_SAME_PRECEDENCE)
+    def test_Instanceof_BinOp(self, _, rep, operator):
+        tree = jast.BinOp(
+            left=jast.InstanceOf(
+                value=jast.Name(jast.identifier("x")),
+                type=jast.Int(),
+            ),
+            op=operator(),
+            right=jast.Name(jast.identifier("y")),
+        )
+        self.assertEqual(f"x instanceof int {rep} y", jast.unparse(tree))
+
+    @parameterized.expand(UNARY_OPERATORS)
+    def test_UnaryOp(self, _, rep, op):
+        tree = jast.UnaryOp(
+            op=op(),
+            operand=jast.Constant(jast.IntLiteral(42)),
+        )
+        self.assertEqual(f"{rep}42", jast.unparse(tree))
+
+    @parameterized.expand(
+        [
+            tuple([*data1, *data2])
+            for data1, data2 in itertools.product(UNARY_OPERATORS, UNARY_OPERATORS)
+        ]
+    )
+    def test_UnaryOp_twice(self, _, rep1, op1, __, rep2, op2):
+        tree = jast.UnaryOp(
+            op=op1(),
+            operand=jast.UnaryOp(
+                op=op2(),
+                operand=jast.Constant(jast.IntLiteral(42)),
+            ),
+        )
+        self.assertEqual(f"{rep1}{rep2}42", jast.unparse(tree))
+
+    def test_UnaryOp_parens(self):
+        tree = jast.UnaryOp(
+            op=jast.USub(),
+            operand=jast.BinOp(
+                left=jast.Name(jast.identifier("x")),
+                op=jast.Mult(),
+                right=jast.Name(jast.identifier("y")),
+            ),
+        )
+        self.assertEqual("-(x * y)", jast.unparse(tree))
+
+    def test_UnaryOp_no_parens(self):
+        tree = jast.BinOp(
+            left=jast.UnaryOp(
+                op=jast.USub(),
+                operand=jast.Name(jast.identifier("x")),
+            ),
+            op=jast.Mult(),
+            right=jast.Name(jast.identifier("y")),
+        )
+        self.assertEqual("-x * y", jast.unparse(tree))
+
+    def test_UnaryOp_cast(self):
+        tree = jast.Cast(
+            type=jast.typebound(types=[jast.Int()]),
+            value=jast.UnaryOp(
+                op=jast.USub(),
+                operand=jast.Name(jast.identifier("x")),
+            ),
+        )
+        self.assertEqual("(int) -x", jast.unparse(tree))
+
+    def test_UnaryOp_cast_parens(self):
+        tree = jast.UnaryOp(
+            op=jast.USub(),
+            operand=jast.Cast(
+                type=jast.typebound(types=[jast.Int()]),
+                value=jast.Name(jast.identifier("x")),
+            ),
+        )
+        self.assertEqual("-((int) x)", jast.unparse(tree))
+
+    def test_Cast(self):
+        tree = jast.Cast(
+            type=jast.typebound(types=[jast.Int()]),
+            value=jast.Name(jast.identifier("x")),
+        )
+        self.assertEqual("(int) x", jast.unparse(tree))
+
+    def test_Cast_twice(self):
+        tree = jast.Cast(
+            type=jast.typebound(types=[jast.Int()]),
+            value=jast.Cast(
+                type=jast.typebound(types=[jast.Long()]),
+                value=jast.Name(jast.identifier("x")),
+            ),
+        )
+        self.assertEqual("(int) (long) x", jast.unparse(tree))
+
+    def test_Cast_type_bounds(self):
+        tree = jast.Cast(
+            type=jast.typebound(types=[jast.Int(), jast.Long()]),
+            value=jast.Name(jast.identifier("x")),
+        )
+        self.assertEqual("(int & long) x", jast.unparse(tree))
+
+    def test_Cast_parens(self):
+        tree = jast.Cast(
+            type=jast.typebound(types=[jast.Int()]),
+            value=jast.BinOp(
+                left=jast.Name(jast.identifier("x")),
+                op=jast.Mult(),
+                right=jast.Name(jast.identifier("y")),
+            ),
+        )
+        self.assertEqual("(int) (x * y)", jast.unparse(tree))
+
+    def test_Cast_no_parens(self):
+        tree = jast.BinOp(
+            left=jast.Cast(
+                type=jast.typebound(types=[jast.Int()]),
+                value=jast.Name(jast.identifier("x")),
+            ),
+            op=jast.Mult(),
+            right=jast.Name(jast.identifier("y")),
+        )
+        self.assertEqual("(int) x * y", jast.unparse(tree))
+
+    def test_Cast_annotation(self):
+        tree = jast.Cast(
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            type=jast.typebound(types=[jast.Int()]),
+            value=jast.Name(jast.identifier("x")),
+        )
+        self.assertEqual("(@foo int) x", jast.unparse(tree))
+
+    def test_NewObject(self):
+        tree = jast.NewObject(
+            type=jast.ClassType(
+                annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+                coits=[
+                    jast.Coit(
+                        id=jast.identifier("bar"),
+                        type_args=jast.typeargs([jast.Int(), jast.Boolean()]),
+                    ),
+                    jast.Coit(
+                        id=jast.identifier("baz"),
+                    ),
+                ],
+            ),
+            args=[jast.Constant(jast.IntLiteral(1)), jast.Constant(jast.IntLiteral(2))],
+        )
+        self.assertEqual("new @foo bar<int, boolean>.baz(1, 2)", jast.unparse(tree))
+
+    def test_NewObject_no_args(self):
+        tree = jast.NewObject(
+            type=jast.ClassType(
+                coits=[
+                    jast.Coit(
+                        id=jast.identifier("X"),
+                    ),
+                ],
+            ),
+            args=[],
+        )
+        self.assertEqual("new X()", jast.unparse(tree))
+
+    def test_NewObject_with_body(self):
+        tree = jast.NewObject(
+            type=jast.ClassType(
+                coits=[
+                    jast.Coit(
+                        id=jast.identifier("X"),
+                    ),
+                ],
+            ),
+            args=[],
+            body=[jast.EmptyDecl(), jast.EmptyDecl()],
+        )
+        self.assertEqual("new X() { ; ; }", jast.unparse(tree, indent=-1))
+
+    def test_NewArray(self):
+        tree = jast.NewArray(
+            type=jast.Int(),
+            expr_dims=[
+                jast.Constant(jast.IntLiteral(1)),
+                jast.Constant(jast.IntLiteral(2)),
+            ],
+            dims=[jast.dim(), jast.dim()],
+        )
+        self.assertEqual("new int[1][2][][]", jast.unparse(tree))
+
+    def test_NewArray_initializer(self):
+        tree = jast.NewArray(
+            type=jast.Int(),
+            dims=[jast.dim()],
+            initializer=jast.arrayinit(
+                [jast.Constant(jast.IntLiteral(3)), jast.Constant(jast.IntLiteral(4))]
+            ),
+        )
+        self.assertEqual("new int[] {3, 4}", jast.unparse(tree))
