@@ -892,3 +892,85 @@ class TestUnparse(unittest.TestCase):
             ),
         )
         self.assertEqual("new int[] {3, 4}", jast.unparse(tree))
+
+    def test_ExpCase(self):
+        tree = jast.ExpCase()
+        self.assertEqual("case", jast.unparse(tree))
+
+    def test_ExpDefault(self):
+        tree = jast.ExpDefault()
+        self.assertEqual("default", jast.unparse(tree))
+
+    def test_switchexprule_case(self):
+        tree = jast.switchexprule(
+            label=jast.ExpCase(),
+            cases=[jast.Constant(jast.IntLiteral(42))],
+            arrow=True,
+            body=[jast.Return(jast.Constant(jast.IntLiteral(24)))],
+        )
+        self.assertEqual("case 42 -> return 24;", jast.unparse(tree, indent=-1))
+
+    def test_switchexprule_default(self):
+        switchexprule = jast.switchexprule(
+            label=jast.ExpDefault(),
+            body=[jast.Empty()],
+        )
+        self.assertEqual("default: ;", jast.unparse(switchexprule, indent=-1))
+
+    def test_switchexprule_block(self):
+        tree = jast.switchexprule(
+            label=jast.ExpCase(),
+            cases=[jast.Constant(jast.IntLiteral(42))],
+            arrow=False,
+            body=[jast.Block()],
+        )
+        self.assertEqual("case 42: { }", jast.unparse(tree, indent=-1))
+
+    def test_switchexprule_empty(self):
+        tree = jast.switchexprule(
+            label=jast.ExpDefault(),
+            arrow=True,
+        )
+        self.assertEqual("default ->", jast.unparse(tree, indent=-1))
+
+    def test_SwitchExp(self):
+        tree = jast.SwitchExp(
+            value=jast.identifier("foo"),
+            rules=[
+                jast.switchexprule(
+                    label=jast.ExpCase(),
+                    cases=[
+                        jast.Constant(jast.IntLiteral(42)),
+                        jast.Constant(jast.IntLiteral(43)),
+                    ],
+                ),
+                jast.switchexprule(
+                    label=jast.ExpCase(),
+                    cases=[
+                        jast.guardedpattern(
+                            value=jast.pattern(
+                                type=jast.Int(),
+                                id=jast.identifier("x"),
+                            ),
+                            conditions=[
+                                jast.Constant(jast.BoolLiteral(True)),
+                            ],
+                        ),
+                    ],
+                    arrow=True,
+                    body=[jast.Return(jast.Constant(jast.IntLiteral(24)))],
+                ),
+                jast.switchexprule(
+                    label=jast.ExpDefault(),
+                    body=[
+                        jast.Block(
+                            body=[jast.Return(jast.Constant(jast.IntLiteral(0)))]
+                        )
+                    ],
+                ),
+            ],
+        )
+        self.assertEqual(
+            "switch (foo) { case 42, 43: case int x && true -> return 24; default: { return 0; } }",
+            jast.unparse(tree, indent=-1),
+        )

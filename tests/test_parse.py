@@ -1115,3 +1115,37 @@ class TestParse(unittest.TestCase):
         self.assertIsInstance(tree.initializer.values[1], jast.Constant)
         self.assertIsInstance(tree.initializer.values[1].value, jast.IntLiteral)
         self.assertEqual(24, tree.initializer.values[1].value.value)
+
+    def test_SwitchExp(self):
+        tree = jast.parse(
+            "switch (x) {case y, z: ; case a: {} default:}", jast.ParseMode.EXPR
+        )
+        self.assertIsInstance(tree, jast.SwitchExp)
+        self.assertIsInstance(tree.value, jast.Name)
+        self.assertEqual("x", tree.value.id)
+        self.assertEqual(3, len(tree.rules))
+        rule = tree.rules[0]
+        self.assertIsInstance(rule, jast.switchexprule)
+        self.assertIsInstance(rule.label, jast.ExpCase)
+        self.assertEqual(2, len(rule.cases))
+        y = rule.cases[0]
+        self.assertIsInstance(y, jast.Name)
+        self.assertEqual("y", y.id)
+        z = rule.cases[1]
+        self.assertIsInstance(z, jast.Name)
+        self.assertEqual("z", z.id)
+        self.assertEqual(1, len(rule.body))
+        self.assertIsInstance(rule.body[0], jast.Empty)
+        rule = tree.rules[1]
+        self.assertIsInstance(rule, jast.switchexprule)
+        self.assertIsInstance(rule.label, jast.ExpCase)
+        self.assertEqual(1, len(rule.cases))
+        a = rule.cases[0]
+        self.assertIsInstance(a, jast.Name)
+        self.assertEqual(1, len(rule.body))
+        self.assertIsInstance(rule.body[0], jast.Block)
+        rule = tree.rules[2]
+        self.assertIsInstance(rule, jast.switchexprule)
+        self.assertIsInstance(rule.label, jast.ExpDefault)
+        self.assertIsNone(rule.cases)
+        self.assertEqual(0, len(rule.body))

@@ -1047,3 +1047,100 @@ class TestConstructors(unittest.TestCase):
             expr_dims=[jast.Constant(jast.IntLiteral(1))],
             initializer=jast.arrayinit(values=[jast.Constant(jast.IntLiteral(1))]),
         )
+
+    def test_ExpCase(self):
+        exp_case = jast.ExpCase()
+        self.assertIsInstance(exp_case, jast.ExpCase)
+        self.assertIsInstance(exp_case, jast.JAST)
+        self._test_iteration(exp_case)
+
+    def test_ExpDefault(self):
+        exp_default = jast.ExpDefault()
+        self.assertIsInstance(exp_default, jast.ExpDefault)
+        self.assertIsInstance(exp_default, jast.JAST)
+        self._test_iteration(exp_default)
+
+    def test_switchexprule(self):
+        switchexprule = jast.switchexprule(
+            label=jast.ExpCase(),
+            cases=[jast.Constant(jast.IntLiteral(42))],
+            arrow=True,
+            body=[jast.Return(jast.Constant(jast.IntLiteral(24)))],
+        )
+        self.assertIsInstance(switchexprule, jast.switchexprule)
+        self.assertIsInstance(switchexprule, jast.JAST)
+        self.assertIsInstance(switchexprule.label, jast.ExpCase)
+        self.assertEqual(1, len(switchexprule.cases))
+        self.assertIsInstance(switchexprule.cases[0], jast.Constant)
+        self.assertIsInstance(switchexprule.cases[0].value, jast.IntLiteral)
+        self.assertEqual(42, switchexprule.cases[0].value)
+        self.assertTrue(switchexprule.arrow)
+        self.assertEqual(1, len(switchexprule.body))
+        ret = switchexprule.body[0]
+        self.assertIsInstance(ret, jast.Return)
+        self.assertIsInstance(ret.value, jast.Constant)
+        self.assertIsInstance(ret.value.value, jast.IntLiteral)
+        self.assertEqual(24, ret.value.value)
+        self._test_iteration(switchexprule)
+
+    def test_switchexprule_default(self):
+        switchexprule = jast.switchexprule(
+            label=jast.ExpDefault(),
+            body=[jast.Empty()],
+        )
+        self.assertIsInstance(switchexprule, jast.switchexprule)
+        self.assertIsInstance(switchexprule, jast.JAST)
+        self.assertIsInstance(switchexprule.label, jast.ExpDefault)
+        self.assertIsNone(switchexprule.cases)
+        self.assertFalse(switchexprule.arrow)
+        self.assertEqual(1, len(switchexprule.body))
+        self.assertIsInstance(switchexprule.body[0], jast.Empty)
+        self._test_iteration(switchexprule)
+
+    def test_switchexprule_error(self):
+        self.assertRaises(
+            ValueError,
+            jast.switchexprule,
+            cases=[jast.Constant(jast.IntLiteral(42))],
+            body=[jast.Return(jast.Constant(jast.IntLiteral(24)))],
+        )
+        self.assertRaises(
+            ValueError,
+            jast.switchexprule,
+            label=jast.ExpCase(),
+            body=[jast.Return(jast.Constant(jast.IntLiteral(24)))],
+        )
+
+    def test_SwitchExp(self):
+        switch_exp = jast.SwitchExp(
+            value=jast.identifier("foo"),
+            rules=[
+                jast.switchexprule(
+                    label=jast.ExpCase(),
+                    cases=[jast.Constant(jast.IntLiteral(42))],
+                    arrow=True,
+                    body=[jast.Return(jast.Constant(jast.IntLiteral(24)))],
+                )
+            ],
+        )
+        self.assertIsInstance(switch_exp, jast.SwitchExp)
+        self.assertIsInstance(switch_exp, jast.JAST)
+        self.assertIsInstance(switch_exp.value, jast.identifier)
+        self.assertEqual("foo", switch_exp.value)
+        self.assertEqual(1, len(switch_exp.rules))
+        self.assertIsInstance(switch_exp.rules[0], jast.switchexprule)
+        self._test_iteration(switch_exp)
+
+    def test_SwitchExp_error(self):
+        self.assertRaises(
+            ValueError,
+            jast.SwitchExp,
+            rules=[
+                jast.switchexprule(
+                    label=jast.ExpCase(),
+                    cases=[jast.Constant(jast.IntLiteral(42))],
+                    arrow=True,
+                    body=[jast.Return(jast.Constant(jast.IntLiteral(24)))],
+                )
+            ],
+        )

@@ -140,6 +140,12 @@ class _Unparser(JNodeVisitor):
     def block_end(self):
         return self._source[-1].endswith("}")
 
+    def braced_block(self, elements):
+        self.write("{")
+        with self.block():
+            self.traverse(elements)
+        self.fill("}")
+
     @contextmanager
     def buffered(self, buffer=None):
         if buffer is None:
@@ -174,6 +180,12 @@ class _Unparser(JNodeVisitor):
 
     def diamond(self):
         return self.delimit("<", ">")
+
+    def braces(self):
+        return self.delimit("{", "}")
+
+    def brackets(self):
+        return self.delimit("[", "]")
 
     def visit_identifier(self, node: jast.identifier):
         self.write(node)
@@ -260,17 +272,15 @@ class _Unparser(JNodeVisitor):
         (self.visit(node.value))
 
     def visit_elementarrayinit(self, node: jast.elementarrayinit):
-        self.write("{")
-        self.items_view(node.values)
-        self.write("}")
+        with self.braces():
+            self.items_view(node.values)
 
     def visit_Annotation(self, node: jast.Annotation):
         self.write("@")
         (self.visit(node.name))
         if node.elements:
-            self.write("(")
-            self.items_view(node.elements)
-            self.write(")")
+            with self.parens():
+                self.items_view(node.elements)
 
     def visit_Void(self, node: jast.Void):
         self.write("void")
@@ -535,14 +545,11 @@ class _Unparser(JNodeVisitor):
         with self.require_parens(_Precedence.TYPE, node):
             self.write("new ")
             self.visit(node.type)
-            self.write("(")
-            self.items_view(node.args)
-            self.write(")")
+            with self.parens():
+                self.items_view(node.args)
             if node.body:
-                with self.delimit(" {", "}"):
-                    with self.block():
-                        self.traverse(node.body)
-                    self.fill()
+                self.write(" ")
+                self.braced_block(node.body)
 
     def visit_NewArray(self, node: jast.NewArray):
         with self.require_parens(_Precedence.TYPE, node):
@@ -576,7 +583,11 @@ class _Unparser(JNodeVisitor):
             self.visit(node.op)
 
     def visit_SwitchExp(self, node: jast.SwitchExp):
-        pass
+        self.write("switch ")
+        with self.parens():
+            self.visit(node.value)
+        self.write(" ")
+        self.braced_block(node.rules)
 
     def visit_Reference(self, node: jast.Reference):
         self.visit(node.type)
@@ -601,7 +612,7 @@ class _Unparser(JNodeVisitor):
     def visit_Subscript(self, node: jast.Subscript):
         self.set_precedence(_Precedence.PRIMARY, node.value)
         self.visit(node.value)
-        with self.delimit("[", "]"):
+        with self.brackets():
             self.visit(node.index)
 
     def visit_This(self, node: jast.This):
@@ -634,16 +645,31 @@ class _Unparser(JNodeVisitor):
         pass
 
     def visit_ExpCase(self, node: jast.ExpCase):
-        pass
+        self.write("case")
 
     def visit_ExpDefault(self, node: jast.ExpDefault):
-        pass
+        self.write("default")
 
     def visit_switchexprule(self, node: jast.switchexprule):
-        pass
+        self.fill()
+        self.visit(node.label)
+        if node.cases:
+            self.write(" ")
+            self.items_view(node.cases)
+        if node.arrow:
+            self.write(" ->")
+        else:
+            self.write(":")
+        if node.body:
+            if len(node.body) == 1 and isinstance(node.body[0], jast.Block):
+                self.write(" ")
+                self.traverse(node.body)
+            else:
+                with self.block():
+                    self.traverse(node.body)
 
     def visit_arrayinit(self, node: jast.arrayinit):
-        with self.delimit("{", "}"):
+        with self.braces():
             self.items_view(node.values)
 
     def visit_receiver(self, node: jast.receiver):
@@ -687,10 +713,7 @@ class _Unparser(JNodeVisitor):
         self.write(";")
 
     def visit_Block(self, node: jast.Block):
-        self.write("{")
-        with self.block():
-            self.traverse(node.body)
-        self.fill("}")
+        self.braced_block(node.body)
 
     def visit_Compound(self, node: jast.Compound):
         self.traverse(node.body)
@@ -882,10 +905,8 @@ class _Unparser(JNodeVisitor):
         if node.permits:
             self.write(" permits ")
             self.items_view(node.permits)
-        self.write(" {")
-        with self.block():
-            self.traverse(node.body)
-        self.fill("}")
+        self.write(" ")
+        self.braced_block(node.body)
 
 
 def unparse(node, indent=4):

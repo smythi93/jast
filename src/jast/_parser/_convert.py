@@ -1889,8 +1889,8 @@ class JASTConverter(JavaParserVisitor):
                 cases = [self.visitGuardedPattern(ctx.guardedPattern())]
             label = jast.ExpCase()
         else:
-            cases = []
-            label = jast.DefaultCase()
+            cases = None
+            label = jast.ExpDefault()
         body = self.visitSwitchRuleOutcome(ctx.switchRuleOutcome())
         return jast.switchexprule(
             label=label,

@@ -1415,19 +1415,21 @@ class switchexprule(JAST):
         super().__init__(*args, **kwargs)
         if label is None:
             raise ValueError("label is required for switchexprule")
-        if not cases:
-            raise ValueError("cases is required for switchexprule")
-        if not body:
-            raise ValueError("body is required for switchexprule")
+        if not cases and isinstance(label, ExpCase):
+            raise ValueError("cases is required for switchexprule with case")
+        elif cases and isinstance(label, ExpDefault):
+            raise ValueError("cases is not allowed for switchexprule with default")
         self.label = label
         self.cases = cases
         self.arrow = arrow
-        self.body = body
+        self.body = body or []
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "label", self.label
-        yield "cases", self.cases
-        yield "body", self.body
+        if self.cases:
+            yield "cases", self.cases
+        if self.body:
+            yield "body", self.body
 
 
 class SwitchExp(expr):
