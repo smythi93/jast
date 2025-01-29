@@ -1060,6 +1060,13 @@ class TestConstructors(BaseTest):
             label=jast.ExpCase(),
             body=[jast.Return(jast.Constant(jast.IntLiteral(24)))],
         )
+        self.assertRaises(
+            ValueError,
+            jast.switchexprule,
+            label=jast.ExpDefault(),
+            cases=[jast.Constant(jast.IntLiteral(42))],
+            body=[jast.Return(jast.Constant(jast.IntLiteral(24)))],
+        )
 
     def test_SwitchExp(self):
         switch_exp = jast.SwitchExp(
@@ -1161,6 +1168,11 @@ class TestConstructors(BaseTest):
             ValueError,
             jast.ExplicitGenericInvocation,
             type_args=jast.typeargs(types=[jast.Int()]),
+        )
+        self.assertRaises(
+            ValueError,
+            jast.ExplicitGenericInvocation,
+            value=jast.Constant(jast.IntLiteral(42)),
         )
 
     def test_Subscript(self):

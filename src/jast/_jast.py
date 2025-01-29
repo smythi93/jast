@@ -1706,12 +1706,12 @@ class receiver(JAST):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("jtype is required for receiver")
+            raise ValueError("type is required for receiver")
         self.type = type
         self.identifiers = identifiers
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "jtype", self.type
+        yield "type", self.type
         if self.identifiers:
             yield "identifiers", self.identifiers
 
@@ -1734,7 +1734,7 @@ class param(JAST):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("jtype is required for param")
+            raise ValueError("type is required for param")
         if id is None:
             raise ValueError("label is required for param")
         self.modifiers = modifiers or []
@@ -1744,8 +1744,8 @@ class param(JAST):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "jtype", self.type
-        yield "label", self.id
+        yield "type", self.type
+        yield "id", self.id
 
 
 class arity(JAST):
@@ -1765,7 +1765,7 @@ class arity(JAST):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("jtype is required for arity")
+            raise ValueError("type is required for arity")
         if id is None:
             raise ValueError("label is required for arity")
         self.modifiers = modifiers or []
@@ -1776,10 +1776,10 @@ class arity(JAST):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "jtype", self.type
+        yield "type", self.type
         if self.annotations:
             yield "annotations", self.annotations
-        yield "label", self.id
+        yield "id", self.id
 
 
 class params(JAST):
@@ -1924,7 +1924,7 @@ class LocalVariable(stmt):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("jtype is required for LocalVariable")
+            raise ValueError("type is required for LocalVariable")
         if not declarators:
             raise ValueError("declarators is required for LocalVariable")
         self.modifiers = modifiers or []
@@ -1934,7 +1934,7 @@ class LocalVariable(stmt):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "jtype", self.type
+        yield "type", self.type
         yield "declarators", self.declarators
 
 
@@ -2043,14 +2043,14 @@ class Match(expr):
     def __init__(self, type: jtype = None, id: identifier = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("jtype is required for Match")
+            raise ValueError("type is required for Match")
         if id is None:
             raise ValueError("id is required for Match")
         self.type = type
         self.id = id
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "jtype", self.type
+        yield "type", self.type
         yield "id", self.id
 
 
@@ -2265,7 +2265,7 @@ class ForEach(stmt):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("jtype is required for ForEachStatement")
+            raise ValueError("type is required for ForEachStatement")
         if id is None:
             raise ValueError("label is required for ForEachStatement")
         if iter is None:
@@ -2281,7 +2281,7 @@ class ForEach(stmt):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "jtype", self.type
+        yield "type", self.type
         yield "id", self.id
         yield "iter", self.iter
         yield "body", self.body
@@ -2445,7 +2445,7 @@ class resource(JAST):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("jtype is required for resource")
+            raise ValueError("type is required for resource")
         if declarator is None:
             raise ValueError("declarator is required for resource")
         self.modifiers = modifiers or []
@@ -2455,7 +2455,7 @@ class resource(JAST):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "jtype", self.type
+        yield "type", self.type
         yield "variable", self.variable
 
 
@@ -2714,7 +2714,7 @@ class Provides(directive):
     ):
         super().__init__(*vargs, **kwargs)
         if name is None:
-            raise ValueError("jtype is required for Provides")
+            raise ValueError("type is required for Provides")
         if not with_:
             raise ValueError("with_ is required for Provides")
         self.name = name
@@ -2779,7 +2779,7 @@ class declarator(JAST):
         self.initializer = initializer
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "label", self.id
+        yield "id", self.id
         if self.initializer:
             yield "initializer", self.initializer
 
@@ -2802,7 +2802,7 @@ class Field(declaration):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("jtype is required for Field")
+            raise ValueError("type is required for Field")
         if not declarators:
             raise ValueError("declarators is required for Field")
         self.modifiers = modifiers or []
@@ -2812,7 +2812,7 @@ class Field(declaration):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "jtype", self.type
+        yield "type", self.type
         yield "declarators", self.declarators
 
 
@@ -2864,7 +2864,7 @@ class Method(declaration):
         if self.annotations:
             yield "annotations", self.annotations
         yield "return_type", self.return_type
-        yield "label", self.id
+        yield "id", self.id
         if self.parameters:
             yield "args", self.parameters
         if self.dims:
@@ -2910,7 +2910,7 @@ class Constructor(declaration):
             yield "modifiers", self.modifiers
         if self.type_params:
             yield "type_params", self.type_params
-        yield "label", self.id
+        yield "id", self.id
         if self.parameters:
             yield "args", self.parameters
         if self.body:
@@ -2974,7 +2974,7 @@ class Interface(declaration):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "label", self.id
+        yield "id", self.id
         if self.type_params:
             yield "type_params", self.type_params
         if self.extends:
@@ -3004,7 +3004,7 @@ class AnnotationMethod(declaration):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("jtype is required for AnnotationMethod")
+            raise ValueError("type is required for AnnotationMethod")
         if id is None:
             raise ValueError("qname is required for AnnotationMethod")
         self.modifiers = modifiers or []
@@ -3015,8 +3015,8 @@ class AnnotationMethod(declaration):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "jtype", self.type
-        yield "label", self.id
+        yield "type", self.type
+        yield "id", self.id
         if self.default:
             yield "default", self.default
 
@@ -3097,7 +3097,7 @@ class Class(declaration):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "label", self.id
+        yield "id", self.id
         if self.type_params:
             yield "type_params", self.type_params
         if self.extends:
@@ -3195,15 +3195,15 @@ class recordcomponent(JAST):
     def __init__(self, type: jtype = None, id: identifier = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("jtype is required for recordcomponent")
+            raise ValueError("type is required for recordcomponent")
         if id is None:
-            raise ValueError("qname is required for recordcomponent")
+            raise ValueError("id is required for recordcomponent")
         self.type = type
         self.id = id
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "jtype", self.type
-        yield "label", self.id
+        yield "type", self.type
+        yield "id", self.id
 
 
 class Record(Class):
