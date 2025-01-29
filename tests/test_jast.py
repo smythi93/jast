@@ -1,10 +1,10 @@
-import unittest
 from typing import List
 
 import jast
+from utils import BaseTest
 
 
-class TestConstructors(unittest.TestCase):
+class TestConstructors(BaseTest):
     def _test_iteration(self, tree):
         for field, value in tree:
             self.assertIsInstance(field, str)
@@ -23,12 +23,8 @@ class TestConstructors(unittest.TestCase):
         qname = jast.qname([jast.identifier("foo"), jast.identifier("bar")])
         self.assertIsInstance(qname, jast.qname)
         self.assertEqual(2, len(qname.identifiers))
-        self.assertIsInstance(qname.identifiers[0], str)
-        self.assertIsInstance(qname.identifiers[0], jast.JAST)
-        self.assertIsInstance(qname.identifiers[1], str)
-        self.assertIsInstance(qname.identifiers[1], jast.JAST)
-        self.assertEqual("foo", qname.identifiers[0])
-        self.assertEqual("bar", qname.identifiers[1])
+        self._test_identifier(qname.identifiers[0], "foo")
+        self._test_identifier(qname.identifiers[1], "bar")
         self._test_iteration(qname)
 
     def test_qname_error(self):
@@ -190,10 +186,8 @@ class TestConstructors(unittest.TestCase):
         )
         self.assertIsInstance(elementvaluepair, jast.elementvaluepair)
         self.assertIsInstance(elementvaluepair, jast.JAST)
-        self.assertEqual("foo", elementvaluepair.id)
-        self.assertIsInstance(elementvaluepair.value, jast.Constant)
-        self.assertIsInstance(elementvaluepair.value.value, jast.IntLiteral)
-        self.assertEqual(42, elementvaluepair.value.value)
+        self._test_identifier(elementvaluepair.id, "foo")
+        self._test_int_constant(elementvaluepair.value, 42)
         self._test_iteration(elementvaluepair)
 
     def test_elementvaluepair_error(self):
@@ -207,9 +201,7 @@ class TestConstructors(unittest.TestCase):
         self.assertIsInstance(elementarrayinit, jast.elementarrayinit)
         self.assertIsInstance(elementarrayinit, jast.JAST)
         self.assertEqual(1, len(elementarrayinit.values))
-        self.assertIsInstance(elementarrayinit.values[0], jast.Constant)
-        self.assertIsInstance(elementarrayinit.values[0].value, jast.IntLiteral)
-        self.assertEqual(42, elementarrayinit.values[0].value)
+        self._test_int_constant(elementarrayinit.values[0], 42)
         self._test_iteration(elementarrayinit)
 
     def test_Annotation(self):
@@ -226,11 +218,8 @@ class TestConstructors(unittest.TestCase):
         self.assertIsInstance(annotation.name, jast.qname)
         self.assertEqual(1, len(annotation.elements))
         self.assertIsInstance(annotation.elements[0], jast.elementvaluepair)
-        self.assertEqual("foo", annotation.elements[0].id)
-        value = annotation.elements[0].value
-        self.assertIsInstance(value, jast.Constant)
-        self.assertIsInstance(value.value, jast.IntLiteral)
-        self.assertEqual(42, value.value)
+        self._test_identifier(annotation.name.identifiers[0], "foo")
+        self._test_int_constant(annotation.elements[0].value, 42)
         self._test_iteration(annotation)
 
     def test_Annotation_error(self):
@@ -353,15 +342,14 @@ class TestConstructors(unittest.TestCase):
     def test_Coit(self):
         coit = jast.Coit(
             annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
-            id=jast.identifier("foo"),
+            id=jast.identifier("bar"),
             type_args=jast.typeargs([jast.Int(), jast.Boolean()]),
         )
         self.assertIsInstance(coit, jast.Coit)
         self.assertIsInstance(coit, jast.JAST)
         self.assertEqual(1, len(coit.annotations))
         self.assertIsInstance(coit.annotations[0], jast.Annotation)
-        self.assertIsInstance(coit.id, jast.identifier)
-        self.assertEqual("foo", coit.id)
+        self._test_identifier(coit.id, "bar")
         self.assertIsInstance(coit.type_args, jast.typeargs)
         self._test_iteration(coit)
 
@@ -435,7 +423,7 @@ class TestConstructors(unittest.TestCase):
         )
         self.assertIsInstance(variabledeclaratorid, jast.variabledeclaratorid)
         self.assertIsInstance(variabledeclaratorid, jast.JAST)
-        self.assertEqual("foo", variabledeclaratorid.id)
+        self._test_identifier(variabledeclaratorid.id, "foo")
         self.assertEqual(2, len(variabledeclaratorid.dims))
         self.assertIsInstance(variabledeclaratorid.dims[0], jast.dim)
         self.assertIsInstance(variabledeclaratorid.dims[1], jast.dim)
@@ -476,7 +464,7 @@ class TestConstructors(unittest.TestCase):
         self.assertIsInstance(typeparam, jast.JAST)
         self.assertEqual(1, len(typeparam.annotations))
         self.assertIsInstance(typeparam.annotations[0], jast.Annotation)
-        self.assertEqual("foo", typeparam.id)
+        self._test_identifier(typeparam.id, "foo")
         self.assertIsInstance(typeparam.bound, jast.typebound)
         self._test_iteration(typeparam)
 
@@ -520,7 +508,7 @@ class TestConstructors(unittest.TestCase):
         self.assertIsInstance(pattern.type, jast.Int)
         self.assertEqual(1, len(pattern.annotations))
         self.assertIsInstance(pattern.annotations[0], jast.Annotation)
-        self.assertEqual("bar", pattern.id)
+        self._test_identifier(pattern.id, "bar")
         self._test_iteration(pattern)
 
     def test_pattern_error(self):
@@ -545,9 +533,7 @@ class TestConstructors(unittest.TestCase):
         boolean = guardedpattern.conditions[0]
         self.assertIsInstance(boolean, jast.Constant)
         self.assertTrue(boolean.value.value)
-        number = guardedpattern.conditions[1]
-        self.assertIsInstance(number, jast.Constant)
-        self.assertEqual(42, number.value)
+        self._test_int_constant(guardedpattern.conditions[1], 42)
         self._test_iteration(guardedpattern)
 
     def test_guardedpattern_error(self):
@@ -727,13 +713,9 @@ class TestConstructors(unittest.TestCase):
         self.assertIsInstance(lambda_, jast.Lambda)
         self.assertIsInstance(lambda_, jast.JAST)
         self.assertEqual(2, len(lambda_.args))
-        self.assertIsInstance(lambda_.args[0], jast.identifier)
-        self.assertIsInstance(lambda_.args[1], jast.identifier)
-        self.assertEqual("foo", lambda_.args[0])
-        self.assertEqual("bar", lambda_.args[1])
-        self.assertIsInstance(lambda_.body, jast.Constant)
-        self.assertIsInstance(lambda_.body.value, jast.IntLiteral)
-        self.assertEqual(42, lambda_.body.value)
+        self._test_identifier(lambda_.args[0], "foo")
+        self._test_identifier(lambda_.args[1], "bar")
+        self._test_int_constant(lambda_.body, 42)
         self._test_iteration(lambda_)
 
     def test_Lambda_error(self):
@@ -750,32 +732,26 @@ class TestConstructors(unittest.TestCase):
 
     def test_Assign(self):
         assign = jast.Assign(
-            target=jast.identifier("foo"),
+            target=jast.Name(jast.identifier("foo")),
             value=jast.Constant(jast.IntLiteral(42)),
         )
         self.assertIsInstance(assign, jast.Assign)
         self.assertIsInstance(assign, jast.JAST)
-        self.assertIsInstance(assign.target, jast.identifier)
-        self.assertEqual("foo", assign.target)
-        self.assertIsInstance(assign.value, jast.Constant)
-        self.assertIsInstance(assign.value.value, jast.IntLiteral)
-        self.assertEqual(42, assign.value.value)
+        self._test_name(assign.target, "foo")
+        self._test_int_constant(assign.value, 42)
         self.assertIsNone(assign.op)
         self._test_iteration(assign)
 
     def test_Assign_op(self):
         assign = jast.Assign(
-            target=jast.identifier("foo"),
+            target=jast.Name(jast.identifier("foo")),
             value=jast.Constant(jast.IntLiteral(42)),
             op=jast.Add(),
         )
         self.assertIsInstance(assign, jast.Assign)
         self.assertIsInstance(assign, jast.JAST)
-        self.assertIsInstance(assign.target, jast.identifier)
-        self.assertEqual("foo", assign.target)
-        self.assertIsInstance(assign.value, jast.Constant)
-        self.assertIsInstance(assign.value.value, jast.IntLiteral)
-        self.assertEqual(42, assign.value.value)
+        self._test_name(assign.target, "foo")
+        self._test_int_constant(assign.value, 42)
         self.assertIsInstance(assign.op, jast.Add)
         self._test_iteration(assign)
 
@@ -796,12 +772,8 @@ class TestConstructors(unittest.TestCase):
         self.assertIsInstance(if_exp.test, jast.Constant)
         self.assertIsInstance(if_exp.test.value, jast.BoolLiteral)
         self.assertTrue(if_exp.test.value)
-        self.assertIsInstance(if_exp.body, jast.Constant)
-        self.assertIsInstance(if_exp.body.value, jast.IntLiteral)
-        self.assertEqual(42, if_exp.body.value)
-        self.assertIsInstance(if_exp.orelse, jast.Constant)
-        self.assertIsInstance(if_exp.orelse.value, jast.IntLiteral)
-        self.assertEqual(0, if_exp.orelse.value)
+        self._test_int_constant(if_exp.body, 42)
+        self._test_int_constant(if_exp.orelse, 0)
         self._test_iteration(if_exp)
 
     def test_IfExp_error(self):
@@ -835,13 +807,9 @@ class TestConstructors(unittest.TestCase):
         )
         self.assertIsInstance(bin_op, jast.BinOp)
         self.assertIsInstance(bin_op, jast.JAST)
-        self.assertIsInstance(bin_op.left, jast.Constant)
-        self.assertIsInstance(bin_op.left.value, jast.IntLiteral)
-        self.assertEqual(42, bin_op.left.value)
+        self._test_int_constant(bin_op.left, 42)
         self.assertIsInstance(bin_op.op, jast.Add)
-        self.assertIsInstance(bin_op.right, jast.Constant)
-        self.assertIsInstance(bin_op.right.value, jast.IntLiteral)
-        self.assertEqual(0, bin_op.right.value)
+        self._test_int_constant(bin_op.right, 0)
         self._test_iteration(bin_op)
 
     def test_BinOp_error(self):
@@ -866,13 +834,12 @@ class TestConstructors(unittest.TestCase):
 
     def test_InstanceOf(self):
         instance_of = jast.InstanceOf(
-            value=jast.identifier("foo"),
+            value=jast.Name(jast.identifier("foo")),
             type=jast.Int(),
         )
         self.assertIsInstance(instance_of, jast.InstanceOf)
         self.assertIsInstance(instance_of, jast.JAST)
-        self.assertIsInstance(instance_of.value, jast.identifier)
-        self.assertEqual("foo", instance_of.value)
+        self._test_name(instance_of.value, "foo")
         self.assertIsInstance(instance_of.type, jast.Int)
         self._test_iteration(instance_of)
 
@@ -896,9 +863,7 @@ class TestConstructors(unittest.TestCase):
         self.assertIsInstance(unary_op, jast.UnaryOp)
         self.assertIsInstance(unary_op, jast.JAST)
         self.assertIsInstance(unary_op.op, jast.USub)
-        self.assertIsInstance(unary_op.operand, jast.Constant)
-        self.assertIsInstance(unary_op.operand.value, jast.IntLiteral)
-        self.assertEqual(42, unary_op.operand.value)
+        self._test_int_constant(unary_op.operand, 42)
         self._test_iteration(unary_op)
 
     def test_UnaryOp_error(self):
@@ -915,13 +880,12 @@ class TestConstructors(unittest.TestCase):
 
     def test_PostOp(self):
         post_op = jast.PostOp(
-            operand=jast.identifier("foo"),
+            operand=jast.Name(jast.identifier("foo")),
             op=jast.PostInc(),
         )
         self.assertIsInstance(post_op, jast.PostOp)
         self.assertIsInstance(post_op, jast.JAST)
-        self.assertIsInstance(post_op.operand, jast.identifier)
-        self.assertEqual("foo", post_op.operand)
+        self._test_name(post_op.operand, "foo")
         self.assertIsInstance(post_op.op, jast.PostInc)
         self._test_iteration(post_op)
 
@@ -948,9 +912,7 @@ class TestConstructors(unittest.TestCase):
         self.assertEqual(1, len(cast.annotations))
         self.assertIsInstance(cast.annotations[0], jast.Annotation)
         self.assertIsInstance(cast.type, jast.Int)
-        self.assertIsInstance(cast.value, jast.Constant)
-        self.assertIsInstance(cast.value.value, jast.IntLiteral)
-        self.assertEqual(42, cast.value.value)
+        self._test_int_constant(cast.value, 42)
         self._test_iteration(cast)
 
     def test_Cast_error(self):
@@ -979,11 +941,9 @@ class TestConstructors(unittest.TestCase):
         self.assertIsInstance(new_object.type_args.types[0], jast.Int)
         self.assertIsInstance(new_object.type_args.types[1], jast.Boolean)
         self.assertIsInstance(new_object.type, jast.Coit)
-        self.assertEqual("A", new_object.type.id)
+        self._test_identifier(new_object.type.id, "A")
         self.assertEqual(1, len(new_object.args))
-        self.assertIsInstance(new_object.args[0], jast.Constant)
-        self.assertIsInstance(new_object.args[0].value, jast.IntLiteral)
-        self.assertEqual(42, new_object.args[0].value)
+        self._test_int_constant(new_object.args[0], 42)
         self.assertEqual(1, len(new_object.body))
         self.assertIsInstance(new_object.body[0], jast.EmptyDecl)
         self._test_iteration(new_object)
@@ -1007,10 +967,7 @@ class TestConstructors(unittest.TestCase):
         self.assertIsInstance(new_array, jast.JAST)
         self.assertIsInstance(new_array.type, jast.Int)
         self.assertEqual(1, len(new_array.expr_dims))
-        expr_dim = new_array.expr_dims[0]
-        self.assertIsInstance(expr_dim, jast.Constant)
-        self.assertIsInstance(expr_dim.value, jast.IntLiteral)
-        self.assertEqual(1, expr_dim.value)
+        self._test_int_constant(new_array.expr_dims[0], 1)
         self.assertEqual(2, len(new_array.dims))
         self.assertIsInstance(new_array.dims[0], jast.dim)
         self.assertIsInstance(new_array.dims[1], jast.dim)
@@ -1029,9 +986,7 @@ class TestConstructors(unittest.TestCase):
         self.assertIsInstance(new_array.dims[0], jast.dim)
         self.assertIsInstance(new_array.initializer, jast.arrayinit)
         self.assertEqual(1, len(new_array.initializer.values))
-        self.assertIsInstance(new_array.initializer.values[0], jast.Constant)
-        self.assertIsInstance(new_array.initializer.values[0].value, jast.IntLiteral)
-        self.assertEqual(1, new_array.initializer.values[0].value)
+        self._test_int_constant(new_array.initializer.values[0], 1)
         self._test_iteration(new_array)
 
     def test_NewArray_error(self):
@@ -1071,16 +1026,11 @@ class TestConstructors(unittest.TestCase):
         self.assertIsInstance(switchexprule, jast.JAST)
         self.assertIsInstance(switchexprule.label, jast.ExpCase)
         self.assertEqual(1, len(switchexprule.cases))
-        self.assertIsInstance(switchexprule.cases[0], jast.Constant)
-        self.assertIsInstance(switchexprule.cases[0].value, jast.IntLiteral)
-        self.assertEqual(42, switchexprule.cases[0].value)
+        self._test_int_constant(switchexprule.cases[0], 42)
         self.assertTrue(switchexprule.arrow)
         self.assertEqual(1, len(switchexprule.body))
-        ret = switchexprule.body[0]
-        self.assertIsInstance(ret, jast.Return)
-        self.assertIsInstance(ret.value, jast.Constant)
-        self.assertIsInstance(ret.value.value, jast.IntLiteral)
-        self.assertEqual(24, ret.value.value)
+        self.assertIsInstance(switchexprule.body[0], jast.Return)
+        self._test_int_constant(switchexprule.body[0].value, 24)
         self._test_iteration(switchexprule)
 
     def test_switchexprule_default(self):
@@ -1113,7 +1063,7 @@ class TestConstructors(unittest.TestCase):
 
     def test_SwitchExp(self):
         switch_exp = jast.SwitchExp(
-            value=jast.identifier("foo"),
+            value=jast.Name(jast.identifier("foo")),
             rules=[
                 jast.switchexprule(
                     label=jast.ExpCase(),
@@ -1125,8 +1075,7 @@ class TestConstructors(unittest.TestCase):
         )
         self.assertIsInstance(switch_exp, jast.SwitchExp)
         self.assertIsInstance(switch_exp, jast.JAST)
-        self.assertIsInstance(switch_exp.value, jast.identifier)
-        self.assertEqual("foo", switch_exp.value)
+        self._test_name(switch_exp.value, "foo")
         self.assertEqual(1, len(switch_exp.rules))
         self.assertIsInstance(switch_exp.rules[0], jast.switchexprule)
         self._test_iteration(switch_exp)
@@ -1143,4 +1092,190 @@ class TestConstructors(unittest.TestCase):
                     body=[jast.Return(jast.Constant(jast.IntLiteral(24)))],
                 )
             ],
+        )
+
+    def test_This(self):
+        this = jast.This()
+        self.assertIsInstance(this, jast.This)
+        self.assertIsInstance(this, jast.JAST)
+        self._test_iteration(this)
+
+    def test_Super(self):
+        super_ = jast.Super(
+            type_args=jast.typeargs(types=[jast.Int()]),
+            id=jast.identifier("foo"),
+        )
+        self.assertIsInstance(super_, jast.Super)
+        self.assertIsInstance(super_, jast.JAST)
+        self.assertIsInstance(super_.type_args, jast.typeargs)
+        self.assertEqual(1, len(super_.type_args.types))
+        self.assertIsInstance(super_.type_args.types[0], jast.Int)
+        self._test_identifier(super_.id, "foo")
+        self._test_iteration(super_)
+
+    def test_Constant(self):
+        constant = jast.Constant(jast.IntLiteral(42))
+        self.assertIsInstance(constant, jast.JAST)
+        self._test_int_constant(constant, 42)
+        self._test_iteration(constant)
+
+    def test_Constant_error(self):
+        self.assertRaises(ValueError, jast.Constant)
+
+    def test_Name(self):
+        name = jast.Name(jast.identifier("foo"))
+        self.assertIsInstance(name, jast.JAST)
+        self._test_name(name, "foo")
+        self._test_iteration(name)
+
+    def test_Name_error(self):
+        self.assertRaises(ValueError, jast.Name)
+
+    def test_ClassExpr(self):
+        class_expr = jast.ClassExpr(type=jast.Int())
+        self.assertIsInstance(class_expr, jast.ClassExpr)
+        self.assertIsInstance(class_expr, jast.JAST)
+        self.assertIsInstance(class_expr.type, jast.Int)
+        self._test_iteration(class_expr)
+
+    def test_ClassExpr_error(self):
+        self.assertRaises(ValueError, jast.ClassExpr)
+
+    def test_ExplicitGenericInvocation(self):
+        explicit_generic_invocation = jast.ExplicitGenericInvocation(
+            type_args=jast.typeargs(types=[jast.Int()]),
+            value=jast.Constant(jast.IntLiteral(42)),
+        )
+        self.assertIsInstance(
+            explicit_generic_invocation, jast.ExplicitGenericInvocation
+        )
+        self.assertIsInstance(explicit_generic_invocation, jast.JAST)
+        self.assertIsInstance(explicit_generic_invocation.type_args, jast.typeargs)
+        self.assertEqual(1, len(explicit_generic_invocation.type_args.types))
+        self.assertIsInstance(explicit_generic_invocation.type_args.types[0], jast.Int)
+        self._test_int_constant(explicit_generic_invocation.value, 42)
+        self._test_iteration(explicit_generic_invocation)
+
+    def test_ExplicitGenericInvocation_error(self):
+        self.assertRaises(
+            ValueError,
+            jast.ExplicitGenericInvocation,
+            type_args=jast.typeargs(types=[jast.Int()]),
+        )
+
+    def test_Subscript(self):
+        subscript = jast.Subscript(
+            value=jast.Name(jast.identifier("foo")),
+            index=jast.Constant(jast.IntLiteral(42)),
+        )
+        self.assertIsInstance(subscript, jast.Subscript)
+        self.assertIsInstance(subscript, jast.JAST)
+        self._test_name(subscript.value, "foo")
+        self._test_int_constant(subscript.index, 42)
+        self._test_iteration(subscript)
+
+    def test_Subscript_error(self):
+        self.assertRaises(
+            ValueError,
+            jast.Subscript,
+            value=jast.Name(jast.identifier("foo")),
+        )
+        self.assertRaises(
+            ValueError,
+            jast.Subscript,
+            index=jast.Constant(jast.IntLiteral(42)),
+        )
+
+    def test_Member(self):
+        member = jast.Member(
+            value=jast.Name(jast.identifier("foo")),
+            member=jast.Name(jast.identifier("bar")),
+        )
+        self.assertIsInstance(member, jast.Member)
+        self.assertIsInstance(member, jast.JAST)
+        self._test_name(member.value, "foo")
+        self._test_name(member.member, "bar")
+        self._test_iteration(member)
+
+    def test_Member_error(self):
+        self.assertRaises(
+            ValueError,
+            jast.Member,
+            member=jast.Name(jast.identifier("bar")),
+        )
+        self.assertRaises(
+            ValueError,
+            jast.Member,
+            value=jast.Name(jast.identifier("foo")),
+        )
+
+    def test_Call(self):
+        call = jast.Call(
+            func=jast.Name(jast.identifier("foo")),
+            args=[jast.Constant(jast.IntLiteral(42))],
+        )
+        self.assertIsInstance(call, jast.Call)
+        self.assertIsInstance(call, jast.JAST)
+        self._test_name(call.func, "foo")
+        self.assertEqual(1, len(call.args))
+        self._test_int_constant(call.args[0], 42)
+        self._test_iteration(call)
+
+    def test_Call_error(self):
+        self.assertRaises(
+            ValueError,
+            jast.Call,
+            args=[jast.Constant(jast.IntLiteral(42))],
+        )
+
+    def test_Reference(self):
+        reference = jast.Reference(
+            type=jast.Name(jast.identifier("foo")),
+            type_args=jast.typeargs(types=[jast.Int()]),
+            id=jast.identifier("bar"),
+        )
+        self.assertIsInstance(reference, jast.Reference)
+        self.assertIsInstance(reference, jast.JAST)
+        self._test_name(reference.type, "foo")
+        self.assertIsInstance(reference.type_args, jast.typeargs)
+        self.assertEqual(1, len(reference.type_args.types))
+        self.assertIsInstance(reference.type_args.types[0], jast.Int)
+        self._test_identifier(reference.id, "bar")
+        self.assertFalse(reference.new)
+        self._test_iteration(reference)
+
+    def test_Reference_new(self):
+        reference = jast.Reference(
+            type=jast.Name(jast.identifier("foo")),
+            type_args=jast.typeargs(types=[jast.Int()]),
+            new=True,
+        )
+        self.assertIsInstance(reference, jast.Reference)
+        self.assertIsInstance(reference, jast.JAST)
+        self._test_name(reference.type, "foo")
+        self.assertIsInstance(reference.type_args, jast.typeargs)
+        self.assertEqual(1, len(reference.type_args.types))
+        self.assertIsInstance(reference.type_args.types[0], jast.Int)
+        self.assertIsNone(reference.id)
+        self.assertTrue(reference.new)
+        self._test_iteration(reference)
+
+    def test_Reference_error(self):
+        self.assertRaises(
+            ValueError,
+            jast.Reference,
+            type=jast.Name(jast.identifier("foo")),
+            type_args=jast.typeargs(types=[jast.Int()]),
+        )
+        self.assertRaises(
+            ValueError,
+            jast.Reference,
+            type=jast.Name(jast.identifier("foo")),
+            id=jast.identifier("bar"),
+            new=True,
+        )
+        self.assertRaises(
+            ValueError,
+            jast.Reference,
+            new=True,
         )

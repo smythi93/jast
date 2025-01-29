@@ -12,6 +12,7 @@ from utils import (
     INSTANCEOF_LOWER_PRECEDENCE,
     INSTANCEOF_LOWER_SAME_PRECEDENCE,
     UNARY_OPERATORS,
+    POST_OPERATORS,
 )
 
 
@@ -872,6 +873,28 @@ class TestUnparse(unittest.TestCase):
         )
         self.assertEqual("new X() { ; ; }", jast.unparse(tree, indent=-1))
 
+    def test_NewObject_all(self):
+        tree = jast.NewObject(
+            type_args=jast.typeargs([jast.Int(), jast.Boolean()]),
+            type=jast.ClassType(
+                coits=[
+                    jast.Coit(
+                        id=jast.identifier("bar"),
+                    ),
+                    jast.Coit(
+                        id=jast.identifier("baz"),
+                        type_args=jast.typeargs([jast.Int(), jast.Boolean()]),
+                    ),
+                ],
+            ),
+            args=[jast.Constant(jast.IntLiteral(1)), jast.Constant(jast.IntLiteral(2))],
+            body=[jast.EmptyDecl(), jast.EmptyDecl()],
+        )
+        self.assertEqual(
+            "new<int, boolean> bar.baz<int, boolean>(1, 2) { ; ; }",
+            jast.unparse(tree, indent=-1),
+        )
+
     def test_NewArray(self):
         tree = jast.NewArray(
             type=jast.Int(),
@@ -892,6 +915,56 @@ class TestUnparse(unittest.TestCase):
             ),
         )
         self.assertEqual("new int[] {3, 4}", jast.unparse(tree))
+
+    @parameterized.expand(POST_OPERATORS)
+    def test_PostOp(self, _, rep, operator):
+        tree = jast.PostOp(
+            op=operator(),
+            operand=jast.Name(jast.identifier("x")),
+        )
+        self.assertEqual(f"x{rep}", jast.unparse(tree))
+
+    def test_PostOp_twice(self):
+        tree = jast.PostOp(
+            op=jast.PostDec(),
+            operand=jast.PostOp(
+                op=jast.PostInc(),
+                operand=jast.Name(jast.identifier("x")),
+            ),
+        )
+        self.assertEqual("x++--", jast.unparse(tree))
+
+    @parameterized.expand(
+        [
+            [*first, *second]
+            for first, second in itertools.product(POST_OPERATORS, UNARY_OPERATORS)
+        ]
+    )
+    def test_postOp_parens(self, _, rep, operator, __, rep2, operator2):
+        tree = jast.UnaryOp(
+            op=operator2(),
+            operand=jast.PostOp(
+                op=operator(),
+                operand=jast.Name(jast.identifier("x")),
+            ),
+        )
+        self.assertEqual(f"{rep2}x{rep}", jast.unparse(tree))
+
+    @parameterized.expand(
+        [
+            [*first, *second]
+            for first, second in itertools.product(POST_OPERATORS, UNARY_OPERATORS)
+        ]
+    )
+    def test_postOp_parens(self, _, rep, operator, __, rep2, operator2):
+        tree = jast.PostOp(
+            op=operator(),
+            operand=jast.UnaryOp(
+                op=operator2(),
+                operand=jast.Name(jast.identifier("x")),
+            ),
+        )
+        self.assertEqual(f"({rep2}x){rep}", jast.unparse(tree))
 
     def test_ExpCase(self):
         tree = jast.ExpCase()
@@ -974,3 +1047,339 @@ class TestUnparse(unittest.TestCase):
             "switch (foo) { case 42, 43: case int x && true -> return 24; default: { return 0; } }",
             jast.unparse(tree, indent=-1),
         )
+
+    def test_This(self):
+        tree = jast.This()
+        self.assertEqual("this", jast.unparse(tree))
+
+    def test_Super(self):
+        tree = jast.Super()
+        self.assertEqual("super", jast.unparse(tree))
+
+    def test_Super_in_ExplicitGenericInvocation(self):
+        tree = jast.ExplicitGenericInvocation(
+            type_args=jast.typeargs([jast.Int()]),
+            value=jast.Super(
+                type_args=jast.typeargs([jast.Int()]),
+                id=jast.identifier("x"),
+            ),
+        )
+        self.assertEqual("<int>super.<int>x", jast.unparse(tree))
+
+    def test_Super_in_ExplicitGenericInvocation_with_args(self):
+        tree = jast.ExplicitGenericInvocation(
+            type_args=jast.typeargs([jast.Int()]),
+            value=jast.Call(
+                func=jast.Super(
+                    type_args=jast.typeargs([jast.Int()]),
+                    id=jast.identifier("x"),
+                ),
+                args=[jast.Constant(jast.IntLiteral(42))],
+            ),
+        )
+        self.assertEqual("<int>super.<int>x(42)", jast.unparse(tree))
+
+    def test_Constant(self):
+        tree = jast.Constant(jast.IntLiteral(42))
+        self.assertEqual("42", jast.unparse(tree))
+
+    def test_Constant_boolean(self):
+        tree = jast.Constant(jast.BoolLiteral(True))
+        self.assertEqual("true", jast.unparse(tree))
+
+    def test_Name(self):
+        tree = jast.Name(jast.identifier("foo"))
+        self.assertEqual("foo", jast.unparse(tree))
+
+    def test_ClassExpr(self):
+        tree = jast.ClassExpr(
+            type=jast.ClassType(
+                coits=[
+                    jast.Coit(
+                        id=jast.identifier("foo"),
+                    ),
+                    jast.Coit(
+                        id=jast.identifier("bar"),
+                    ),
+                ],
+            )
+        )
+        self.assertEqual("foo.bar.class", jast.unparse(tree))
+
+    def test_ExplicitGenericInvocation(self):
+        tree = jast.ExplicitGenericInvocation(
+            type_args=jast.typeargs([jast.Int()]),
+            value=jast.Call(func=jast.Name(jast.identifier("foo")), args=[]),
+        )
+        self.assertEqual("<int>foo()", jast.unparse(tree))
+
+    def test_ExplicitGenericInvocation_args(self):
+        tree = jast.ExplicitGenericInvocation(
+            type_args=jast.typeargs([jast.Int()]),
+            value=jast.Call(
+                func=jast.Name(jast.identifier("foo")),
+                args=[
+                    jast.Constant(jast.IntLiteral(42)),
+                    jast.Constant(jast.IntLiteral(24)),
+                ],
+            ),
+        )
+        self.assertEqual("<int>foo(42, 24)", jast.unparse(tree))
+
+    def test_ExplicitGenericInvocation_this(self):
+        tree = jast.ExplicitGenericInvocation(
+            type_args=jast.typeargs([jast.Int()]),
+            value=jast.Call(
+                func=jast.This(),
+                args=[jast.Constant(jast.IntLiteral(42))],
+            ),
+        )
+        self.assertEqual("<int>this(42)", jast.unparse(tree))
+
+    def test_Subscript(self):
+        tree = jast.Subscript(
+            value=jast.Name(jast.identifier("x")),
+            index=jast.Name(jast.identifier("y")),
+        )
+        self.assertEqual("x[y]", jast.unparse(tree))
+
+    def test_Subscript_primary(self):
+        tree = jast.Subscript(
+            value=jast.Member(
+                value=jast.Name(jast.identifier("x")),
+                member=jast.Name(jast.identifier("y")),
+            ),
+            index=jast.Name(jast.identifier("z")),
+        )
+        self.assertEqual("x.y[z]", jast.unparse(tree))
+
+    def test_Subscript_parens(self):
+        tree = jast.Subscript(
+            value=jast.UnaryOp(
+                op=jast.PreInc(),
+                operand=jast.Name(jast.identifier("x")),
+            ),
+            index=jast.Name(jast.identifier("z")),
+        )
+        self.assertEqual("(++x)[z]", jast.unparse(tree))
+
+    def test_Subscript_no_parens(self):
+        tree = jast.UnaryOp(
+            op=jast.PreInc(),
+            operand=jast.Subscript(
+                value=jast.Name(jast.identifier("x")),
+                index=jast.Name(jast.identifier("z")),
+            ),
+        )
+        self.assertEqual("++x[z]", jast.unparse(tree))
+
+    def test_Member(self):
+        tree = jast.Member(
+            value=jast.Name(jast.identifier("foo")),
+            member=jast.Name(jast.identifier("bar")),
+        )
+        self.assertEqual("foo.bar", jast.unparse(tree))
+
+    def test_Member_call(self):
+        tree = jast.Member(
+            value=jast.Name(jast.identifier("foo")),
+            member=jast.Call(func=jast.Name(jast.identifier("bar")), args=[]),
+        )
+        self.assertEqual("foo.bar()", jast.unparse(tree))
+
+    def test_Member_this(self):
+        tree = jast.Member(
+            value=jast.Name(jast.identifier("bar")),
+            member=jast.This(),
+        )
+        self.assertEqual("bar.this", jast.unparse(tree))
+
+    def test_Member_inner_creation(self):
+        tree = jast.Member(
+            value=jast.Name(
+                id=jast.identifier("x"),
+            ),
+            member=jast.NewObject(
+                type_args=jast.typeargs([jast.Int()]),
+                type=jast.Coit(
+                    id=jast.identifier("Y"),
+                    type_args=jast.typeargs([]),
+                ),
+                args=[jast.Constant(jast.IntLiteral(42))],
+                body=[jast.EmptyDecl()],
+            ),
+        )
+        self.assertEqual("x.new<int> Y<>(42) { ; }", jast.unparse(tree, indent=-1))
+
+    def test_Member_super(self):
+        tree = jast.Member(
+            value=jast.Name(
+                id=jast.identifier("x"),
+            ),
+            member=jast.Super(
+                id=jast.identifier("y"),
+            ),
+        )
+        self.assertEqual("x.super.y", jast.unparse(tree))
+
+    def test_Member_super_args(self):
+        tree = jast.Member(
+            value=jast.Name(
+                id=jast.identifier("x"),
+            ),
+            member=jast.Call(
+                func=jast.Super(),
+                args=[jast.Constant(jast.IntLiteral(42))],
+            ),
+        )
+        self.assertEqual("x.super(42)", jast.unparse(tree))
+
+    def test_Member_ExplicitGenericInvocation(self):
+        tree = jast.Member(
+            value=jast.Name(
+                id=jast.identifier("x"),
+            ),
+            member=jast.ExplicitGenericInvocation(
+                type_args=jast.typeargs([jast.Int()]),
+                value=jast.Call(
+                    func=jast.Name(jast.identifier("y")),
+                    args=[],
+                ),
+            ),
+        )
+        self.assertEqual("x.<int>y()", jast.unparse(tree))
+
+    def test_Member_primary(self):
+        tree = jast.Member(
+            value=jast.Subscript(
+                value=jast.Name(jast.identifier("x")),
+                index=jast.Constant(jast.IntLiteral(42)),
+            ),
+            member=jast.Name(jast.identifier("z")),
+        )
+        self.assertEqual("x[42].z", jast.unparse(tree))
+
+    def test_Member_primary_reversed(self):
+        tree = jast.Subscript(
+            value=jast.Member(
+                value=jast.Name(jast.identifier("x")),
+                member=jast.Name(jast.identifier("y")),
+            ),
+            index=jast.Constant(jast.IntLiteral(42)),
+        )
+        self.assertEqual("x.y[42]", jast.unparse(tree))
+
+    def test_Member_parens(self):
+        tree = jast.Member(
+            value=jast.UnaryOp(
+                op=jast.PreInc(),
+                operand=jast.Name(jast.identifier("x")),
+            ),
+            member=jast.Name(jast.identifier("y")),
+        )
+        self.assertEqual("(++x).y", jast.unparse(tree))
+
+    def test_Member_no_parens(self):
+        tree = jast.UnaryOp(
+            op=jast.PreInc(),
+            operand=jast.Member(
+                value=jast.Name(jast.identifier("x")),
+                member=jast.Name(jast.identifier("y")),
+            ),
+        )
+        self.assertEqual("++x.y", jast.unparse(tree))
+
+    def test_Call(self):
+        tree = jast.Call(
+            func=jast.Name(jast.identifier("foo")),
+        )
+        self.assertEqual("foo()", jast.unparse(tree))
+
+    def test_Call_args(self):
+        tree = jast.Call(
+            func=jast.Name(jast.identifier("foo")),
+            args=[
+                jast.Constant(jast.IntLiteral(42)),
+                jast.Constant(jast.IntLiteral(24)),
+            ],
+        )
+        self.assertEqual("foo(42, 24)", jast.unparse(tree))
+
+    def test_Call_this(self):
+        tree = jast.Call(
+            func=jast.This(),
+            args=[jast.Constant(jast.IntLiteral(42))],
+        )
+        self.assertEqual("this(42)", jast.unparse(tree))
+
+    def test_Call_super(self):
+        tree = jast.Call(
+            func=jast.Super(),
+            args=[jast.Constant(jast.IntLiteral(42))],
+        )
+        self.assertEqual("super(42)", jast.unparse(tree))
+
+    def test_Call_no_parens(self):
+        tree = jast.UnaryOp(
+            op=jast.PreInc(),
+            operand=jast.Call(
+                func=jast.Name(jast.identifier("foo")),
+                args=[jast.Constant(jast.IntLiteral(42))],
+            ),
+        )
+        self.assertEqual("++foo(42)", jast.unparse(tree))
+
+    def test_Reference(self):
+        tree = jast.Reference(
+            type=jast.Name(jast.identifier("x")),
+            type_args=jast.typeargs([jast.Int()]),
+            id=jast.identifier("y"),
+        )
+        self.assertEqual("x::<int>y", jast.unparse(tree))
+
+    def test_Reference_primary(self):
+        tree = jast.Reference(
+            type=jast.Member(
+                value=jast.Name(jast.identifier("x")),
+                member=jast.Name(jast.identifier("y")),
+            ),
+            id=jast.identifier("z"),
+        )
+        self.assertEqual("x.y::z", jast.unparse(tree))
+
+    def test_Reference_twice(self):
+        tree = jast.Reference(
+            type=jast.Reference(
+                type=jast.Name(jast.identifier("x")),
+                type_args=jast.typeargs([jast.Int()]),
+                id=jast.identifier("y"),
+            ),
+            id=jast.identifier("z"),
+        )
+        self.assertEqual("x::<int>y::z", jast.unparse(tree))
+
+    def test_Reference_type(self):
+        tree = jast.Reference(
+            type=jast.Int(),
+            type_args=jast.typeargs([jast.Int()]),
+            id=jast.identifier("x"),
+        )
+        self.assertEqual("int::<int>x", jast.unparse(tree))
+
+    def test_Reference_new(self):
+        tree = jast.Reference(
+            type=jast.Int(),
+            new=True,
+        )
+        self.assertEqual("int::new", jast.unparse(tree))
+
+    def test_Reference_class_type(self):
+        tree = jast.Reference(
+            type=jast.Coit(
+                id=jast.identifier("X"),
+                type_args=jast.typeargs([jast.Int(), jast.Boolean()]),
+            ),
+            type_args=jast.typeargs([jast.Int(), jast.Float()]),
+            new=True,
+        )
+        self.assertEqual("X<int, boolean>::<int, float>new", jast.unparse(tree))

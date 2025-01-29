@@ -762,7 +762,7 @@ primary
         | methodCall
         | THIS
         | NEW nonWildcardTypeArguments? innerCreator
-        | SUPER superSuffix
+        | superSuffix
         | explicitGenericInvocation
     )                                                               #MemberReferenceExpression
     // Method calls and method references are part of primary, and hence level 16 precedence
@@ -874,12 +874,12 @@ typeArguments
     ;
 
 superSuffix
-    : arguments
-    | '.' typeArguments? identifier arguments?
+    : SUPER arguments
+    | SUPER '.' typeArguments? identifier arguments?
     ;
 
 explicitGenericInvocationSuffix
-    : SUPER superSuffix
+    : superSuffix
     | identifier arguments
     ;
 

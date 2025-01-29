@@ -1,4 +1,4 @@
-import unittest
+import itertools
 
 from parameterized import parameterized
 
@@ -12,17 +12,15 @@ from utils import (
     INSTANCEOF_LOWER_PRECEDENCE,
     INSTANCEOF_LOWER_SAME_PRECEDENCE,
     UNARY_OPERATORS,
+    BaseTest,
+    POST_OPERATORS,
 )
 
 
-class TestParse(unittest.TestCase):
+class TestParse(BaseTest):
     def test_identifier(self):
         name = jast.parse("foo", jast.ParseMode.EXPR)
-        self.assertIsInstance(name, jast.Name)
-        identifier = name.id
-        self.assertIsInstance(identifier, str)
-        self.assertEqual(identifier, "foo")
-        self.assertIsInstance(identifier, jast.JAST)
+        self._test_name(name, "foo")
 
     def test_qname(self):
         qname = jast.parse("package foo.bar;", jast.ParseMode.DECL)
@@ -30,10 +28,10 @@ class TestParse(unittest.TestCase):
         name = qname.name
         self.assertIsInstance(name, jast.qname)
         self.assertEqual(2, len(name.identifiers))
-        self.assertEqual("foo", name.identifiers[0])
-        self.assertEqual("bar", name.identifiers[1])
+        self._test_identifier(name.identifiers[0], "foo")
+        self._test_identifier(name.identifiers[1], "bar")
 
-    def _test_IntLiteral(self, value, long=False):
+    def _test_int_literal_long(self, value, long=False):
         self.assertIsInstance(value, jast.Constant)
         int_literal = value.value
         self.assertIsInstance(int_literal, jast.IntLiteral)
@@ -45,35 +43,35 @@ class TestParse(unittest.TestCase):
 
     def test_IntLiteral(self):
         int_literal = jast.parse("42", jast.ParseMode.EXPR)
-        self._test_IntLiteral(int_literal)
+        self._test_int_literal_long(int_literal)
 
     def test_IntLiteral_long(self):
         int_literal = jast.parse("42L", jast.ParseMode.EXPR)
-        self._test_IntLiteral(int_literal, long=True)
+        self._test_int_literal_long(int_literal, long=True)
 
     def test_IntLiteral_bin(self):
         int_literal = jast.parse("0b101010", jast.ParseMode.EXPR)
-        self._test_IntLiteral(int_literal)
+        self._test_int_literal_long(int_literal)
 
     def test_IntLiteral_bin_long(self):
         int_literal = jast.parse("0b101010L", jast.ParseMode.EXPR)
-        self._test_IntLiteral(int_literal, long=True)
+        self._test_int_literal_long(int_literal, long=True)
 
     def test_IntLiteral_oct(self):
         int_literal = jast.parse("0_52", jast.ParseMode.EXPR)
-        self._test_IntLiteral(int_literal)
+        self._test_int_literal_long(int_literal)
 
     def test_IntLiteral_oct_long(self):
         int_literal = jast.parse("0_52L", jast.ParseMode.EXPR)
-        self._test_IntLiteral(int_literal, long=True)
+        self._test_int_literal_long(int_literal, long=True)
 
     def test_IntLiteral_hex(self):
         int_literal = jast.parse("0x2A", jast.ParseMode.EXPR)
-        self._test_IntLiteral(int_literal)
+        self._test_int_literal_long(int_literal)
 
     def test_IntLiteral_hex_long(self):
         int_literal = jast.parse("0x2AL", jast.ParseMode.EXPR)
-        self._test_IntLiteral(int_literal, long=True)
+        self._test_int_literal_long(int_literal, long=True)
 
     def _test_FloatLiteral(self, value, double=False):
         self.assertIsInstance(value, jast.Constant)
@@ -229,12 +227,8 @@ class TestParse(unittest.TestCase):
         element = annotation.elements[0]
         self.assertIsInstance(element, jast.elementarrayinit)
         self.assertEqual(2, len(element.values))
-        self.assertIsInstance(element.values[0], jast.Constant)
-        self.assertIsInstance(element.values[0].value, jast.IntLiteral)
-        self.assertEqual(1, element.values[0].value.value)
-        self.assertIsInstance(element.values[1], jast.Constant)
-        self.assertIsInstance(element.values[1].value, jast.IntLiteral)
-        self.assertEqual(42, element.values[1].value.value)
+        self._test_int_constant(element.values[0], 1)
+        self._test_int_constant(element.values[1], 42)
         annotation = tree.modifiers[1]
         self.assertIsInstance(annotation, jast.Annotation)
         self.assertEqual("bar", jast.unparse(annotation.name))
@@ -242,15 +236,11 @@ class TestParse(unittest.TestCase):
         element = annotation.elements[0]
         self.assertIsInstance(element, jast.elementvaluepair)
         self.assertEqual("x", element.id)
-        self.assertIsInstance(element.value, jast.Constant)
-        self.assertIsInstance(element.value.value, jast.IntLiteral)
-        self.assertEqual(1, element.value.value)
+        self._test_int_constant(element.value, 1)
         element = annotation.elements[1]
         self.assertIsInstance(element, jast.elementvaluepair)
         self.assertEqual("y", element.id)
-        self.assertIsInstance(element.value, jast.Constant)
-        self.assertIsInstance(element.value.value, jast.IntLiteral)
-        self.assertEqual(42, element.value.value)
+        self._test_int_constant(element.value, 42)
 
     def test_Void(self):
         tree = jast.parse("void foo() {}", jast.ParseMode.DECL)
@@ -473,12 +463,8 @@ class TestParse(unittest.TestCase):
         self.assertIsInstance(pattern.id, jast.identifier)
         self.assertEqual("y", pattern.id)
         self.assertEqual(2, len(guardedpattern.conditions))
-        self.assertIsInstance(guardedpattern.conditions[0], jast.Constant)
-        self.assertIsInstance(guardedpattern.conditions[0].value, jast.BoolLiteral)
-        self.assertTrue(guardedpattern.conditions[0].value.value)
-        self.assertIsInstance(guardedpattern.conditions[1], jast.Constant)
-        self.assertIsInstance(guardedpattern.conditions[1].value, jast.IntLiteral)
-        self.assertEqual(42, guardedpattern.conditions[1].value.value)
+        self._test_bool_constant(guardedpattern.conditions[0], True)
+        self._test_int_constant(guardedpattern.conditions[1], 42)
 
     def _test_operator(self, tree, operator):
         self.assertIsInstance(tree, jast.BinOp)
@@ -1109,12 +1095,51 @@ class TestParse(unittest.TestCase):
         self.assertIsNotNone(tree.initializer)
         self.assertIsInstance(tree.initializer, jast.arrayinit)
         self.assertEqual(2, len(tree.initializer.values))
-        self.assertIsInstance(tree.initializer.values[0], jast.Constant)
-        self.assertIsInstance(tree.initializer.values[0].value, jast.IntLiteral)
-        self.assertEqual(42, tree.initializer.values[0].value.value)
-        self.assertIsInstance(tree.initializer.values[1], jast.Constant)
-        self.assertIsInstance(tree.initializer.values[1].value, jast.IntLiteral)
-        self.assertEqual(24, tree.initializer.values[1].value.value)
+        self._test_int_constant(tree.initializer.values[0], 42)
+        self._test_int_constant(tree.initializer.values[1], 24)
+
+    @parameterized.expand(POST_OPERATORS)
+    def test_PostOp(self, _, rep, operator):
+        tree = jast.parse(f"x{rep}", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.PostOp)
+        self.assertIsInstance(tree.op, operator)
+        self._test_name(tree.operand, "x")
+
+    def test_PostOp_twice(self):
+        tree = jast.parse(f"x++++", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.PostOp)
+        self.assertIsInstance(tree.op, jast.PostInc)
+        self.assertIsInstance(tree.operand, jast.PostOp)
+        self.assertIsInstance(tree.operand.op, jast.PostInc)
+        self._test_name(tree.operand.operand, "x")
+
+    @parameterized.expand(
+        [
+            [*first, *second]
+            for first, second in itertools.product(POST_OPERATORS, UNARY_OPERATORS)
+        ]
+    )
+    def test_postOp_parens(self, _, rep, operator, __, rep2, operator2):
+        tree = jast.parse(f"{rep2}x{rep}", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.UnaryOp)
+        self.assertIsInstance(tree.op, operator2)
+        self.assertIsInstance(tree.operand, jast.PostOp)
+        self.assertIsInstance(tree.operand.op, operator)
+        self._test_name(tree.operand.operand, "x")
+
+    @parameterized.expand(
+        [
+            [*first, *second]
+            for first, second in itertools.product(POST_OPERATORS, UNARY_OPERATORS)
+        ]
+    )
+    def test_postOp_parens(self, _, rep, operator, __, rep2, operator2):
+        tree = jast.parse(f"({rep2}x){rep}", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.PostOp)
+        self.assertIsInstance(tree.op, operator)
+        self.assertIsInstance(tree.operand, jast.UnaryOp)
+        self.assertIsInstance(tree.operand.op, operator2)
+        self._test_name(tree.operand.operand, "x")
 
     def test_SwitchExp(self):
         tree = jast.parse(
@@ -1149,3 +1174,319 @@ class TestParse(unittest.TestCase):
         self.assertIsInstance(rule.label, jast.ExpDefault)
         self.assertIsNone(rule.cases)
         self.assertEqual(0, len(rule.body))
+
+    def test_This(self):
+        tree = jast.parse("this", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.This)
+
+    def test_Super(self):
+        tree = jast.parse("super", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Super)
+        self.assertIsNone(tree.type_args)
+        self.assertIsNone(tree.id)
+
+    def test_Super_in_ExplicitGenericInvocation(self):
+        tree = jast.parse("<int> super.<int>x", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.ExplicitGenericInvocation)
+        self.assertIsInstance(tree.type_args, jast.typeargs)
+        self.assertEqual(1, len(tree.type_args.types))
+        self.assertIsInstance(tree.type_args.types[0], jast.Int)
+        self.assertIsInstance(tree.value, jast.Super)
+        self.assertIsInstance(tree.value.type_args, jast.typeargs)
+        self.assertEqual(1, len(tree.value.type_args.types))
+        self.assertIsInstance(tree.value.type_args.types[0], jast.Int)
+        self.assertIsInstance(tree.value.id, jast.identifier)
+        self.assertEqual("x", tree.value.id)
+
+    def test_Super_in_ExplicitGenericInvocation_with_args(self):
+        tree = jast.parse("<int> super(42)", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.ExplicitGenericInvocation)
+        self.assertIsInstance(tree.type_args, jast.typeargs)
+        self.assertEqual(1, len(tree.type_args.types))
+        self.assertIsInstance(tree.type_args.types[0], jast.Int)
+        self.assertIsInstance(tree.value, jast.Call)
+        self.assertIsInstance(tree.value.func, jast.Super)
+        self.assertIsNone(tree.value.func.type_args)
+        self.assertIsNone(tree.value.func.id)
+        self.assertEqual(1, len(tree.value.args))
+        self._test_int_constant(tree.value.args[0], 42)
+
+    def test_Constant(self):
+        tree = jast.parse("42", jast.ParseMode.EXPR)
+        self._test_int_constant(tree, 42)
+
+    def test_Constant_boolean(self):
+        tree = jast.parse("true", jast.ParseMode.EXPR)
+        self._test_bool_constant(tree, True)
+
+    def test_Name(self):
+        tree = jast.parse("x", jast.ParseMode.EXPR)
+        self._test_name(tree, "x")
+
+    def test_ClassExpr(self):
+        tree = jast.parse("int.class", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.ClassExpr)
+        self.assertIsInstance(tree.type, jast.Int)
+
+    def test_ExplicitGenericInvocation(self):
+        tree = jast.parse("<int>x()", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.ExplicitGenericInvocation)
+        self.assertIsInstance(tree.type_args, jast.typeargs)
+        self.assertEqual(1, len(tree.type_args.types))
+        self.assertIsInstance(tree.type_args.types[0], jast.Int)
+        self.assertIsInstance(tree.value, jast.Call)
+        self._test_name(tree.value.func, "x")
+        self.assertEqual(0, len(tree.value.args))
+
+    def test_ExplicitGenericInvocation_args(self):
+        tree = jast.parse("<int>x(42, 24)", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.ExplicitGenericInvocation)
+        self.assertIsInstance(tree.type_args, jast.typeargs)
+        self.assertEqual(1, len(tree.type_args.types))
+        self.assertIsInstance(tree.type_args.types[0], jast.Int)
+        self.assertIsInstance(tree.value, jast.Call)
+        self._test_name(tree.value.func, "x")
+        self.assertEqual(2, len(tree.value.args))
+        self._test_int_constant(tree.value.args[0], 42)
+        self._test_int_constant(tree.value.args[1], 24)
+
+    def test_ExplicitGenericInvocation_this(self):
+        tree = jast.parse("<int>this(42)", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.ExplicitGenericInvocation)
+        self.assertIsInstance(tree.type_args, jast.typeargs)
+        self.assertEqual(1, len(tree.type_args.types))
+        self.assertIsInstance(tree.type_args.types[0], jast.Int)
+        self.assertIsInstance(tree.value, jast.Call)
+        self.assertIsInstance(tree.value.func, jast.This)
+        self.assertEqual(1, len(tree.value.args))
+        self._test_int_constant(tree.value.args[0], 42)
+
+    def test_Subscript(self):
+        tree = jast.parse("x[y]", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Subscript)
+        self._test_name(tree.value, "x")
+        self._test_name(tree.index, "y")
+
+    def test_Subscript_primary(self):
+        tree = jast.parse("x.y[z]", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Subscript)
+        self.assertIsInstance(tree.value, jast.Member)
+        self._test_name(tree.value.value, "x")
+        self._test_name(tree.value.member, "y")
+        self._test_name(tree.index, "z")
+
+    def test_Subscript_parens(self):
+        tree = jast.parse("(++x)[z]", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Subscript)
+        self.assertIsInstance(tree.value, jast.UnaryOp)
+        self.assertIsInstance(tree.value.op, jast.PreInc)
+        self._test_name(tree.value.operand, "x")
+        self._test_name(tree.index, "z")
+
+    def test_Subscript_no_parens(self):
+        tree = jast.parse("++x[z]", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.UnaryOp)
+        self.assertIsInstance(tree.op, jast.PreInc)
+        self.assertIsInstance(tree.operand, jast.Subscript)
+        self._test_name(tree.operand.value, "x")
+        self._test_name(tree.operand.index, "z")
+
+    def test_Member(self):
+        tree = jast.parse("x.y", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Member)
+        self._test_name(tree.value, "x")
+        self._test_name(tree.member, "y")
+
+    def test_Member_call(self):
+        tree = jast.parse("x.y()", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Member)
+        self._test_name(tree.value, "x")
+        self.assertIsInstance(tree.member, jast.Call)
+        self._test_name(tree.member.func, "y")
+        self.assertEqual(0, len(tree.member.args))
+
+    def test_Member_this(self):
+        tree = jast.parse("x.this", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Member)
+        self._test_name(tree.value, "x")
+        self.assertIsInstance(tree.member, jast.This)
+
+    def test_Member_inner_creation(self):
+        tree = jast.parse("x.new <int> Y<>(42) {;}", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Member)
+        self._test_name(tree.value, "x")
+        self.assertIsInstance(tree.member, jast.NewObject)
+        self.assertIsInstance(tree.member.type_args, jast.typeargs)
+        self.assertEqual(1, len(tree.member.type_args.types))
+        self.assertIsInstance(tree.member.type_args.types[0], jast.Int)
+        self.assertIsInstance(tree.member.type, jast.Coit)
+        self._test_identifier(tree.member.type.id, "Y")
+        self.assertIsInstance(tree.member.type.type_args, jast.typeargs)
+        self.assertEqual(0, len(tree.member.type.type_args.types))
+        self.assertEqual(1, len(tree.member.args))
+        self._test_int_constant(tree.member.args[0], 42)
+        self.assertIsNotNone(tree.member.body)
+        self.assertEqual(1, len(tree.member.body))
+        self.assertIsInstance(tree.member.body[0], jast.EmptyDecl)
+
+    def test_Member_super(self):
+        tree = jast.parse("x.super.y", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Member)
+        self._test_name(tree.value, "x")
+        self.assertIsInstance(tree.member, jast.Super)
+        self._test_identifier(tree.member.id, "y")
+
+    def test_Member_super_args(self):
+        tree = jast.parse("x.super(42)", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Member)
+        self._test_name(tree.value, "x")
+        self.assertIsInstance(tree.member, jast.Call)
+        self.assertIsInstance(tree.member.func, jast.Super)
+        self.assertEqual(1, len(tree.member.args))
+        self._test_int_constant(tree.member.args[0], 42)
+
+    def test_Member_ExplicitGenericInvocation(self):
+        tree = jast.parse("x.<int>y()", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Member)
+        self._test_name(tree.value, "x")
+        self.assertIsInstance(tree.member, jast.ExplicitGenericInvocation)
+        self.assertIsInstance(tree.member.type_args, jast.typeargs)
+        self.assertEqual(1, len(tree.member.type_args.types))
+        self.assertIsInstance(tree.member.type_args.types[0], jast.Int)
+        self.assertIsInstance(tree.member.value, jast.Call)
+        self._test_name(tree.member.value.func, "y")
+        self.assertEqual(0, len(tree.member.value.args))
+
+    def test_Member_primary(self):
+        tree = jast.parse("x[42].z", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Member)
+        self.assertIsInstance(tree.value, jast.Subscript)
+        self._test_name(tree.value.value, "x")
+        self._test_int_constant(tree.value.index, 42)
+        self._test_name(tree.member, "z")
+
+    def test_Member_primary_reversed(self):
+        tree = jast.parse("x.z[42]", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Subscript)
+        self.assertIsInstance(tree.value, jast.Member)
+        self._test_name(tree.value.value, "x")
+        self._test_name(tree.value.member, "z")
+        self._test_int_constant(tree.index, 42)
+
+    def test_Member_parens(self):
+        tree = jast.parse("(++x).y", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Member)
+        self.assertIsInstance(tree.value, jast.UnaryOp)
+        self.assertIsInstance(tree.value.op, jast.PreInc)
+        self._test_name(tree.value.operand, "x")
+        self._test_name(tree.member, "y")
+
+    def test_Member_no_parens(self):
+        tree = jast.parse("++x.y", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.UnaryOp)
+        self.assertIsInstance(tree.op, jast.PreInc)
+        self.assertIsInstance(tree.operand, jast.Member)
+        self._test_name(tree.operand.value, "x")
+        self._test_name(tree.operand.member, "y")
+
+    def test_Call(self):
+        tree = jast.parse("x()", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Call)
+        self._test_name(tree.func, "x")
+        self.assertEqual(0, len(tree.args))
+
+    def test_Call_args(self):
+        tree = jast.parse("x(42, 24)", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Call)
+        self._test_name(tree.func, "x")
+        self.assertEqual(2, len(tree.args))
+        self._test_int_constant(tree.args[0], 42)
+        self._test_int_constant(tree.args[1], 24)
+
+    def test_Call_this(self):
+        tree = jast.parse("this(42)", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Call)
+        self.assertIsInstance(tree.func, jast.This)
+        self.assertEqual(1, len(tree.args))
+        self._test_int_constant(tree.args[0], 42)
+
+    def test_Call_super(self):
+        tree = jast.parse("super(42)", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Call)
+        self.assertIsInstance(tree.func, jast.Super)
+        self.assertEqual(1, len(tree.args))
+        self._test_int_constant(tree.args[0], 42)
+
+    def test_Call_no_parens(self):
+        tree = jast.parse("++x()", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.UnaryOp)
+        self.assertIsInstance(tree.op, jast.PreInc)
+        self.assertIsInstance(tree.operand, jast.Call)
+        self._test_name(tree.operand.func, "x")
+        self.assertEqual(0, len(tree.operand.args))
+
+    def test_Reference(self):
+        tree = jast.parse("x::<int>y", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Reference)
+        self._test_name(tree.type, "x")
+        self.assertIsInstance(tree.type_args, jast.typeargs)
+        self.assertEqual(1, len(tree.type_args.types))
+        self.assertIsInstance(tree.type_args.types[0], jast.Int)
+        self._test_identifier(tree.id, "y")
+        self.assertFalse(tree.new)
+
+    def test_Reference_primary(self):
+        tree = jast.parse("x.y::z", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Reference)
+        self.assertIsInstance(tree.type, jast.Member)
+        self._test_name(tree.type.value, "x")
+        self._test_name(tree.type.member, "y")
+        self._test_identifier(tree.id, "z")
+        self.assertFalse(tree.new)
+
+    def test_Reference_twice(self):
+        tree = jast.parse("x::<int>y::z", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Reference)
+        self.assertIsInstance(tree.type, jast.Reference)
+        self._test_name(tree.type.type, "x")
+        self.assertIsInstance(tree.type.type_args, jast.typeargs)
+        self.assertEqual(1, len(tree.type.type_args.types))
+        self.assertIsInstance(tree.type.type_args.types[0], jast.Int)
+        self._test_identifier(tree.type.id, "y")
+        self.assertFalse(tree.type.new)
+        self._test_identifier(tree.id, "z")
+        self.assertFalse(tree.new)
+
+    def test_Reference_type(self):
+        tree = jast.parse("int::<int>x", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Reference)
+        self.assertIsInstance(tree.type, jast.Int)
+        self.assertIsInstance(tree.type_args, jast.typeargs)
+        self.assertEqual(1, len(tree.type_args.types))
+        self.assertIsInstance(tree.type_args.types[0], jast.Int)
+        self._test_identifier(tree.id, "x")
+        self.assertFalse(tree.new)
+
+    def test_Reference_new(self):
+        tree = jast.parse("int::new", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Reference)
+        self.assertIsInstance(tree.type, jast.Int)
+        self.assertIsNone(tree.id)
+        self.assertTrue(tree.new)
+
+    def test_Reference_class_type(self):
+        tree = jast.parse("X<int>::<int>new", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Reference)
+        self.assertIsInstance(tree.type, jast.ClassType)
+        self.assertEqual(1, len(tree.type.coits))
+        coit = tree.type.coits[0]
+        self.assertIsInstance(coit, jast.Coit)
+        self.assertEqual("X", coit.id)
+        self.assertIsInstance(coit.type_args, jast.typeargs)
+        self.assertEqual(1, len(coit.type_args.types))
+        self.assertIsInstance(coit.type_args.types[0], jast.Int)
+        self.assertIsInstance(tree.type_args, jast.typeargs)
+        self.assertEqual(1, len(tree.type_args.types))
+        self.assertIsInstance(tree.type_args.types[0], jast.Int)
+        self.assertIsNone(tree.id)
+        self.assertTrue(tree.new)

@@ -1,3 +1,5 @@
+import unittest
+
 import jast
 
 OPERATORS_ASSIGN = [
@@ -209,3 +211,34 @@ UNARY_OPERATORS = [
     ("PreInc", "++", jast.PreInc),
     ("PreDec", "--", jast.PreDec),
 ]
+
+POST_OPERATORS = [
+    ("PostInc", "++", jast.PostInc),
+    ("PostDec", "--", jast.PostDec),
+]
+
+
+class BaseTest(unittest.TestCase):
+    def _test_int_literal(self, literal, expected: int = 42):
+        self.assertIsInstance(literal, jast.IntLiteral)
+        self.assertEqual(literal.value, expected)
+
+    def _test_int_constant(self, constant, expected: int = 42):
+        self.assertIsInstance(constant, jast.Constant)
+        self._test_int_literal(constant.value, expected)
+
+    def _test_bool_constant(self, constant, expected: bool = True):
+        self.assertIsInstance(constant, jast.Constant)
+        self.assertIsInstance(constant.value, jast.BoolLiteral)
+        if expected:
+            self.assertTrue(constant.value.value)
+        else:
+            self.assertFalse(constant.value.value)
+
+    def _test_identifier(self, identifier, expected: str):
+        self.assertIsInstance(identifier, jast.identifier)
+        self.assertEqual(expected, identifier)
+
+    def _test_name(self, name, expected: str):
+        self.assertIsInstance(name, jast.Name)
+        self._test_identifier(name.id, expected)

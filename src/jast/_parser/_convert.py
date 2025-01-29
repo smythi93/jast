@@ -1,6 +1,7 @@
 from typing import List, Dict, Optional
 
 from antlr4.ParserRuleContext import ParserRuleContext
+from antlr4.tree.Tree import TerminalNodeImpl
 
 import jast._jast as jast
 from jast import typeargs
@@ -16,6 +17,15 @@ class JASTConverter(JavaParserVisitor):
             "col_offset": ctx.start.column,
             "end_lineno": ctx.stop.line,
             "end_col_offset": ctx.stop.column,
+        }
+
+    @staticmethod
+    def _get_location_token(token: TerminalNodeImpl) -> Dict[str, int]:
+        return {
+            "lineno": token.symbol.line,
+            "col_offset": token.symbol.start,
+            "end_lineno": token.symbol.line,
+            "end_col_offset": token.symbol.stop,
         }
 
     @staticmethod
@@ -280,7 +290,7 @@ class JASTConverter(JavaParserVisitor):
         return jast.enumconstant(
             annotations=annotations,
             id=identifier,
-            arguments=arguments,
+            args=arguments,
             body=body,
         )
 
@@ -1405,9 +1415,9 @@ class JASTConverter(JavaParserVisitor):
 
     def visitMethodCall(self, ctx: JavaParser.MethodCallContext) -> jast.Call:
         if ctx.THIS():
-            function = jast.This(**self._get_location_rule(ctx.THIS()))
+            function = jast.This(**self._get_location_token(ctx.THIS()))
         elif ctx.SUPER():
-            function = jast.Super(**self._get_location_rule(ctx.SUPER()))
+            function = jast.Super(**self._get_location_token(ctx.SUPER()))
         else:
             function = jast.Name(
                 id=self.visitIdentifier(ctx.identifier()),
@@ -1752,12 +1762,12 @@ class JASTConverter(JavaParserVisitor):
         return self.visitExpression(ctx.expression())
 
     def visitThisExpression(self, ctx: JavaParser.ThisExpressionContext) -> jast.This:
-        return jast.This(**self._get_location_rule(ctx.THIS()))
+        return jast.This(**self._get_location_rule(ctx))
 
     def visitSuperExpression(
         self, ctx: JavaParser.SuperExpressionContext
     ) -> jast.Super:
-        return jast.Super(**self._get_location_rule(ctx.SUPER()))
+        return jast.Super(**self._get_location_rule(ctx))
 
     def visitLiteralExpression(
         self, ctx: JavaParser.LiteralExpressionContext
@@ -1787,9 +1797,16 @@ class JASTConverter(JavaParserVisitor):
         self, ctx: JavaParser.ExplicitGenericInvocationExpressionContext
     ) -> jast.ExplicitGenericInvocation:
         if ctx.THIS():
-            expression = jast.This(
-                arguments=self.visitArguments(ctx.arguments()),
-                **self._get_location_rule(ctx.THIS()),
+            location = self._get_location_rule(ctx)
+            start = self._get_location_token(ctx.THIS())
+            location["lineno"] = start["lineno"]
+            location["col_offset"] = start["col_offset"]
+            expression = jast.Call(
+                func=jast.This(
+                    **start,
+                ),
+                args=self.visitArguments(ctx.arguments()),
+                **location,
             )
         else:
             expression = self.visitExplicitGenericInvocationSuffix(
@@ -1799,13 +1816,13 @@ class JASTConverter(JavaParserVisitor):
             type_args=self.visitNonWildcardTypeArguments(
                 ctx.nonWildcardTypeArguments()
             ),
-            expression=expression,
+            value=expression,
             **self._get_location_rule(ctx),
         )
 
     def visitArrayAccessExpression(self, ctx: JavaParser.ArrayAccessExpressionContext):
         return jast.Subscript(
-            epxr=self.visit(ctx.primary()),
+            value=self.visit(ctx.primary()),
             index=self.visitExpression(ctx.expression()),
             **self._get_location_rule(ctx),
         )
@@ -1814,15 +1831,18 @@ class JASTConverter(JavaParserVisitor):
         self, ctx: JavaParser.MemberReferenceExpressionContext
     ):
         if ctx.THIS():
-            expr = jast.This(**self._get_location_rule(ctx.THIS()))
-        elif ctx.SUPER():
+            expr = jast.This(**self._get_location_token(ctx.THIS()))
+        elif ctx.superSuffix():
             expr = self.visitSuperSuffix(ctx.superSuffix())
         elif ctx.NEW():
+            start = self._get_location_token(ctx.NEW())
             expr = self.visitInnerCreator(ctx.innerCreator())
             if ctx.nonWildcardTypeArguments():
                 expr.type_args = self.visitNonWildcardTypeArguments(
                     ctx.nonWildcardTypeArguments()
                 )
+            expr.lineno = start["lineno"]
+            expr.col_offset = start["col_offset"]
         elif ctx.identifier():
             expr = jast.Name(
                 id=self.visitIdentifier(ctx.identifier()),
@@ -1991,12 +2011,14 @@ class JASTConverter(JavaParserVisitor):
 
     def visitInnerCreator(self, ctx: JavaParser.InnerCreatorContext) -> jast.NewObject:
         return jast.NewObject(
-            id=self.visitIdentifier(ctx.identifier()),
-            template_args=self.visitNonWildcardTypeArgumentsOrDiamond(
-                ctx.nonWildcardTypeArgumentsOrDiamond()
-            )
-            if ctx.nonWildcardTypeArgumentsOrDiamond()
-            else None,
+            type=jast.Coit(
+                id=self.visitIdentifier(ctx.identifier()),
+                type_args=self.visitNonWildcardTypeArgumentsOrDiamond(
+                    ctx.nonWildcardTypeArgumentsOrDiamond()
+                )
+                if ctx.nonWildcardTypeArgumentsOrDiamond()
+                else None,
+            ),
             args=self.visitArguments(ctx.arguments()),
             body=self.visitClassBody(ctx.classBody()) if ctx.classBody() else None,
             **self._get_location_rule(ctx),
@@ -2023,7 +2045,7 @@ class JASTConverter(JavaParserVisitor):
             type_args=self.visitNonWildcardTypeArguments(
                 ctx.nonWildcardTypeArguments()
             ),
-            expression=self.visitExplicitGenericInvocationSuffix(
+            value=self.visitExplicitGenericInvocationSuffix(
                 ctx.explicitGenericInvocationSuffix()
             ),
             **self._get_location_rule(ctx),
@@ -2104,14 +2126,25 @@ class JASTConverter(JavaParserVisitor):
         )
 
     def visitSuperSuffix(self, ctx: JavaParser.SuperSuffixContext) -> jast.Super:
-        return jast.Super(
+        location = self._get_location_token(ctx.SUPER())
+        if ctx.identifier():
+            end = self._get_location_rule(ctx.identifier())
+            location["end_lineno"] = end["end_lineno"]
+            location["end_col_offset"] = end["end_col_offset"]
+        expr = jast.Super(
             type_args=self.visitTypeArguments(ctx.typeArguments())
             if ctx.typeArguments()
             else None,
             id=self.visitIdentifier(ctx.identifier()) if ctx.identifier() else None,
-            args=self.visitArguments(ctx.arguments()) if ctx.arguments() else None,
-            **self._get_location_rule(ctx),
+            **location,
         )
+        if ctx.arguments():
+            expr = jast.Call(
+                func=expr,
+                args=self.visitArguments(ctx.arguments()),
+                **self._get_location_rule(ctx),
+            )
+        return expr
 
     def visitExplicitGenericInvocationSuffix(
         self, ctx: JavaParser.ExplicitGenericInvocationSuffixContext

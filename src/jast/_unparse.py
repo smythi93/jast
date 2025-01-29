@@ -543,7 +543,9 @@ class _Unparser(JNodeVisitor):
 
     def visit_NewObject(self, node: jast.NewObject):
         with self.require_parens(_Precedence.TYPE, node):
-            self.write("new ")
+            self.write("new")
+            self.visit(node.type_args)
+            self.write(" ")
             self.visit(node.type)
             with self.parens():
                 self.items_view(node.args)
@@ -617,9 +619,6 @@ class _Unparser(JNodeVisitor):
 
     def visit_This(self, node: jast.This):
         self.write("this")
-        if node.arguments:
-            with self.parens():
-                self.items_view(node.arguments)
 
     def visit_Super(self, node: jast.Super):
         self.write("super")
@@ -627,9 +626,6 @@ class _Unparser(JNodeVisitor):
             self.write(".")
             self.visit(node.type_args)
             self.visit_identifier(node.id)
-        if node.args is not None:
-            with self.parens():
-                self.items_view(node.args)
 
     def visit_Constant(self, node: jast.Constant):
         self.visit(node.value)
@@ -638,11 +634,12 @@ class _Unparser(JNodeVisitor):
         self.visit_identifier(node.id)
 
     def visit_ClassExpr(self, node: jast.ClassExpr):
-        self.visit_identifier(node.type)
+        self.visit(node.type)
         self.write(".class")
 
-    def visit_ExplictGenericInvocation(self, node: jast.ExplicitGenericInvocation):
-        pass
+    def visit_ExplicitGenericInvocation(self, node):
+        self.visit(node.type_args)
+        self.visit(node.value)
 
     def visit_ExpCase(self, node: jast.ExpCase):
         self.write("case")
