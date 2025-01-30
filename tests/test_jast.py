@@ -1291,3 +1291,94 @@ class TestConstructors(BaseTest):
             jast.Reference,
             new=True,
         )
+
+    def test_arrayinit(self):
+        arrayinit = jast.arrayinit(values=[jast.Constant(jast.IntLiteral(42))])
+        self.assertIsInstance(arrayinit, jast.arrayinit)
+        self.assertIsInstance(arrayinit, jast.JAST)
+        self.assertEqual(1, len(arrayinit.values))
+        self._test_int_constant(arrayinit.values[0], 42)
+        self._test_iteration(arrayinit)
+
+    def test_receiver(self):
+        receiver = jast.receiver(type=jast.Int(), identifiers=[jast.identifier("foo")])
+        self.assertIsInstance(receiver, jast.receiver)
+        self.assertIsInstance(receiver, jast.JAST)
+        self.assertIsInstance(receiver.type, jast.Int)
+        self.assertEqual(1, len(receiver.identifiers))
+        self._test_identifier(receiver.identifiers[0], "foo")
+        self._test_iteration(receiver)
+
+    def test_receiver_error(self):
+        self.assertRaises(
+            ValueError, jast.receiver, identifiers=[jast.identifier("foo")]
+        )
+
+    def test_param(self):
+        param = jast.param(
+            modifiers=[jast.Final()],
+            type=jast.Int(),
+            id=jast.variabledeclaratorid(jast.identifier("bar")),
+        )
+        self.assertIsInstance(param, jast.param)
+        self.assertIsInstance(param, jast.JAST)
+        self.assertEqual(1, len(param.modifiers))
+        self.assertIsInstance(param.modifiers[0], jast.Final)
+        self.assertIsInstance(param.type, jast.Int)
+        self.assertIsInstance(param.id, jast.variabledeclaratorid)
+        self._test_identifier(param.id.id, "bar")
+        self.assertEqual(0, len(param.id.dims))
+        self._test_iteration(param)
+
+    def test_param_error(self):
+        self.assertRaises(
+            ValueError, jast.param, id=jast.variabledeclaratorid(jast.identifier("bar"))
+        )
+        self.assertRaises(ValueError, jast.param, type=jast.Int())
+
+    def test_arity(self):
+        arity = jast.arity(
+            modifiers=[jast.Final()],
+            type=jast.Int(),
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            id=jast.variabledeclaratorid(jast.identifier("bar")),
+        )
+        self.assertIsInstance(arity, jast.arity)
+        self.assertIsInstance(arity, jast.JAST)
+        self.assertEqual(1, len(arity.modifiers))
+        self.assertIsInstance(arity.modifiers[0], jast.Final)
+        self.assertIsInstance(arity.type, jast.Int)
+        self.assertEqual(1, len(arity.annotations))
+        self.assertIsInstance(arity.annotations[0], jast.Annotation)
+        self.assertIsInstance(arity.id, jast.variabledeclaratorid)
+        self._test_identifier(arity.id.id, "bar")
+        self.assertEqual(0, len(arity.id.dims))
+        self._test_iteration(arity)
+
+    def test_arity_error(self):
+        self.assertRaises(ValueError, jast.arity, id=jast.identifier("bar"))
+        self.assertRaises(ValueError, jast.arity, type=jast.Int())
+
+    def test_params(self):
+        params = jast.params(
+            receiver_param=jast.receiver(jast.Int()),
+            parameters=[
+                jast.param(
+                    modifiers=[jast.Final()],
+                    type=jast.Int(),
+                    id=jast.variabledeclaratorid(jast.identifier("foo")),
+                ),
+                jast.param(
+                    modifiers=[jast.Final()],
+                    type=jast.Int(),
+                    id=jast.variabledeclaratorid(jast.identifier("bar")),
+                ),
+            ],
+        )
+        self.assertIsInstance(params, jast.params)
+        self.assertIsInstance(params, jast.JAST)
+        self.assertIsInstance(params.receiver_param, jast.receiver)
+        self.assertEqual(2, len(params.parameters))
+        self.assertIsInstance(params.parameters[0], jast.param)
+        self.assertIsInstance(params.parameters[1], jast.param)
+        self._test_iteration(params)

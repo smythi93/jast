@@ -1383,3 +1383,52 @@ class TestUnparse(unittest.TestCase):
             new=True,
         )
         self.assertEqual("X<int, boolean>::<int, float>new", jast.unparse(tree))
+
+    def test_arrayinit(self):
+        tree = jast.arrayinit(
+            values=[
+                jast.Constant(jast.IntLiteral(42)),
+                jast.Constant(jast.IntLiteral(24)),
+            ]
+        )
+        self.assertEqual("{42, 24}", jast.unparse(tree))
+
+    def test_receiver(self):
+        tree = jast.receiver(
+            type=jast.Int(),
+            identifiers=[jast.identifier("foo"), jast.identifier("bar")],
+        )
+        self.assertEqual("int foo.bar.this", jast.unparse(tree))
+
+    def test_param(self):
+        param = jast.param(
+            modifiers=[jast.Final()],
+            type=jast.Int(),
+            id=jast.variabledeclaratorid(jast.identifier("bar")),
+        )
+        self.assertEqual("final int bar", jast.unparse(param))
+
+    def test_arity(self):
+        arity = jast.arity(
+            modifiers=[jast.Final()],
+            type=jast.Int(),
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            id=jast.variabledeclaratorid(jast.identifier("bar")),
+        )
+        self.assertEqual("final int @foo ... bar", jast.unparse(arity))
+
+    def test_params(self):
+        params = jast.params(
+            receiver_param=jast.receiver(jast.Int()),
+            parameters=[
+                jast.param(
+                    type=jast.Int(),
+                    id=jast.variabledeclaratorid(jast.identifier("foo")),
+                ),
+                jast.arity(
+                    type=jast.Int(),
+                    id=jast.variabledeclaratorid(jast.identifier("bar")),
+                ),
+            ],
+        )
+        self.assertEqual("int this, int foo, int ... bar", jast.unparse(params))

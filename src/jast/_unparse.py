@@ -672,7 +672,7 @@ class _Unparser(JNodeVisitor):
     def visit_receiver(self, node: jast.receiver):
         self.visit(node.type)
         self.write(" ")
-        self.interleave(node.identifiers, ".", ".")
+        self.interleave(node.identifiers, ".", end=".")
         self.write("this")
 
     def visit_param(self, node: jast.param):
@@ -690,7 +690,7 @@ class _Unparser(JNodeVisitor):
         self.visit_variabledeclaratorid(node.id)
 
     def visit_params(self, node: jast.params):
-        self.items_view(filter(None, [node.receiver_parameter] + node.parameters))
+        self.items_view(filter(None, [node.receiver_param] + node.parameters))
 
     def visit_LocalClass(self, node: jast.LocalClass):
         pass

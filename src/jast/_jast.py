@@ -1098,7 +1098,7 @@ class Lambda(expr):
             raise ValueError("args is required for Lambda")
         if body is None:
             raise ValueError("body is required for Lambda")
-        if isinstance(args, params) and args.receiver_parameter:
+        if isinstance(args, params) and args.receiver_param:
             raise ValueError("receiver_param is not allowed for Lambda")
         self.args = args
         self.body = body
@@ -1798,14 +1798,14 @@ class params(JAST):
         **kwargs,
     ):
         super().__init__(*vargs, **kwargs)
-        self.receiver_parameter = receiver_param
+        self.receiver_param = receiver_param
         self.parameters = parameters or []
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        if self.receiver_parameter:
-            yield "receiver_param", self.receiver_parameter
+        if self.receiver_param:
+            yield "receiver_param", self.receiver_param
         if self.parameters:
-            yield "args", self.parameters
+            yield "parameters", self.parameters
 
 
 # Statements

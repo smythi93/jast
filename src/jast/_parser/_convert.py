@@ -695,7 +695,7 @@ class JASTConverter(JavaParserVisitor):
         ]
         return jast.receiver(
             type=type_,
-            id=identifiers,
+            identifiers=identifiers,
         )
 
     def visitFormalParameterList(
@@ -729,10 +729,14 @@ class JASTConverter(JavaParserVisitor):
             self.visitVariableModifier(modifier) for modifier in ctx.variableModifier()
         ]
         type_ = self.visitTypeType(ctx.typeType())
+        annotations = [
+            self.visitAnnotation(annotation) for annotation in ctx.annotation()
+        ]
         identifier = self.visitVariableDeclaratorId(ctx.variableDeclaratorId())
         return jast.arity(
             modifiers=modifiers,
             type=type_,
+            annotations=annotations,
             id=identifier,
         )
 
