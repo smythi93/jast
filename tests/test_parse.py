@@ -1,4 +1,5 @@
 import itertools
+import unittest
 
 from parameterized import parameterized
 
@@ -118,6 +119,31 @@ class TestParse(BaseTest):
     def test_FloatLiteral_hex(self):
         float_literal = jast.parse("0x1.91eb851eb851fp+1", jast.ParseMode.EXPR)
         self._test_FloatLiteral(float_literal)
+
+    def test_CharLiteral(self):
+        char_literal = jast.parse("'a'", jast.ParseMode.EXPR)
+        self.assertIsInstance(char_literal, jast.Constant)
+        self.assertIsInstance(char_literal.value, jast.CharLiteral)
+        self.assertEqual("a", char_literal.value.value)
+
+    def test_StringLiteral(self):
+        string_literal = jast.parse('"foo"', jast.ParseMode.EXPR)
+        self.assertIsInstance(string_literal, jast.Constant)
+        self.assertIsInstance(string_literal.value, jast.StringLiteral)
+        self.assertEqual("foo", string_literal.value.value)
+
+    @unittest.skip("TextBlock does not work as expected")
+    def test_TextBlock(self):
+        text_block = jast.parse('"""foo"""', jast.ParseMode.EXPR)
+        self.assertIsInstance(text_block, jast.Constant)
+        self.assertIsInstance(text_block.value, jast.TextBlock)
+        self.assertEqual("foo", text_block.value.value)
+
+    def test_Null(self):
+        null = jast.parse("null", jast.ParseMode.EXPR)
+        self.assertIsInstance(null, jast.Constant)
+        self.assertIsInstance(null.value, jast.NullLiteral)
+        self.assertIsNone(null.value.value)
 
     def _test_modifier_class(self, tree, expected):
         self.assertIsInstance(tree, jast.Class)
