@@ -780,23 +780,20 @@ class TestConstructors(BaseTest):
         self.assertRaises(
             ValueError,
             jast.IfExp,
-            test=jast.Constant(
-                jast.BoolLiteral(True), body=jast.Constant(jast.IntLiteral(42))
-            ),
+            test=jast.Constant(jast.BoolLiteral(True)),
+            body=jast.Constant(jast.IntLiteral(42)),
         )
         self.assertRaises(
             ValueError,
             jast.IfExp,
-            test=jast.Constant(
-                jast.BoolLiteral(True), orelse=jast.Constant(jast.IntLiteral(0))
-            ),
+            test=jast.Constant(jast.BoolLiteral(True)),
+            orelse=jast.Constant(jast.IntLiteral(0)),
         )
         self.assertRaises(
             ValueError,
             jast.IfExp,
-            body=jast.Constant(
-                jast.IntLiteral(42), orelse=jast.Constant(jast.IntLiteral(0))
-            ),
+            body=jast.Constant(jast.IntLiteral(42)),
+            orelse=jast.Constant(jast.IntLiteral(0)),
         )
 
     def test_BinOp(self):
