@@ -18476,7 +18476,7 @@ class JavaParser(Parser):
         "recordComponent",
         "recordBody",
         "recordBodyDeclaration",
-        "body",
+        "block",
         "blockStatement",
         "localVariableDeclaration",
         "identifier",
