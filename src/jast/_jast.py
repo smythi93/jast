@@ -3178,7 +3178,7 @@ class Record(declaration):
     """
     Represents a record decl in the Java AST.
 
-    <modifier>* record <qname> (<component>, <component>, ...) [implements <jtype>, <jtype>, ...] {
+    <modifier>* record <id> (<component>, <component>, ...) [implements <jtype>, <jtype>, ...] {
         <decl> <decl> ...
     }
     """

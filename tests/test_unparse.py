@@ -1442,3 +1442,406 @@ class TestUnparse(unittest.TestCase):
             ],
         )
         self.assertEqual("int this, int foo, int ... bar", jast.unparse(params))
+
+    def test_Empty(self):
+        tree = jast.Empty()
+        self.assertEqual(";", jast.unparse(tree))
+
+    def test_Block(self):
+        tree = jast.Block(body=[jast.Empty(), jast.Empty()])
+        self.assertEqual("{ ; ; }", jast.unparse(tree, indent=-1))
+
+    def test_Compound(self):
+        tree = jast.Compound(body=[jast.Empty(), jast.Empty()])
+        self.assertEqual("; ;", jast.unparse(tree, indent=-1))
+
+    def test_LocalType_class(self):
+        tree = jast.LocalType(
+            decl=jast.Class(
+                id=jast.identifier("A"),
+                body=[jast.EmptyDecl()],
+            )
+        )
+        self.assertEqual("class A { ; }", jast.unparse(tree, indent=-1))
+
+    def test_LocalType_interface(self):
+        tree = jast.LocalType(
+            decl=jast.Interface(
+                id=jast.identifier("A"),
+                body=[jast.EmptyDecl()],
+            )
+        )
+        self.assertEqual("interface A { ; }", jast.unparse(tree, indent=-1))
+
+    def test_LocalType_record(self):
+        tree = jast.LocalType(
+            decl=jast.Record(
+                id=jast.identifier("A"),
+                body=[jast.EmptyDecl()],
+            )
+        )
+        self.assertEqual("record A() { ; }", jast.unparse(tree, indent=-1))
+
+    def test_LocalVariable(self):
+        tree = jast.LocalVariable(
+            modifiers=[jast.Final()],
+            type=jast.Int(),
+            declarators=[
+                jast.declarator(
+                    id=jast.variabledeclaratorid(jast.identifier("foo")),
+                    init=jast.Constant(jast.IntLiteral(42)),
+                ),
+                jast.declarator(id=jast.variabledeclaratorid(jast.identifier("bar"))),
+            ],
+        )
+        self.assertEqual("final int foo = 42, bar;", jast.unparse(tree))
+
+    def test_Labeled(self):
+        tree = jast.Labeled(
+            label=jast.identifier("foo"),
+            body=jast.Empty(),
+        )
+        self.assertEqual("foo:\n;", jast.unparse(tree))
+
+    def test_Expression(self):
+        tree = jast.Expression(
+            value=jast.Constant(jast.IntLiteral(42)),
+        )
+        self.assertEqual("42;", jast.unparse(tree))
+
+    def test_If(self):
+        tree = jast.If(
+            test=jast.Constant(jast.BoolLiteral(True)),
+            body=jast.Empty(),
+            orelse=jast.Empty(),
+        )
+        self.assertEqual("if (true) ; else ;", jast.unparse(tree, indent=-1))
+
+    def test_If_block(self):
+        tree = jast.If(
+            test=jast.Constant(jast.BoolLiteral(True)),
+            body=jast.Block(body=[jast.Empty()]),
+            orelse=jast.Block(body=[jast.Empty()]),
+        )
+        self.assertEqual("if (true) {\n    ;\n} else {\n    ;\n}", jast.unparse(tree))
+
+    def test_If_no_orelse(self):
+        tree = jast.If(
+            test=jast.Constant(jast.BoolLiteral(True)),
+            body=jast.Empty(),
+        )
+        self.assertEqual("if (true)\n    ;", jast.unparse(tree))
+
+    def test_Assert(self):
+        tree = jast.Assert(
+            test=jast.Constant(jast.BoolLiteral(True)),
+            msg=jast.Constant(jast.StringLiteral("foo")),
+        )
+        self.assertEqual('assert true : "foo";', jast.unparse(tree))
+
+    def test_Match(self):
+        tree = jast.Match(
+            type=jast.Int(),
+            id=jast.identifier("foo"),
+        )
+        self.assertEqual("int foo", jast.unparse(tree))
+
+    def test_Case(self):
+        tree = jast.Case(
+            guard=jast.Constant(jast.IntLiteral(42)),
+        )
+        self.assertEqual("case 42:", jast.unparse(tree))
+
+    def test_DefaultCase(self):
+        tree = jast.DefaultCase()
+        self.assertEqual("default:", jast.unparse(tree))
+
+    def test_Throw(self):
+        tree = jast.Throw(
+            exc=jast.Name(jast.identifier("foo")),
+        )
+        self.assertEqual("throw foo;", jast.unparse(tree))
+
+    def test_switchgroup(self):
+        tree = jast.switchgroup(
+            labels=[
+                jast.Case(
+                    guard=jast.Constant(jast.IntLiteral(42)),
+                ),
+                jast.Case(
+                    guard=jast.Constant(jast.IntLiteral(24)),
+                ),
+            ],
+            body=[jast.Empty()],
+        )
+        self.assertEqual("case 42: case 24: ;", jast.unparse(tree, indent=-1))
+
+    def test_switchblock(self):
+        tree = jast.switchblock(
+            groups=[
+                jast.switchgroup(
+                    labels=[
+                        jast.Case(
+                            guard=jast.Constant(jast.IntLiteral(42)),
+                        ),
+                        jast.Case(
+                            guard=jast.Constant(jast.IntLiteral(24)),
+                        ),
+                    ],
+                    body=[jast.Empty()],
+                )
+            ],
+            labels=[jast.Case(guard=jast.Constant(jast.IntLiteral(42)))],
+        )
+        self.assertEqual(
+            "{\n    case 42:\n    case 24:\n        ;\n    case 42:\n}",
+            jast.unparse(tree),
+        )
+
+    def test_Switch(self):
+        tree = jast.Switch(
+            value=jast.Name(jast.identifier("foo")),
+            body=jast.switchblock(
+                groups=[
+                    jast.switchgroup(
+                        labels=[
+                            jast.Case(
+                                guard=jast.Constant(jast.IntLiteral(42)),
+                            ),
+                            jast.Case(
+                                guard=jast.Constant(jast.IntLiteral(24)),
+                            ),
+                        ],
+                        body=[jast.Empty()],
+                    )
+                ],
+                labels=[jast.Case(guard=jast.Constant(jast.IntLiteral(42)))],
+            ),
+        )
+        self.assertEqual(
+            "switch (foo) {\n    case 42:\n    case 24:\n        ;\n    case 42:\n}",
+            jast.unparse(tree),
+        )
+
+    def test_While(self):
+        tree = jast.While(
+            test=jast.Constant(jast.BoolLiteral(True)),
+            body=jast.Empty(),
+        )
+        self.assertEqual("while (true)\n    ;", jast.unparse(tree))
+
+    def test_DoWhile(self):
+        tree = jast.DoWhile(
+            body=jast.Empty(),
+            test=jast.Constant(jast.BoolLiteral(True)),
+        )
+        self.assertEqual("do\n    ;\nwhile (true);", jast.unparse(tree))
+
+    def test_For(self):
+        tree = jast.For(
+            init=jast.LocalVariable(
+                type=jast.Int(),
+                declarators=[
+                    jast.declarator(
+                        id=jast.variabledeclaratorid(jast.identifier("foo")),
+                        init=jast.Constant(jast.IntLiteral(42)),
+                    )
+                ],
+            ),
+            test=jast.BinOp(
+                left=jast.Name(jast.identifier("foo")),
+                op=jast.Gt(),
+                right=jast.Constant(jast.IntLiteral(0)),
+            ),
+            update=[
+                jast.PostOp(
+                    operand=jast.Name(jast.identifier("foo")),
+                    op=jast.PostDec(),
+                )
+            ],
+            body=jast.Empty(),
+        )
+        self.assertEqual(
+            "for (int foo = 42; foo > 0; foo--)\n    ;", jast.unparse(tree)
+        )
+
+    def test_For_block(self):
+        tree = jast.For(
+            init=jast.LocalVariable(
+                type=jast.Int(),
+                declarators=[
+                    jast.declarator(
+                        id=jast.variabledeclaratorid(jast.identifier("foo")),
+                        init=jast.Constant(jast.IntLiteral(42)),
+                    )
+                ],
+            ),
+            test=jast.BinOp(
+                left=jast.Name(jast.identifier("foo")),
+                op=jast.Gt(),
+                right=jast.Constant(jast.IntLiteral(0)),
+            ),
+            update=[
+                jast.PostOp(
+                    operand=jast.Name(jast.identifier("foo")),
+                    op=jast.PostDec(),
+                )
+            ],
+            body=jast.Block(body=[jast.Empty()]),
+        )
+        self.assertEqual(
+            "for (int foo = 42; foo > 0; foo--) {\n    ;\n}",
+            jast.unparse(tree),
+        )
+
+    def test_For_multiple_init_update(self):
+        tree = jast.For(
+            init=[
+                jast.Assign(
+                    target=jast.Name(jast.identifier("x")),
+                    value=jast.Constant(jast.IntLiteral(0)),
+                ),
+                jast.Assign(
+                    target=jast.Name(jast.identifier("y")),
+                    value=jast.Constant(jast.IntLiteral(0)),
+                ),
+            ],
+            test=jast.BinOp(
+                left=jast.Name(jast.identifier("x")),
+                op=jast.Lt(),
+                right=jast.Constant(jast.IntLiteral(10)),
+            ),
+            update=[
+                jast.PostOp(
+                    operand=jast.Name(jast.identifier("x")),
+                    op=jast.PostInc(),
+                ),
+                jast.PostOp(
+                    operand=jast.Name(jast.identifier("y")),
+                    op=jast.PostInc(),
+                ),
+            ],
+            body=jast.Empty(),
+        )
+        self.assertEqual(
+            "for (x = 0, y = 0; x < 10; x++, y++)\n    ;", jast.unparse(tree)
+        )
+
+    def test_ForEach(self):
+        tree = jast.ForEach(
+            modifiers=[jast.Final()],
+            type=jast.Int(),
+            id=jast.variabledeclaratorid(jast.identifier("foo")),
+            iter=jast.Name(jast.identifier("bar")),
+            body=jast.Empty(),
+        )
+        self.assertEqual("for (final int foo : bar)\n    ;", jast.unparse(tree))
+
+    def test_ForEach_block(self):
+        tree = jast.ForEach(
+            modifiers=[jast.Final()],
+            type=jast.Int(),
+            id=jast.variabledeclaratorid(jast.identifier("foo")),
+            iter=jast.Name(jast.identifier("bar")),
+            body=jast.Block(body=[jast.Empty()]),
+        )
+        self.assertEqual("for (final int foo : bar) {\n    ;\n}", jast.unparse(tree))
+
+    def test_Break(self):
+        tree = jast.Break()
+        self.assertEqual("break;", jast.unparse(tree))
+
+    def test_Break_label(self):
+        tree = jast.Break(label=jast.identifier("foo"))
+        self.assertEqual("break foo;", jast.unparse(tree))
+
+    def test_Continue(self):
+        tree = jast.Continue()
+        self.assertEqual("continue;", jast.unparse(tree))
+
+    def test_Continue_label(self):
+        tree = jast.Continue(label=jast.identifier("foo"))
+        self.assertEqual("continue foo;", jast.unparse(tree))
+
+    def test_Return(self):
+        tree = jast.Return(
+            value=jast.Constant(jast.IntLiteral(42)),
+        )
+        self.assertEqual("return 42;", jast.unparse(tree))
+
+    def test_Return_no_value(self):
+        tree = jast.Return()
+        self.assertEqual("return;", jast.unparse(tree))
+
+    def test_Synch(self):
+        tree = jast.Synch(lock=jast.Constant(jast.IntLiteral(42)), body=jast.Block())
+        self.assertEqual("synchronized (42) { }", jast.unparse(tree, indent=-1))
+
+    def test_catch(self):
+        catch = jast.catch(
+            modifiers=[jast.Final()],
+            excs=[jast.qname([jast.identifier("foo")])],
+            id=jast.identifier("bar"),
+            body=jast.Block(),
+        )
+        self.assertEqual("catch (final foo bar) { }", jast.unparse(catch, indent=-1))
+
+    def test_Try(self):
+        tree = jast.Try(
+            body=jast.Block(),
+            catches=[
+                jast.catch(
+                    modifiers=[jast.Final()],
+                    excs=[jast.qname([jast.identifier("foo")])],
+                    id=jast.identifier("bar"),
+                    body=jast.Block(),
+                )
+            ],
+            final=jast.Block(),
+        )
+        self.assertEqual(
+            "try {\n} catch (final foo bar) {\n} finally {\n}", jast.unparse(tree)
+        )
+
+    def test_resource(self):
+        tree = jast.resource(
+            modifiers=[jast.Final()],
+            type=jast.Coit(id=jast.identifier("X")),
+            variable=jast.declarator(
+                id=jast.variabledeclaratorid(jast.identifier("foo")),
+                init=jast.Constant(jast.IntLiteral(42)),
+            ),
+        )
+        self.assertEqual("final X foo = 42", jast.unparse(tree))
+
+    def test_TryWithResources(self):
+        tree = jast.TryWithResources(
+            resources=[
+                jast.resource(
+                    modifiers=[jast.Final()],
+                    type=jast.Coit(id=jast.identifier("X")),
+                    variable=jast.declarator(
+                        id=jast.variabledeclaratorid(jast.identifier("foo")),
+                        init=jast.Constant(jast.IntLiteral(42)),
+                    ),
+                )
+            ],
+            body=jast.Block(),
+            catches=[
+                jast.catch(
+                    modifiers=[jast.Final()],
+                    excs=[jast.qname([jast.identifier("foo")])],
+                    id=jast.identifier("bar"),
+                    body=jast.Block(),
+                )
+            ],
+            final=jast.Block(),
+        )
+        self.assertEqual(
+            "try (final X foo = 42) {\n} catch (final foo bar) {\n} finally {\n}",
+            jast.unparse(tree),
+        )
+
+    def test_Yield(self):
+        tree = jast.Yield(value=jast.Constant(jast.IntLiteral(42)))
+        self.assertEqual("yield 42;", jast.unparse(tree))

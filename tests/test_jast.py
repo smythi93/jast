@@ -1868,6 +1868,13 @@ class TestConstructors(BaseTest):
             id=jast.variabledeclaratorid(jast.identifier("foo")),
             body=jast.Empty(),
         )
+        self.assertRaises(
+            JASTError,
+            jast.ForEach,
+            type=jast.Int(),
+            id=jast.variabledeclaratorid(jast.identifier("foo")),
+            iter=jast.Name(jast.identifier("bar")),
+        )
 
     def test_Break(self):
         break_ = jast.Break(label=jast.identifier("foo"))

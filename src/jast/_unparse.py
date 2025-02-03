@@ -138,6 +138,7 @@ class _Unparser(JNodeVisitor):
 
     def optional_block(self, node):
         if isinstance(node, jast.Block):
+            self.write(" ")
             return nullcontext()
         else:
             return self.block()
@@ -152,12 +153,10 @@ class _Unparser(JNodeVisitor):
         self.fill("}")
 
     @contextmanager
-    def buffered(self, buffer=None):
-        if buffer is None:
-            buffer = []
-        self._source, original = buffer, self._source
-        yield buffer
-        self._source = original
+    def buffered(self):
+        self._source, original = [], self._source
+        yield
+        self._source = original + self._source
 
     @contextmanager
     def delimit(self, start, end):
@@ -739,9 +738,9 @@ class _Unparser(JNodeVisitor):
             self.visit(node.body)
         if node.orelse:
             if self.block_end():
-                self.write(" else ")
+                self.write(" else")
             else:
-                self.fill("else ")
+                self.fill("else")
             with self.optional_block(node.orelse):
                 self.visit(node.orelse)
 
@@ -759,7 +758,11 @@ class _Unparser(JNodeVisitor):
         self.write(";")
 
     def visit_Switch(self, node: jast.Switch):
-        pass
+        self.fill("switch ")
+        with self.parens():
+            self.visit(node.value)
+        self.write(" ")
+        self.visit_switchblock(node.body)
 
     def visit_While(self, node: jast.While):
         self.fill("while ")
@@ -769,7 +772,7 @@ class _Unparser(JNodeVisitor):
             self.visit(node.body)
 
     def visit_DoWhile(self, node: jast.DoWhile):
-        self.fill("do ")
+        self.fill("do")
         with self.optional_block(node.body):
             self.visit(node.body)
         if self.block_end():
@@ -778,12 +781,35 @@ class _Unparser(JNodeVisitor):
             self.fill("while ")
         with self.parens():
             self.visit(node.test)
+        self.write(";")
 
     def visit_For(self, node: jast.For):
-        pass
+        self.fill("for ")
+        with self.parens():
+            if isinstance(node.init, list):
+                self.items_view(node.init)
+                self.write("; ")
+            else:
+                with self.buffered():
+                    self.visit_LocalVariable(node.init)
+                self.write(" ")
+            self.visit(node.test)
+            self.write("; ")
+            self.items_view(node.update)
+        with self.optional_block(node.body):
+            self.visit(node.body)
 
     def visit_ForEach(self, node: jast.ForEach):
-        pass
+        self.fill("for ")
+        with self.parens():
+            self.interleave(node.modifiers, " ", end=" ")
+            self.visit(node.type)
+            self.write(" ")
+            self.visit_variabledeclaratorid(node.id)
+            self.write(" : ")
+            self.visit(node.iter)
+        with self.optional_block(node.body):
+            self.visit(node.body)
 
     def visit_Break(self, node: jast.Break):
         self.fill("break")
@@ -807,13 +833,30 @@ class _Unparser(JNodeVisitor):
         self.write(";")
 
     def visit_Synch(self, node: jast.Synch):
-        pass
+        self.fill("synchronized ")
+        with self.parens():
+            self.visit(node.lock)
+        self.write(" ")
+        self.visit(node.body)
 
     def visit_Try(self, node: jast.Try):
-        pass
+        self.fill("try ")
+        self.visit(node.body)
+        self.interleave(node.catches, " ", start=" ")
+        if node.final:
+            self.write(" finally ")
+            self.visit(node.final)
 
     def visit_TryWithResources(self, node: jast.TryWithResources):
-        pass
+        self.fill("try ")
+        with self.parens():
+            self.interleave(node.resources, "; ")
+        self.write(" ")
+        self.visit(node.body)
+        self.interleave(node.catches, " ", start=" ")
+        if node.final:
+            self.write(" finally ")
+            self.visit(node.final)
 
     def visit_Yield(self, node: jast.Yield):
         self.fill("yield ")
@@ -821,25 +864,46 @@ class _Unparser(JNodeVisitor):
         self.write(";")
 
     def visit_Match(self, node: jast.Match):
-        pass
+        self.visit(node.type)
+        self.write(" ")
+        self.visit_identifier(node.id)
 
     def visit_Case(self, node: jast.Case):
-        pass
+        self.fill("case ")
+        self.visit(node.guard)
+        self.write(":")
 
     def visit_DefaultCase(self, node: jast.DefaultCase):
-        pass
+        self.fill("default:")
 
     def visit_switchgroup(self, node: jast.switchgroup):
-        pass
+        self.traverse(node.labels)
+        with self.block():
+            self.traverse(node.body)
 
     def visit_switchblock(self, node: jast.switchblock):
-        pass
+        self.braced_block(node.groups + node.labels)
 
     def visit_catch(self, node: jast.catch):
-        pass
+        self.write("catch ")
+        with self.parens():
+            self.interleave(node.modifiers, " ", end=" ")
+            self.interleave(node.excs, " | ", end=" ")
+            self.visit_identifier(node.id)
+        self.write(" ")
+        self.visit(node.body)
 
     def visit_resource(self, node: jast.resource):
-        pass
+        self.interleave(node.modifiers, " ", end=" ")
+        self.visit(node.type)
+        self.write(" ")
+        self.visit_declarator(node.variable)
+
+    def visit_declarator(self, node):
+        self.visit(node.id)
+        if node.init:
+            self.write(" = ")
+            self.visit(node.init)
 
     def visit_Package(self, node: jast.Package):
         self.fill("package ")
@@ -904,6 +968,37 @@ class _Unparser(JNodeVisitor):
         if node.permits:
             self.write(" permits ")
             self.items_view(node.permits)
+        self.write(" ")
+        self.braced_block(node.body)
+
+    def visit_Interface(self, node: jast.Interface):
+        self.fill()
+        self.fill()
+        self.interleave(node.modifiers, " ", end=" ")
+        self.write("interface ")
+        self.visit_identifier(node.id)
+        self.visit(node.type_params)
+        if node.extends:
+            self.write(" extends ")
+            self.items_view(node.extends)
+        if node.permits:
+            self.write(" permits ")
+            self.items_view(node.permits)
+        self.write(" ")
+        self.braced_block(node.body)
+
+    def visit_Record(self, node: jast.Record):
+        self.fill()
+        self.fill()
+        self.interleave(node.modifiers, " ", end=" ")
+        self.write("record ")
+        self.visit_identifier(node.id)
+        self.visit(node.type_params)
+        with self.parens():
+            self.items_view(node.components)
+        if node.implements:
+            self.write(" implements ")
+            self.items_view(node.implements)
         self.write(" ")
         self.braced_block(node.body)
 
