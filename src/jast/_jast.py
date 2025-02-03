@@ -6,6 +6,10 @@ import abc
 from typing import List, Any, Iterator, Tuple, Union
 
 
+class JASTError(ValueError):
+    pass
+
+
 class JAST(abc.ABC):
     """
     Abstract base class for all JAST classes.
@@ -107,7 +111,7 @@ class qname(JAST):
     def __init__(self, identifiers: List[identifier] = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if not identifiers:
-            raise ValueError("identifier is required for qname")
+            raise JASTError("identifier is required for qname")
         self.identifiers = identifiers
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -353,9 +357,9 @@ class elementvaluepair(JAST):
     ):
         super().__init__(*vargs, **kwargs)
         if id is None:
-            raise ValueError("id is required for elementvaluepair")
+            raise JASTError("id is required for elementvaluepair")
         if value is None:
-            raise ValueError("value is required for elementvaluepair")
+            raise JASTError("value is required for elementvaluepair")
         self.id = id
         self.value = value
 
@@ -402,7 +406,7 @@ class Annotation(modifier):
     ):
         super().__init__(*vargs, **kwargs)
         if name is None:
-            raise ValueError("qname is required for Annotation")
+            raise JASTError("qname is required for Annotation")
         self.name = name
         self.elements = elements
 
@@ -514,9 +518,9 @@ class wildcardbound(JAST):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("jtype is required for wildcardbound")
+            raise JASTError("jtype is required for wildcardbound")
         if extends == super_:
-            raise ValueError(
+            raise JASTError(
                 "extends and super_ are mutually exclusive for wildcardbound"
             )
         self.type = type
@@ -562,7 +566,7 @@ class typeargs(JAST):
     def __init__(self, types: List[jtype] = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if types is None:
-            raise ValueError("types is required for typeargs")
+            raise JASTError("types is required for typeargs")
         self.types = types
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -587,7 +591,7 @@ class Coit(jtype):
     ):
         super().__init__(*vargs, **kwargs)
         if id is None:
-            raise ValueError("id is required")
+            raise JASTError("id is required")
         self.annotations = annotations or []
         self.id = id
         self.type_args = type_args
@@ -616,7 +620,7 @@ class ClassType(jtype):
     ):
         super().__init__(*vargs, **kwargs)
         if not coits:
-            raise ValueError("coits is required")
+            raise JASTError("coits is required")
         self.annotations = annotations or []
         self.coits = coits
 
@@ -660,7 +664,7 @@ class ArrayType(jtype):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("jtype is required")
+            raise JASTError("jtype is required")
         self.annotations = annotations or []
         self.type = type
         self.dims = dims or []
@@ -684,7 +688,7 @@ class variabledeclaratorid(JAST):
     def __init__(self, id: identifier = None, dims: List[dim] = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if id is None:
-            raise ValueError("id is required for variabledeclaratorid")
+            raise JASTError("id is required for variabledeclaratorid")
         self.id = id
         self.dims = dims or []
 
@@ -713,7 +717,7 @@ class typebound(JAST):
     ):
         super().__init__(*vargs, **kwargs)
         if not types:
-            raise ValueError("types is required for typebound")
+            raise JASTError("types is required for typebound")
         self.annotations = annotations or []
         self.types = types
 
@@ -739,7 +743,7 @@ class typeparam(JAST):
     ):
         super().__init__(*vargs, **kwargs)
         if id is None:
-            raise ValueError("id is required")
+            raise JASTError("id is required")
         self.annotations = annotations or []
         self.id = id
         self.bound = bound
@@ -762,7 +766,7 @@ class typeparams(JAST):
     def __init__(self, parameters: List[typeparam] = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if not parameters:
-            raise ValueError("parameters is required for typeparams")
+            raise JASTError("parameters is required for typeparams")
         self.parameters = parameters
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -791,9 +795,9 @@ class pattern(JAST):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("type is required for pattern")
+            raise JASTError("type is required for pattern")
         if id is None:
-            raise ValueError("id is required for pattern")
+            raise JASTError("id is required for pattern")
         self.modifiers = modifiers or []
         self.type = type
         self.annotations = annotations or []
@@ -824,7 +828,7 @@ class guardedpattern(JAST):
     ):
         super().__init__(*vargs, **kwargs)
         if value is None:
-            raise ValueError("pattern is required for guardedpattern")
+            raise JASTError("pattern is required for guardedpattern")
         self.value = value
         self.conditions = conditions or []
 
@@ -1093,11 +1097,11 @@ class Lambda(expr):
     ):
         super().__init__(*vargs, **kwargs)
         if args is None:
-            raise ValueError("args is required for Lambda")
+            raise JASTError("args is required for Lambda")
         if body is None:
-            raise ValueError("body is required for Lambda")
+            raise JASTError("body is required for Lambda")
         if isinstance(args, params) and args.receiver_param:
-            raise ValueError("receiver_param is not allowed for Lambda")
+            raise JASTError("receiver_param is not allowed for Lambda")
         self.args = args
         self.body = body
 
@@ -1123,9 +1127,9 @@ class Assign(expr):
     ):
         super().__init__(*vargs, **kwargs)
         if target is None:
-            raise ValueError("target is required for Assign")
+            raise JASTError("target is required for Assign")
         if value is None:
-            raise ValueError("value is required for Assign")
+            raise JASTError("value is required for Assign")
         self.target = target
         self.op = op
         self.value = value
@@ -1154,11 +1158,11 @@ class IfExp(expr):
     ):
         super().__init__(*vargs, **kwargs)
         if test is None:
-            raise ValueError("test is required for IfExp")
+            raise JASTError("test is required for IfExp")
         if body is None:
-            raise ValueError("body is required for IfExp")
+            raise JASTError("body is required for IfExp")
         if orelse is None:
-            raise ValueError("orelse is required for IfExp")
+            raise JASTError("orelse is required for IfExp")
         self.test = test
         self.body = body
         self.orelse = orelse
@@ -1186,11 +1190,11 @@ class BinOp(expr):
     ):
         super().__init__(*vargs, **kwargs)
         if left is None:
-            raise ValueError("left is required for BinOp")
+            raise JASTError("left is required for BinOp")
         if op is None:
-            raise ValueError("op is required for BinOp")
+            raise JASTError("op is required for BinOp")
         if right is None:
-            raise ValueError("right is required for BinOp")
+            raise JASTError("right is required for BinOp")
         self.left = left
         self.op = op
         self.right = right
@@ -1214,9 +1218,9 @@ class InstanceOf(expr):
     ):
         super().__init__(*vargs, **kwargs)
         if value is None:
-            raise ValueError("value is required for InstanceOf")
+            raise JASTError("value is required for InstanceOf")
         if type is None:
-            raise ValueError("jtype is required for InstanceOf")
+            raise JASTError("jtype is required for InstanceOf")
         self.value = value
         self.type = type
 
@@ -1235,9 +1239,9 @@ class UnaryOp(expr):
     def __init__(self, op: unaryop = None, operand: expr = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if op is None:
-            raise ValueError("op is required for UnaryOp")
+            raise JASTError("op is required for UnaryOp")
         if operand is None:
-            raise ValueError("operand is required for UnaryOp")
+            raise JASTError("operand is required for UnaryOp")
         self.op = op
         self.operand = operand
 
@@ -1256,9 +1260,9 @@ class PostOp(expr):
     def __init__(self, operand: expr = None, op: postop = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if operand is None:
-            raise ValueError("operand is required for PostOp")
+            raise JASTError("operand is required for PostOp")
         if op is None:
-            raise ValueError("op is required for PostOp")
+            raise JASTError("op is required for PostOp")
         self.operand = operand
         self.op = op
 
@@ -1285,9 +1289,9 @@ class Cast(expr):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("jtype is required for Cast")
+            raise JASTError("jtype is required for Cast")
         if value is None:
-            raise ValueError("value is required for Cast")
+            raise JASTError("value is required for Cast")
         self.annotations = annotations or []
         self.type = type
         self.value = value
@@ -1318,7 +1322,7 @@ class NewObject(expr):
     ):
         super().__init__(*vargs, **kwargs)
         if not type:
-            raise ValueError("type is required for ObjectCreation")
+            raise JASTError("type is required for ObjectCreation")
         self.type_args = type_args
         self.type = type
         self.args = args or []
@@ -1354,9 +1358,9 @@ class NewArray(expr):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("jtype is required for ArrayCreation")
+            raise JASTError("jtype is required for ArrayCreation")
         if expr_dims and initializer:
-            raise ValueError(
+            raise JASTError(
                 "expr_dims and initializer are mutually exclusive for ArrayCreation"
             )
         self.type = type
@@ -1408,11 +1412,11 @@ class switchexprule(JAST):
     ):
         super().__init__(*vargs, **kwargs)
         if label is None:
-            raise ValueError("label is required for switchexprule")
+            raise JASTError("label is required for switchexprule")
         if not cases and isinstance(label, ExpCase):
-            raise ValueError("cases is required for switchexprule with case")
+            raise JASTError("cases is required for switchexprule with case")
         elif cases and isinstance(label, ExpDefault):
-            raise ValueError("cases is not allowed for switchexprule with default")
+            raise JASTError("cases is not allowed for switchexprule with default")
         self.label = label
         self.cases = cases
         self.arrow = arrow
@@ -1440,7 +1444,7 @@ class SwitchExp(expr):
     ):
         super().__init__(*vargs, **kwargs)
         if value is None:
-            raise ValueError("value is required for SwitchExp")
+            raise JASTError("value is required for SwitchExp")
         self.value = value
         self.rules = rules or []
 
@@ -1495,7 +1499,7 @@ class Constant(expr):
     def __init__(self, value: literal = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if value is None:
-            raise ValueError("literal is required for Constant")
+            raise JASTError("literal is required for Constant")
         self.value = value
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -1513,7 +1517,7 @@ class Name(expr):
     def __init__(self, id: identifier = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if id is None:
-            raise ValueError("label is required for Name")
+            raise JASTError("label is required for Name")
         self.id = id
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -1531,7 +1535,7 @@ class ClassExpr(expr):
     def __init__(self, type: jtype = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("type is required for ClassExpr")
+            raise JASTError("type is required for ClassExpr")
         self.type = type
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -1552,9 +1556,9 @@ class ExplicitGenericInvocation(expr):
     ):
         super().__init__(*vargs, **kwargs)
         if type_args is None:
-            raise ValueError("type_args is required for ExplicitGenericInvocation")
+            raise JASTError("type_args is required for ExplicitGenericInvocation")
         if value is None:
-            raise ValueError("value is required for ExplicitGenericInvocation")
+            raise JASTError("value is required for ExplicitGenericInvocation")
         self.type_args = type_args
         self.value = value
 
@@ -1573,9 +1577,9 @@ class Subscript(expr):
     def __init__(self, value: expr = None, index: expr = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if value is None:
-            raise ValueError("value is required for Subscript")
+            raise JASTError("value is required for Subscript")
         if index is None:
-            raise ValueError("index is required for Subscript")
+            raise JASTError("index is required for Subscript")
         self.value = value
         self.index = index
 
@@ -1594,9 +1598,9 @@ class Member(expr):
     def __init__(self, value: expr = None, member: expr = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if value is None:
-            raise ValueError("value is required for Member")
+            raise JASTError("value is required for Member")
         if member is None:
-            raise ValueError("member is required for Member")
+            raise JASTError("member is required for Member")
         self.value = value
         self.member = member
 
@@ -1621,7 +1625,7 @@ class Call(expr):
     ):
         super().__init__(*vargs, **kwargs)
         if func is None:
-            raise ValueError("value is required for Call")
+            raise JASTError("value is required for Call")
         self.func = func
         self.args = args or []
 
@@ -1650,11 +1654,11 @@ class Reference(expr):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("type is required for Reference")
+            raise JASTError("type is required for Reference")
         if new and id:
-            raise ValueError("new and id are mutually exclusive for Reference")
+            raise JASTError("new and id are mutually exclusive for Reference")
         elif not new and not id:
-            raise ValueError("now or id is required for Reference")
+            raise JASTError("now or id is required for Reference")
         self.type = type
         self.type_args = type_args
         self.id = id
@@ -1704,7 +1708,7 @@ class receiver(JAST):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("type is required for receiver")
+            raise JASTError("type is required for receiver")
         self.type = type
         self.identifiers = identifiers
 
@@ -1732,9 +1736,9 @@ class param(JAST):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("type is required for param")
+            raise JASTError("type is required for param")
         if id is None:
-            raise ValueError("label is required for param")
+            raise JASTError("label is required for param")
         self.modifiers = modifiers or []
         self.type = type
         self.id = id
@@ -1763,9 +1767,9 @@ class arity(JAST):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("type is required for arity")
+            raise JASTError("type is required for arity")
         if id is None:
-            raise ValueError("label is required for arity")
+            raise JASTError("label is required for arity")
         self.modifiers = modifiers or []
         self.type = type
         self.annotations = annotations or []
@@ -1863,11 +1867,11 @@ class LocalClass(stmt):
     def __init__(self, decl: "Class" = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if decl is None:
-            raise ValueError("decl is required for LocalClass")
+            raise JASTError("decl is required for LocalClass")
         self.declaration = decl
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "decl", self.declaration
+        yield "declaration", self.declaration
 
 
 class LocalInterface(stmt):
@@ -1880,11 +1884,11 @@ class LocalInterface(stmt):
     def __init__(self, decl: "Interface" = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if decl is None:
-            raise ValueError("decl is required for LocalInterface")
+            raise JASTError("decl is required for LocalInterface")
         self.declaration = decl
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "decl", self.declaration
+        yield "declaration", self.declaration
 
 
 class LocalRecord(stmt):
@@ -1897,11 +1901,11 @@ class LocalRecord(stmt):
     def __init__(self, decl: "Record" = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if decl is None:
-            raise ValueError("decl is required for LocalRecord")
+            raise JASTError("decl is required for LocalRecord")
         self.declaration = decl
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "decl", self.declaration
+        yield "declaration", self.declaration
 
 
 class LocalVariable(stmt):
@@ -1922,9 +1926,9 @@ class LocalVariable(stmt):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("type is required for LocalVariable")
+            raise JASTError("type is required for LocalVariable")
         if not declarators:
-            raise ValueError("declarators is required for LocalVariable")
+            raise JASTError("declarators is required for LocalVariable")
         self.modifiers = modifiers or []
         self.type = type
         self.declarators = declarators
@@ -1947,9 +1951,9 @@ class Labeled(stmt):
     def __init__(self, label: identifier = None, body: stmt = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if label is None:
-            raise ValueError("label is required for LabeledStatement")
+            raise JASTError("label is required for Labeled")
         if body is None:
-            raise ValueError("statement is required for LabeledStatement")
+            raise JASTError("statement is required for Labeled")
         self.label = label
         self.body = body
 
@@ -1968,7 +1972,7 @@ class Expression(stmt):
     def __init__(self, value: expr = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if value is None:
-            raise ValueError("value is required for ExpressionStatement")
+            raise JASTError("value is required for Expression")
         self.value = value
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -1992,9 +1996,9 @@ class If(stmt):
     ):
         super().__init__(*vargs, **kwargs)
         if test is None:
-            raise ValueError("test is required for IfStatement")
+            raise JASTError("test is required for If")
         if body is None:
-            raise ValueError("then_statement is required for IfStatement")
+            raise JASTError("then_statement is required for If")
         self.test = test
         self.body = body
         self.orelse = orelse
@@ -2003,7 +2007,7 @@ class If(stmt):
         yield "test", self.test
         yield "body", self.body
         if self.orelse:
-            yield "else_statement", self.orelse
+            yield "orelse", self.orelse
 
 
 class Assert(stmt):
@@ -2016,7 +2020,7 @@ class Assert(stmt):
     def __init__(self, test: expr = None, msg: expr = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if test is None:
-            raise ValueError("condition is required for AssertStatement")
+            raise JASTError("condition is required for Assert")
         self.test = test
         self.msg = msg
 
@@ -2041,9 +2045,9 @@ class Match(expr):
     def __init__(self, type: jtype = None, id: identifier = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("type is required for Match")
+            raise JASTError("type is required for Match")
         if id is None:
-            raise ValueError("id is required for Match")
+            raise JASTError("id is required for Match")
         self.type = type
         self.id = id
 
@@ -2062,7 +2066,7 @@ class Case(switchlabel):
     def __init__(self, guard: expr = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if not guard:
-            raise ValueError("constants is required for Case")
+            raise JASTError("constants is required for Case")
         self.guard = guard
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -2087,7 +2091,7 @@ class Throw(stmt):
     def __init__(self, exc: expr = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if exc is None:
-            raise ValueError("value is required for ThrowStatement")
+            raise JASTError("value is required for Throw")
         self.exc = exc
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -2104,21 +2108,21 @@ class switchgroup(JAST):
     def __init__(
         self,
         labels: List[switchlabel] = None,
-        statements: List[stmt] = None,
+        body: List[stmt] = None,
         *vargs,
         **kwargs,
     ):
         super().__init__(*vargs, **kwargs)
         if not labels:
-            raise ValueError("labels is required for switchgroup")
-        if not statements:
-            raise ValueError("body is required for switchgroup")
+            raise JASTError("labels is required for switchgroup")
+        if not body:
+            raise JASTError("body is required for switchgroup")
         self.labels = labels
-        self.statements = statements
+        self.body = body
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "labels", self.labels
-        yield "body", self.statements
+        yield "body", self.body
 
 
 class switchblock(JAST):
@@ -2148,22 +2152,20 @@ class Switch(stmt):
     """
     Represents a switch statement in the Java AST.
 
-    switch (<subject>) { <body> }
+    switch (<value>) { <body> }
     """
 
-    def __init__(
-        self, subject: expr = None, body: switchblock = None, *vargs, **kwargs
-    ):
+    def __init__(self, value: expr = None, body: switchblock = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
-        if subject is None:
-            raise ValueError("value is required for SwitchStatement")
-        if not body:
-            raise ValueError("blocks is required for SwitchStatement")
-        self.subject = subject
+        if value is None:
+            raise JASTError("value is required for Switch")
+        if body is None:
+            raise JASTError("body is required for Switch")
+        self.value = value
         self.body = body
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "subject", self.subject
+        yield "value", self.value
         yield "body", self.body
 
 
@@ -2177,9 +2179,9 @@ class While(stmt):
     def __init__(self, test: expr = None, body: stmt = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if test is None:
-            raise ValueError("test is required for WhileStatement")
+            raise JASTError("test is required for While")
         if body is None:
-            raise ValueError("statement is required for WhileStatement")
+            raise JASTError("statement is required for While")
         self.test = test
         self.body = body
 
@@ -2198,9 +2200,9 @@ class DoWhile(stmt):
     def __init__(self, body: stmt = None, test: expr = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if body is None:
-            raise ValueError("statement is required for DoWhileStatement")
+            raise JASTError("statement is required for DoWhile")
         if test is None:
-            raise ValueError("test is required for DoWhileStatement")
+            raise JASTError("test is required for DoWhile")
         self.body = body
         self.test = test
 
@@ -2227,7 +2229,7 @@ class For(stmt):
     ):
         super().__init__(*vargs, **kwargs)
         if body is None:
-            raise ValueError("statement is required for ForStatement")
+            raise JASTError("statement is required for For")
         self.init = init or []
         self.test = test
         self.update = update or []
@@ -2263,13 +2265,13 @@ class ForEach(stmt):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("type is required for ForEachStatement")
+            raise JASTError("type is required for ForEach")
         if id is None:
-            raise ValueError("label is required for ForEachStatement")
+            raise JASTError("label is required for ForEach")
         if iter is None:
-            raise ValueError("value is required for ForEachStatement")
+            raise JASTError("value is required for ForEach")
         if body is None:
-            raise ValueError("body is required for ForEachStatement")
+            raise JASTError("body is required for ForEach")
         self.modifiers = modifiers or []
         self.type = type
         self.id = id
@@ -2342,18 +2344,18 @@ class Synch(stmt):
     synchronized (<lock>) <body>
     """
 
-    def __init__(self, lock: expr = None, block: Block = None, *vargs, **kwargs):
+    def __init__(self, lock: expr = None, body: Block = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if lock is None:
-            raise ValueError("value is required for SynchronizedStatement")
-        if block is None:
-            raise ValueError("body is required for SynchronizedStatement")
+            raise JASTError("value is required for Synchronized")
+        if body is None:
+            raise JASTError("body is required for Synchronized")
         self.lock = lock
-        self.block = block
+        self.body = body
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "lock", self.lock
-        yield "body", self.block
+        yield "body", self.body
 
 
 class catch(JAST):
@@ -2375,11 +2377,11 @@ class catch(JAST):
     ):
         super().__init__(*vargs, **kwargs)
         if not excs:
-            raise ValueError("excs is required for catch")
+            raise JASTError("excs is required for catch")
         if id is None:
-            raise ValueError("label is required for catch")
+            raise JASTError("label is required for catch")
         if body is None:
-            raise ValueError("body is required for catch")
+            raise JASTError("body is required for catch")
         self.modifiers = modifiers or []
         self.excs = excs
         self.id = id
@@ -2410,9 +2412,9 @@ class Try(stmt):
     ):
         super().__init__(*vargs, **kwargs)
         if body is None:
-            raise ValueError("body is required for TryStatement")
+            raise JASTError("body is required for Try")
         if not catches and not final:
-            raise ValueError("catches or final is required for TryStatement")
+            raise JASTError("catches or final is required for Try")
         self.body = body
         self.catches = catches or []
         self.final = final
@@ -2443,9 +2445,9 @@ class resource(JAST):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("type is required for resource")
-        if declarator is None:
-            raise ValueError("declarator is required for resource")
+            raise JASTError("type is required for resource")
+        if variable is None:
+            raise JASTError("declarator is required for resource")
         self.modifiers = modifiers or []
         self.type = type
         self.variable = variable
@@ -2475,9 +2477,9 @@ class TryWithResources(stmt):
     ):
         super().__init__(*vargs, **kwargs)
         if not resources:
-            raise ValueError("resources is required for TryWithResourcesStatement")
+            raise JASTError("resources is required for TryWithResources")
         if body is None:
-            raise ValueError("body is required for TryWithResourcesStatement")
+            raise JASTError("body is required for TryWithResources")
         self.resources = resources
         self.body = body
         self.catches = catches or []
@@ -2502,7 +2504,7 @@ class Yield(stmt):
     def __init__(self, value: expr = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if value is None:
-            raise ValueError("value is required for YieldStatement")
+            raise JASTError("value is required for Yield")
         self.value = value
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -2545,7 +2547,7 @@ class Package(declaration):
     ):
         super().__init__(*vargs, **kwargs)
         if name is None:
-            raise ValueError("qname is required for Package")
+            raise JASTError("qname is required for Package")
         self.annotations = annotations or []
         self.name = name
 
@@ -2578,7 +2580,7 @@ class Import(declaration):
     ):
         super().__init__(*vargs, **kwargs)
         if name is None:
-            raise ValueError("qname is required for Import")
+            raise JASTError("qname is required for Import")
         self.static = static
         self.name = name
         self.on_demand = on_demand
@@ -2612,7 +2614,7 @@ class Requires(directive):
     ):
         super().__init__(*vargs, **kwargs)
         if name is None:
-            raise ValueError("qname is required for Requires")
+            raise JASTError("qname is required for Requires")
         self.modifiers = modifiers
         self.name = name
 
@@ -2638,7 +2640,7 @@ class Exports(directive):
     ):
         super().__init__(*vargs, **kwargs)
         if name is None:
-            raise ValueError("qname is required for Exports")
+            raise JASTError("qname is required for Exports")
         self.name = name
         self.to = to
 
@@ -2664,7 +2666,7 @@ class Opens(directive):
     ):
         super().__init__(*vargs, **kwargs)
         if name is None:
-            raise ValueError("qname is required for Opens")
+            raise JASTError("qname is required for Opens")
         self.name = name
         self.to = to
 
@@ -2689,7 +2691,7 @@ class Uses(directive):
     ):
         super().__init__(*vargs, **kwargs)
         if name is None:
-            raise ValueError("qname is required for Uses")
+            raise JASTError("qname is required for Uses")
         self.name = name
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -2712,9 +2714,9 @@ class Provides(directive):
     ):
         super().__init__(*vargs, **kwargs)
         if name is None:
-            raise ValueError("type is required for Provides")
+            raise JASTError("type is required for Provides")
         if not with_:
-            raise ValueError("with_ is required for Provides")
+            raise JASTError("with_ is required for Provides")
         self.name = name
         self.with_ = with_
 
@@ -2741,7 +2743,7 @@ class Module(declaration):
     ):
         super().__init__(*vargs, **kwargs)
         if not name:
-            raise ValueError("qname is required for Module")
+            raise JASTError("qname is required for Module")
         self.open = open
         self.name = name
         self.directives = directives or []
@@ -2772,7 +2774,7 @@ class declarator(JAST):
     ):
         super().__init__(*vargs, **kwargs)
         if id is None:
-            raise ValueError("id_ is required for declarator")
+            raise JASTError("id_ is required for declarator")
         self.id = id
         self.initializer = initializer
 
@@ -2800,9 +2802,9 @@ class Field(declaration):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("type is required for Field")
+            raise JASTError("type is required for Field")
         if not declarators:
-            raise ValueError("declarators is required for Field")
+            raise JASTError("declarators is required for Field")
         self.modifiers = modifiers or []
         self.type = type
         self.declarators = declarators
@@ -2841,9 +2843,9 @@ class Method(declaration):
     ):
         super().__init__(*vargs, **kwargs)
         if return_type is None:
-            raise ValueError("return_type is required for Method")
+            raise JASTError("return_type is required for Method")
         if id is None:
-            raise ValueError("qname is required for Method")
+            raise JASTError("qname is required for Method")
         self.modifiers = modifiers or []
         self.type_params = type_params or []
         self.annotations = annotations or []
@@ -2896,7 +2898,7 @@ class Constructor(declaration):
     ):
         super().__init__(*vargs, **kwargs)
         if id is None:
-            raise ValueError("label is required for Constructor")
+            raise JASTError("label is required for Constructor")
         self.modifiers = modifiers or []
         self.type_params = type_params or []
         self.id = id
@@ -2929,7 +2931,7 @@ class Initializer(declaration):
     def __init__(self, body: Block = None, static: bool = False, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if body is None:
-            raise ValueError("body is required for Initializer")
+            raise JASTError("body is required for Initializer")
         self.body = body
         self.static = static
 
@@ -2961,7 +2963,7 @@ class Interface(declaration):
     ):
         super().__init__(*vargs, **kwargs)
         if id is None:
-            raise ValueError("qname is required for Interface")
+            raise JASTError("qname is required for Interface")
         self.modifiers = modifiers or []
         self.id = id
         self.type_params = type_params or []
@@ -3002,9 +3004,9 @@ class AnnotationMethod(declaration):
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("type is required for AnnotationMethod")
+            raise JASTError("type is required for AnnotationMethod")
         if id is None:
-            raise ValueError("qname is required for AnnotationMethod")
+            raise JASTError("qname is required for AnnotationMethod")
         self.modifiers = modifiers or []
         self.type = type
         self.id = id
@@ -3039,7 +3041,7 @@ class AnnotationDecl(declaration):
     ):
         super().__init__(*vargs, **kwargs)
         if id is None:
-            raise ValueError("qname is required for AnnotationInterfaceDeclaration")
+            raise JASTError("qname is required for AnnotationInterfaceDeclaration")
         self.modifiers = modifiers or []
         self.name = id
         self.extends = extends or []
@@ -3083,7 +3085,7 @@ class Class(declaration):
     ):
         super().__init__(*vargs, **kwargs)
         if id is None:
-            raise ValueError("qname is required for Class")
+            raise JASTError("id is required for Class")
         self.modifiers = modifiers or []
         self.id = id
         self.type_params = type_params
@@ -3127,7 +3129,7 @@ class enumconstant(JAST):
     ):
         super().__init__(*vargs, **kwargs)
         if id is None:
-            raise ValueError("qname is required for enumconstant")
+            raise JASTError("qname is required for enumconstant")
         self.annotations = annotations or []
         self.name = id
         self.args = args
@@ -3163,7 +3165,7 @@ class Enum(declaration):
     ):
         super().__init__(*vargs, **kwargs)
         if id is None:
-            raise ValueError("qname is required for Enum")
+            raise JASTError("qname is required for Enum")
         self.modifiers = modifiers or []
         self.name = id
         self.implements = implements or []
@@ -3193,9 +3195,9 @@ class recordcomponent(JAST):
     def __init__(self, type: jtype = None, id: identifier = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if type is None:
-            raise ValueError("type is required for recordcomponent")
+            raise JASTError("type is required for recordcomponent")
         if id is None:
-            raise ValueError("id is required for recordcomponent")
+            raise JASTError("id is required for recordcomponent")
         self.type = type
         self.id = id
 
@@ -3204,7 +3206,7 @@ class recordcomponent(JAST):
         yield "id", self.id
 
 
-class Record(Class):
+class Record(declaration):
     """
     Represents a record decl in the Java AST.
 
@@ -3227,7 +3229,7 @@ class Record(Class):
     ):
         super().__init__(*vargs, **kwargs)
         if id is None:
-            raise ValueError("qname is required for Record")
+            raise JASTError("qname is required for Record")
         self.modifiers = modifiers or []
         self.name = id
         self.type_params = type_params or []
@@ -3303,7 +3305,7 @@ class ModularUnit(mod):
     ):
         super().__init__(*vargs, **kwargs)
         if not module:
-            raise ValueError("module is required for ModularUnit")
+            raise JASTError("module is required for ModularUnit")
         self.imports = imports or []
         self.module = module
 

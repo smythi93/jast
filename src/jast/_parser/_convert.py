@@ -1250,7 +1250,7 @@ class JASTConverter(JavaParserVisitor):
                 )
         elif ctx.SWITCH():
             return jast.Switch(
-                subject=self.visitParExpression(ctx.parExpression()),
+                value=self.visitParExpression(ctx.parExpression()),
                 body=self.visitSwitchBlock(ctx.switchBlock()),
                 **self._get_location_rule(ctx),
             )
@@ -1379,7 +1379,7 @@ class JASTConverter(JavaParserVisitor):
             labels=[
                 self.visitSwitchLabel(switchLabel) for switchLabel in ctx.switchLabel()
             ],
-            statements=[
+            body=[
                 self.visitBlockStatement(blockStatement)
                 for blockStatement in ctx.blockStatement()
             ],

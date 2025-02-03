@@ -24,6 +24,7 @@
 """
 
 from jast._jast import (
+    JASTError,
     JAST,
     mod,
     CompilationUnit,
@@ -205,6 +206,7 @@ from jast._unparse import unparse
 from jast._visitors import JNodeVisitor, JNodeTransformer, JNodeKeepTransformer
 
 __all__ = [
+    "JASTError",
     "JAST",
     "mod",
     "CompilationUnit",
@@ -271,7 +273,8 @@ __all__ = [
     "Super",
     "Constant",
     "Name",
-    "ClassExpr" "ExplicitGenericInvocation",
+    "ClassExpr",
+    "ExplicitGenericInvocation",
     "Subscript",
     "Member",
     "Call",

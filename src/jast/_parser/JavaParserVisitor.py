@@ -372,7 +372,7 @@ class JavaParserVisitor(ParseTreeVisitor):
     def visitRecordBodyDeclaration(self, ctx: JavaParser.RecordBodyDeclarationContext):
         return self.visitChildren(ctx)
 
-    # Visit a parse tree produced by JavaParser#block.
+    # Visit a parse tree produced by JavaParser#body.
     def visitBlock(self, ctx: JavaParser.BlockContext):
         return self.visitChildren(ctx)
 

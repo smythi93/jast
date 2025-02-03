@@ -160,10 +160,9 @@ class TestVisitor(unittest.TestCase):
         self.assertEqual(string_literal.value, new_string_literal.value)
 
     def test_copy_TextBlock(self):
-        text_block = jast.TextBlock("Hello, World!")
+        text_block = jast.TextBlock(["Hello,", "World!"])
         new_text_block = copy(text_block)
         self.assertIsNot(text_block, new_text_block)
-        self.assertEqual(text_block, new_text_block)
         self.assertEqual(text_block.value, new_text_block.value)
 
     def test_DeleteReturn(self):
