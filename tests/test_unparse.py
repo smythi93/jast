@@ -920,7 +920,7 @@ class TestUnparse(unittest.TestCase):
         tree = jast.NewArray(
             type=jast.Int(),
             dims=[jast.dim()],
-            initializer=jast.arrayinit(
+            init=jast.arrayinit(
                 [jast.Constant(jast.IntLiteral(3)), jast.Constant(jast.IntLiteral(4))]
             ),
         )

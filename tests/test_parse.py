@@ -1103,7 +1103,7 @@ class TestParse(BaseTest):
         self.assertIsInstance(expr_dim.value, jast.IntLiteral)
         self.assertEqual(42, expr_dim.value.value)
         self.assertEqual(0, len(tree.dims))
-        self.assertIsNone(tree.initializer)
+        self.assertIsNone(tree.init)
 
     def test_NewArray_dims(self):
         tree = jast.parse("new int[42][24][][]", jast.ParseMode.EXPR)
@@ -1121,7 +1121,7 @@ class TestParse(BaseTest):
         self.assertEqual(2, len(tree.dims))
         self.assertIsInstance(tree.dims[0], jast.dim)
         self.assertIsInstance(tree.dims[1], jast.dim)
-        self.assertIsNone(tree.initializer)
+        self.assertIsNone(tree.init)
 
     def test_NewArray_initializer(self):
         tree = jast.parse("new int[]{42, 24}", jast.ParseMode.EXPR)
@@ -1130,11 +1130,11 @@ class TestParse(BaseTest):
         self.assertEqual(0, len(tree.expr_dims))
         self.assertEqual(1, len(tree.dims))
         self.assertIsInstance(tree.dims[0], jast.dim)
-        self.assertIsNotNone(tree.initializer)
-        self.assertIsInstance(tree.initializer, jast.arrayinit)
-        self.assertEqual(2, len(tree.initializer.values))
-        self._test_int_constant(tree.initializer.values[0], 42)
-        self._test_int_constant(tree.initializer.values[1], 24)
+        self.assertIsNotNone(tree.init)
+        self.assertIsInstance(tree.init, jast.arrayinit)
+        self.assertEqual(2, len(tree.init.values))
+        self._test_int_constant(tree.init.values[0], 42)
+        self._test_int_constant(tree.init.values[1], 24)
 
     @parameterized.expand(POST_OPERATORS)
     def test_PostOp(self, _, rep, operator):
@@ -1542,11 +1542,11 @@ class TestParse(BaseTest):
         self.assertIsInstance(declarator.id, jast.variabledeclaratorid)
         self._test_identifier(declarator.id.id, "x")
         self.assertEqual(0, len(declarator.id.dims))
-        self.assertIsNotNone(declarator.initializer)
-        self.assertIsInstance(declarator.initializer, jast.arrayinit)
-        self.assertEqual(2, len(declarator.initializer.values))
-        self._test_int_constant(declarator.initializer.values[0], 42)
-        self._test_int_constant(declarator.initializer.values[1], 24)
+        self.assertIsNotNone(declarator.init)
+        self.assertIsInstance(declarator.init, jast.arrayinit)
+        self.assertEqual(2, len(declarator.init.values))
+        self._test_int_constant(declarator.init.values[0], 42)
+        self._test_int_constant(declarator.init.values[1], 24)
 
     def test_params(self):
         tree = jast.parse(
@@ -1611,3 +1611,458 @@ class TestParse(BaseTest):
         self.assertEqual(2, len(param.id.dims))
         self.assertIsInstance(tree.body, jast.Block)
         self.assertEqual(0, len(tree.body.body))
+
+    def test_Empty(self):
+        tree = jast.parse(";", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.Empty)
+
+    def test_Block(self):
+        tree = jast.parse("{;;}", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.Block)
+        self.assertEqual(2, len(tree.body))
+        self.assertIsInstance(tree.body[0], jast.Empty)
+        self.assertIsInstance(tree.body[1], jast.Empty)
+
+    def test_LocalType_class(self):
+        tree = jast.parse("class X {}", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.LocalType)
+        self.assertIsInstance(tree.decl, jast.Class)
+        self._test_identifier(tree.decl.id, "X")
+        self.assertIsNone(tree.decl.type_params)
+        self.assertEqual(0, len(tree.decl.modifiers))
+        self.assertIsNone(tree.decl.extends)
+        self.assertEqual(0, len(tree.decl.implements))
+        self.assertEqual(0, len(tree.decl.permits))
+        self.assertEqual(0, len(tree.decl.body))
+
+    def test_LocalType_interface(self):
+        tree = jast.parse("interface X {}", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.LocalType)
+        self.assertIsInstance(tree.decl, jast.Interface)
+        self._test_identifier(tree.decl.id, "X")
+        self.assertIsNone(tree.decl.type_params)
+        self.assertEqual(0, len(tree.decl.modifiers))
+        self.assertEqual(0, len(tree.decl.extends))
+        self.assertEqual(0, len(tree.decl.permits))
+        self.assertEqual(0, len(tree.decl.body))
+
+    def test_LocalType_record(self):
+        tree = jast.parse("record X() {}", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.LocalType)
+        self.assertIsInstance(tree.decl, jast.Record)
+        self._test_identifier(tree.decl.id, "X")
+        self.assertIsNone(tree.decl.type_params)
+        self.assertEqual(0, len(tree.decl.modifiers))
+        self.assertEqual(0, len(tree.decl.components))
+        self.assertEqual(0, len(tree.decl.implements))
+        self.assertEqual(0, len(tree.decl.body))
+
+    def test_LocalVariable(self):
+        tree = jast.parse("final int x = 24, y, z = 42;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.LocalVariable)
+        self.assertEqual(1, len(tree.modifiers))
+        self.assertIsInstance(tree.modifiers[0], jast.Final)
+        self.assertIsInstance(tree.type, jast.Int)
+        self.assertEqual(3, len(tree.declarators))
+        declarator = tree.declarators[0]
+        self.assertIsInstance(declarator, jast.declarator)
+        self.assertIsInstance(declarator.id, jast.variabledeclaratorid)
+        self._test_identifier(declarator.id.id, "x")
+        self.assertEqual(0, len(declarator.id.dims))
+        self.assertIsNotNone(declarator.init)
+        self._test_int_constant(declarator.init, 24)
+        declarator = tree.declarators[1]
+        self.assertIsInstance(declarator, jast.declarator)
+        self.assertIsInstance(declarator.id, jast.variabledeclaratorid)
+        self._test_identifier(declarator.id.id, "y")
+        self.assertEqual(0, len(declarator.id.dims))
+        self.assertIsNone(declarator.init)
+        declarator = tree.declarators[2]
+        self.assertIsInstance(declarator, jast.declarator)
+        self.assertIsInstance(declarator.id, jast.variabledeclaratorid)
+        self._test_identifier(declarator.id.id, "z")
+        self.assertEqual(0, len(declarator.id.dims))
+        self.assertIsNotNone(declarator.init)
+        self._test_int_constant(declarator.init, 42)
+
+    def test_Labeled(self):
+        tree = jast.parse("foo: ;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.Labeled)
+        self._test_identifier(tree.label, "foo")
+        self.assertIsInstance(tree.body, jast.Empty)
+
+    def test_Expression(self):
+        tree = jast.parse("x;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.Expression)
+        self._test_name(tree.value, "x")
+
+    def test_If(self):
+        tree = jast.parse("if (x) ;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.If)
+        self._test_name(tree.test, "x")
+        self.assertIsInstance(tree.body, jast.Empty)
+        self.assertIsNone(tree.orelse)
+
+    def test_If_orelse(self):
+        tree = jast.parse("if (x) ; else ;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.If)
+        self._test_name(tree.test, "x")
+        self.assertIsInstance(tree.body, jast.Empty)
+        self.assertIsInstance(tree.orelse, jast.Empty)
+
+    def test_If_orelse_block(self):
+        tree = jast.parse("if (x) ; else {;;}", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.If)
+        self._test_name(tree.test, "x")
+        self.assertIsInstance(tree.body, jast.Empty)
+        self.assertIsInstance(tree.orelse, jast.Block)
+        self.assertEqual(2, len(tree.orelse.body))
+        self.assertIsInstance(tree.orelse.body[0], jast.Empty)
+        self.assertIsInstance(tree.orelse.body[1], jast.Empty)
+
+    def test_Assert(self):
+        tree = jast.parse("assert x;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.Assert)
+        self._test_name(tree.test, "x")
+        self.assertIsNone(tree.msg)
+
+    def test_Assert_msg(self):
+        tree = jast.parse("assert x : y;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.Assert)
+        self._test_name(tree.test, "x")
+        self._test_name(tree.msg, "y")
+
+    def test_Switch(self):
+        tree = jast.parse(
+            "switch (x) {\n"
+            "   case 42:\n"
+            "   case 24:\n"
+            "       y = x;\n"
+            "       return x;\n"
+            "   case int z:\n"
+            "       return z;\n"
+            "   case 0:\n"
+            "   default:\n"
+            "}",
+            jast.ParseMode.STMT,
+        )
+        self.assertIsInstance(tree, jast.Switch)
+        self._test_name(tree.value, "x")
+        self.assertIsNotNone(tree.body)
+        block = tree.body
+        self.assertEqual(2, len(block.groups))
+        group = block.groups[0]
+        self.assertIsInstance(group, jast.switchgroup)
+        self.assertEqual(2, len(group.labels))
+        label = group.labels[0]
+        self.assertIsInstance(label, jast.Case)
+        self._test_int_constant(label.guard, 42)
+        label = group.labels[1]
+        self.assertIsInstance(label, jast.Case)
+        self._test_int_constant(label.guard, 24)
+        self.assertEqual(2, len(group.body))
+        self.assertIsInstance(group.body[0], jast.Expression)
+        self.assertIsInstance(group.body[1], jast.Return)
+        group = block.groups[1]
+        self.assertIsInstance(group, jast.switchgroup)
+        self.assertEqual(1, len(group.labels))
+        label = group.labels[0]
+        self.assertIsInstance(label, jast.Case)
+        self.assertIsInstance(label.guard, jast.Match)
+        self.assertIsInstance(label.guard.type, jast.Int)
+        self._test_identifier(label.guard.id, "z")
+        self.assertEqual(1, len(group.body))
+        self.assertIsInstance(group.body[0], jast.Return)
+        self.assertEqual(2, len(block.labels))
+        label = block.labels[0]
+        self.assertIsInstance(label, jast.Case)
+        self._test_int_constant(label.guard, 0)
+        label = block.labels[1]
+        self.assertIsInstance(label, jast.DefaultCase)
+
+    def test_Throw(self):
+        tree = jast.parse("throw x;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.Throw)
+        self._test_name(tree.exc, "x")
+
+    def test_While(self):
+        tree = jast.parse("while (x) ;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.While)
+        self._test_name(tree.test, "x")
+        self.assertIsInstance(tree.body, jast.Empty)
+
+    def test_DoWhile(self):
+        tree = jast.parse("do ; while (x);", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.DoWhile)
+        self.assertIsInstance(tree.body, jast.Empty)
+        self._test_name(tree.test, "x")
+
+    def test_For(self):
+        tree = jast.parse("for (int x = 0; x < 10; x++) ;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.For)
+        self.assertIsInstance(tree.init, jast.LocalVariable)
+        self.assertIsInstance(tree.test, jast.BinOp)
+        self.assertIsInstance(tree.update, list)
+        self.assertEqual(1, len(tree.update))
+        self.assertIsInstance(tree.update[0], jast.PostOp)
+        self.assertIsInstance(tree.body, jast.Empty)
+
+    def test_For_multiple_init_updated(self):
+        tree = jast.parse("for (x = 0, y = 0; x < 10; x++, y++) ;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.For)
+        self.assertIsInstance(tree.init, list)
+        self.assertEqual(2, len(tree.init))
+        self.assertIsInstance(tree.init[0], jast.Assign)
+        self._test_name(tree.init[0].target, "x")
+        self.assertIsNone(tree.init[0].op)
+        self._test_int_constant(tree.init[0].value, 0)
+        self.assertIsInstance(tree.init[1], jast.Assign)
+        self._test_name(tree.init[1].target, "y")
+        self.assertIsNone(tree.init[1].op)
+        self._test_int_constant(tree.init[1].value, 0)
+        self.assertIsInstance(tree.test, jast.BinOp)
+        self._test_name(tree.test.left, "x")
+        self.assertIsInstance(tree.test.op, jast.Lt)
+        self._test_int_constant(tree.test.right, 10)
+        self.assertIsInstance(tree.update, list)
+        self.assertEqual(2, len(tree.update))
+        self.assertIsInstance(tree.update[0], jast.PostOp)
+        self._test_name(tree.update[0].operand, "x")
+        self.assertIsInstance(tree.update[0].op, jast.PostInc)
+        self.assertIsInstance(tree.update[1], jast.PostOp)
+        self._test_name(tree.update[1].operand, "y")
+        self.assertIsInstance(tree.update[1].op, jast.PostInc)
+        self.assertIsInstance(tree.body, jast.Empty)
+
+    def test_ForEach(self):
+        tree = jast.parse("for (final int x : y) ;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.ForEach)
+        self.assertEqual(1, len(tree.modifiers))
+        self.assertIsInstance(tree.modifiers[0], jast.Final)
+        self.assertIsInstance(tree.type, jast.Int)
+        self.assertIsInstance(tree.id, jast.variabledeclaratorid)
+        self._test_identifier(tree.id.id, "x")
+        self.assertEqual(0, len(tree.id.dims))
+        self._test_name(tree.iter, "y")
+
+    def test_Break(self):
+        tree = jast.parse("break;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.Break)
+        self.assertIsNone(tree.label)
+
+    def test_Break_label(self):
+        tree = jast.parse("break foo;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.Break)
+        self._test_identifier(tree.label, "foo")
+
+    def test_Continue(self):
+        tree = jast.parse("continue;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.Continue)
+        self.assertIsNone(tree.label)
+
+    def test_Continue_label(self):
+        tree = jast.parse("continue foo;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.Continue)
+        self._test_identifier(tree.label, "foo")
+
+    def test_Return(self):
+        tree = jast.parse("return;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.Return)
+        self.assertIsNone(tree.value)
+
+    def test_Return_value(self):
+        tree = jast.parse("return x;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.Return)
+        self._test_name(tree.value, "x")
+
+    def test_Synch(self):
+        tree = jast.parse("synchronized (x) {;;}", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.Synch)
+        self._test_name(tree.lock, "x")
+        self.assertIsInstance(tree.body, jast.Block)
+        self.assertEqual(2, len(tree.body.body))
+
+    def test_Try(self):
+        tree = jast.parse(
+            "try {;;} catch (Exception e) {;;} catch (final A | B | C.D f) {;;} finally {}",
+            jast.ParseMode.STMT,
+        )
+        self.assertIsInstance(tree, jast.Try)
+        self.assertIsInstance(tree.body, jast.Block)
+        self.assertEqual(2, len(tree.body.body))
+        self.assertEqual(2, len(tree.catches))
+        catch = tree.catches[0]
+        self.assertIsInstance(catch, jast.catch)
+        self.assertEqual(0, len(catch.modifiers))
+        self.assertEqual(1, len(catch.excs))
+        self.assertEqual("Exception", jast.unparse(catch.excs[0]))
+        self._test_identifier(catch.id, "e")
+        self.assertIsInstance(catch.body, jast.Block)
+        self.assertEqual(2, len(catch.body.body))
+        catch = tree.catches[1]
+        self.assertIsInstance(catch, jast.catch)
+        self.assertEqual(1, len(catch.modifiers))
+        self.assertIsInstance(catch.modifiers[0], jast.Final)
+        self.assertEqual(3, len(catch.excs))
+        self.assertEqual("A", jast.unparse(catch.excs[0]))
+        self.assertEqual("B", jast.unparse(catch.excs[1]))
+        self.assertEqual("C.D", jast.unparse(catch.excs[2]))
+        self._test_identifier(catch.id, "f")
+        self.assertIsInstance(catch.body, jast.Block)
+        self.assertEqual(2, len(catch.body.body))
+        self.assertIsNotNone(tree.final)
+        self.assertIsInstance(tree.final, jast.Block)
+
+    def test_Try_only_final(self):
+        tree = jast.parse(
+            "try {} finally {}",
+            jast.ParseMode.STMT,
+        )
+        self.assertIsInstance(tree, jast.Try)
+        self.assertIsInstance(tree.body, jast.Block)
+        self.assertEqual(0, len(tree.body.body))
+        self.assertEqual(0, len(tree.catches))
+        self.assertIsNotNone(tree.final)
+        self.assertIsInstance(tree.final, jast.Block)
+
+    def test_Try_only_catch(self):
+        tree = jast.parse(
+            "try {} catch (Exception e) {}",
+            jast.ParseMode.STMT,
+        )
+        self.assertIsInstance(tree, jast.Try)
+        self.assertIsInstance(tree.body, jast.Block)
+        self.assertEqual(0, len(tree.body.body))
+        self.assertEqual(1, len(tree.catches))
+        catch = tree.catches[0]
+        self.assertIsInstance(catch, jast.catch)
+        self.assertEqual(0, len(catch.modifiers))
+        self.assertEqual(1, len(catch.excs))
+        self.assertEqual("Exception", jast.unparse(catch.excs[0]))
+        self._test_identifier(catch.id, "e")
+        self.assertIsInstance(catch.body, jast.Block)
+        self.assertEqual(0, len(catch.body.body))
+        self.assertIsNone(tree.final)
+
+    def test_TryWithResources(self):
+        tree = jast.parse(
+            "try (A a = c; final B b = d) {;;} catch (Exception e) {;;} catch (final A | B | C.D f) {;;} finally {}",
+            jast.ParseMode.STMT,
+        )
+        self.assertIsInstance(tree, jast.TryWithResources)
+        self.assertEqual(2, len(tree.resources))
+        resource = tree.resources[0]
+        self.assertIsInstance(resource, jast.resource)
+        self.assertIsInstance(resource.type, jast.ClassType)
+        self.assertEqual(1, len(resource.type.coits))
+        coit = resource.type.coits[0]
+        self.assertIsInstance(coit, jast.Coit)
+        self.assertEqual("A", coit.id)
+        self.assertIsNone(coit.type_args)
+        self.assertIsInstance(resource.variable, jast.declarator)
+        self._test_variabledeclaratorid(resource.variable.id, "a")
+        self._test_name(resource.variable.init, "c")
+        resource = tree.resources[1]
+        self.assertIsInstance(resource, jast.resource)
+        self.assertEqual(1, len(resource.modifiers))
+        self.assertIsInstance(resource.modifiers[0], jast.Final)
+        self.assertIsInstance(resource.type, jast.ClassType)
+        self.assertEqual(1, len(resource.type.coits))
+        coit = resource.type.coits[0]
+        self.assertIsInstance(coit, jast.Coit)
+        self.assertEqual("B", coit.id)
+        self.assertIsNone(coit.type_args)
+        self.assertIsInstance(resource.variable, jast.declarator)
+        self._test_variabledeclaratorid(resource.variable.id, "b")
+        self._test_name(resource.variable.init, "d")
+        self.assertIsInstance(tree.body, jast.Block)
+        self.assertEqual(2, len(tree.body.body))
+        self.assertEqual(2, len(tree.catches))
+        catch = tree.catches[0]
+        self.assertIsInstance(catch, jast.catch)
+        self.assertEqual(0, len(catch.modifiers))
+        self.assertEqual(1, len(catch.excs))
+        self.assertEqual("Exception", jast.unparse(catch.excs[0]))
+        self._test_identifier(catch.id, "e")
+        self.assertIsInstance(catch.body, jast.Block)
+        self.assertEqual(2, len(catch.body.body))
+        catch = tree.catches[1]
+        self.assertIsInstance(catch, jast.catch)
+        self.assertEqual(1, len(catch.modifiers))
+        self.assertIsInstance(catch.modifiers[0], jast.Final)
+        self.assertEqual(3, len(catch.excs))
+        self.assertEqual("A", jast.unparse(catch.excs[0]))
+        self.assertEqual("B", jast.unparse(catch.excs[1]))
+        self.assertEqual("C.D", jast.unparse(catch.excs[2]))
+        self._test_identifier(catch.id, "f")
+        self.assertIsInstance(catch.body, jast.Block)
+        self.assertEqual(2, len(catch.body.body))
+        self.assertIsNotNone(tree.final)
+        self.assertIsInstance(tree.final, jast.Block)
+        self.assertEqual(0, len(tree.final.body))
+
+    def test_TryWithResources_only_final(self):
+        tree = jast.parse(
+            "try (var a = c) {} finally {}",
+            jast.ParseMode.STMT,
+        )
+        self.assertIsInstance(tree, jast.TryWithResources)
+        self.assertEqual(1, len(tree.resources))
+        resource = tree.resources[0]
+        self.assertIsInstance(resource, jast.resource)
+        self.assertIsInstance(resource.type, jast.Var)
+        self.assertIsInstance(resource.variable, jast.declarator)
+        self._test_variabledeclaratorid(resource.variable.id, "a")
+        self._test_name(resource.variable.init, "c")
+        self.assertIsInstance(tree.body, jast.Block)
+        self.assertEqual(0, len(tree.body.body))
+        self.assertEqual(0, len(tree.catches))
+        self.assertIsNotNone(tree.final)
+        self.assertIsInstance(tree.final, jast.Block)
+        self.assertEqual(0, len(tree.final.body))
+
+    def test_TryWithResources_only_catch(self):
+        tree = jast.parse(
+            "try (var a = c) {} catch (Exception e) {}",
+            jast.ParseMode.STMT,
+        )
+        self.assertIsInstance(tree, jast.TryWithResources)
+        self.assertEqual(1, len(tree.resources))
+        resource = tree.resources[0]
+        self.assertIsInstance(resource, jast.resource)
+        self.assertIsInstance(resource.type, jast.Var)
+        self.assertIsInstance(resource.variable, jast.declarator)
+        self._test_variabledeclaratorid(resource.variable.id, "a")
+        self._test_name(resource.variable.init, "c")
+        self.assertIsInstance(tree.body, jast.Block)
+        self.assertEqual(0, len(tree.body.body))
+        self.assertIsNotNone(tree.catches)
+        catch = tree.catches[0]
+        self.assertIsInstance(catch, jast.catch)
+        self.assertEqual(0, len(catch.modifiers))
+        self.assertEqual(1, len(catch.excs))
+        self.assertEqual("Exception", jast.unparse(catch.excs[0]))
+        self._test_identifier(catch.id, "e")
+        self.assertIsInstance(catch.body, jast.Block)
+        self.assertEqual(0, len(catch.body.body))
+        self.assertIsNone(tree.final)
+
+    def test_TryWithResources_no_catch_and_final(self):
+        tree = jast.parse(
+            "try (A.B) {}",
+            jast.ParseMode.STMT,
+        )
+        self.assertIsInstance(tree, jast.TryWithResources)
+        self.assertEqual(1, len(tree.resources))
+        resource = tree.resources[0]
+        self.assertIsInstance(resource, jast.qname)
+        self.assertEqual("A.B", jast.unparse(resource))
+        self.assertIsInstance(tree.body, jast.Block)
+        self.assertEqual(0, len(tree.body.body))
+        self.assertEqual(0, len(tree.catches))
+        self.assertIsNone(tree.final)
+
+    def test_Yield(self):
+        tree = jast.parse("yield x;", jast.ParseMode.STMT)
+        self.assertIsInstance(tree, jast.Yield)
+        self._test_name(tree.value, "x")

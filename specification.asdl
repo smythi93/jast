@@ -39,9 +39,7 @@ module Java
         | Block(stmt* body)
         | Compound(stmt* body)
 
-        | LocalClass(Class decl)
-        | LocalInterface(Interface decl)
-        | LocalRecord(Record decl)
+        | LocalType(Class | Interface | Record decl)
         | LocalVariable(modifier* modifiers, jtype type, declarator* variables)
 
         | Labeled(identifier label, stmt body)

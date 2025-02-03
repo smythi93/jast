@@ -370,7 +370,7 @@ class elementvaluepair(JAST):
 
 class elementarrayinit(JAST):
     """
-    Represents an element-value array initializer in the Java AST.
+    Represents an element-value array init in the Java AST.
 
     { <value>, <value>, ... }
     """
@@ -1343,7 +1343,7 @@ class NewArray(expr):
     Represents a new array creation in the Java AST.
 
     new <jtype><expr_dim><expr_dim>...[<dim><dim>...]
-    new <jtype><dim><dim>... [<initializer>]
+    new <jtype><dim><dim>... [<init>]
     """
 
     # noinspection PyShadowingBuiltins
@@ -1352,21 +1352,21 @@ class NewArray(expr):
         type: jtype = None,
         expr_dims: List[expr] = None,
         dims: List[dim] = None,
-        initializer: "arrayinit" = None,
+        init: "arrayinit" = None,
         *vargs,
         **kwargs,
     ):
         super().__init__(*vargs, **kwargs)
         if type is None:
             raise JASTError("jtype is required for ArrayCreation")
-        if expr_dims and initializer:
+        if expr_dims and init:
             raise JASTError(
-                "expr_dims and initializer are mutually exclusive for ArrayCreation"
+                "expr_dims and init are mutually exclusive for ArrayCreation"
             )
         self.type = type
         self.expr_dims = expr_dims or []
         self.dims = dims or []
-        self.initializer = initializer
+        self.init = init
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "type", self.type
@@ -1374,8 +1374,8 @@ class NewArray(expr):
             yield "expr_dims", self.expr_dims
         if self.dims:
             yield "dims", self.dims
-        if self.initializer:
-            yield "initializer", self.initializer
+        if self.init:
+            yield "init", self.init
 
 
 class switchexplabel(JAST, abc.ABC):
@@ -1677,7 +1677,7 @@ class Reference(expr):
 
 class arrayinit(JAST):
     """
-    Represents an array initializer in the Java AST.
+    Represents an array init in the Java AST.
 
     { <value>, <value>, ... }
     """
@@ -1857,55 +1857,23 @@ class Compound(stmt):
         yield "body", self.body
 
 
-class LocalClass(stmt):
+class LocalType(stmt):
     """
-    Represents a local class decl in the Java AST.
+    Represents a local type (class, interface, or record) decl in the Java AST.
 
-    class { <decl> <decl> ... }
+    <decl>
     """
 
-    def __init__(self, decl: "Class" = None, *vargs, **kwargs):
+    def __init__(
+        self, decl: Union["Class", "Interface", "Record"] = None, *vargs, **kwargs
+    ):
         super().__init__(*vargs, **kwargs)
         if decl is None:
-            raise JASTError("decl is required for LocalClass")
-        self.declaration = decl
+            raise JASTError("decl is required for LocalType")
+        self.decl = decl
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "declaration", self.declaration
-
-
-class LocalInterface(stmt):
-    """
-    Represents a local interface decl in the Java AST.
-
-    interface { <decl> <decl> ... }
-    """
-
-    def __init__(self, decl: "Interface" = None, *vargs, **kwargs):
-        super().__init__(*vargs, **kwargs)
-        if decl is None:
-            raise JASTError("decl is required for LocalInterface")
-        self.declaration = decl
-
-    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "declaration", self.declaration
-
-
-class LocalRecord(stmt):
-    """
-    Represents a local record decl in the Java AST.
-
-    record { <decl> <decl> ... }
-    """
-
-    def __init__(self, decl: "Record" = None, *vargs, **kwargs):
-        super().__init__(*vargs, **kwargs)
-        if decl is None:
-            raise JASTError("decl is required for LocalRecord")
-        self.declaration = decl
-
-    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "declaration", self.declaration
+        yield "decl", self.decl
 
 
 class LocalVariable(stmt):
@@ -2020,7 +1988,7 @@ class Assert(stmt):
     def __init__(self, test: expr = None, msg: expr = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if test is None:
-            raise JASTError("condition is required for Assert")
+            raise JASTError("test is required for Assert")
         self.test = test
         self.msg = msg
 
@@ -2079,23 +2047,6 @@ class DefaultCase(switchlabel):
 
     default:
     """
-
-
-class Throw(stmt):
-    """
-    Represents a throw statement in the Java AST.
-
-    throw <exc>;
-    """
-
-    def __init__(self, exc: expr = None, *vargs, **kwargs):
-        super().__init__(*vargs, **kwargs)
-        if exc is None:
-            raise JASTError("value is required for Throw")
-        self.exc = exc
-
-    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "exc", self.exc
 
 
 class switchgroup(JAST):
@@ -2167,6 +2118,23 @@ class Switch(stmt):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "value", self.value
         yield "body", self.body
+
+
+class Throw(stmt):
+    """
+    Represents a throw statement in the Java AST.
+
+    throw <exc>;
+    """
+
+    def __init__(self, exc: expr = None, *vargs, **kwargs):
+        super().__init__(*vargs, **kwargs)
+        if exc is None:
+            raise JASTError("value is required for Throw")
+        self.exc = exc
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        yield "exc", self.exc
 
 
 class While(stmt):
@@ -2447,7 +2415,7 @@ class resource(JAST):
         if type is None:
             raise JASTError("type is required for resource")
         if variable is None:
-            raise JASTError("declarator is required for resource")
+            raise JASTError("variable is required for resource")
         self.modifiers = modifiers or []
         self.type = type
         self.variable = variable
@@ -2761,14 +2729,14 @@ class declarator(JAST):
     """
     Represents a variable declarator in the Java AST.
 
-    <label> [= <initializer>]
+    <label> [= <init>]
     """
 
     # noinspection PyShadowingBuiltins
     def __init__(
         self,
         id: variabledeclaratorid = None,
-        initializer: expr | arrayinit = None,
+        init: expr | arrayinit = None,
         *vargs,
         **kwargs,
     ):
@@ -2776,12 +2744,12 @@ class declarator(JAST):
         if id is None:
             raise JASTError("id_ is required for declarator")
         self.id = id
-        self.initializer = initializer
+        self.init = init
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         yield "id", self.id
-        if self.initializer:
-            yield "initializer", self.initializer
+        if self.init:
+            yield "init", self.init
 
 
 class Field(declaration):
@@ -2922,7 +2890,7 @@ class Constructor(declaration):
 
 class Initializer(declaration):
     """
-    Represents an initializer in the Java AST.
+    Represents an init in the Java AST.
 
     { <statement> <statement> ... }
     static { <statement> <statement> ... }
@@ -2966,7 +2934,7 @@ class Interface(declaration):
             raise JASTError("qname is required for Interface")
         self.modifiers = modifiers or []
         self.id = id
-        self.type_params = type_params or []
+        self.type_params = type_params
         self.extends = extends or []
         self.permits = permits or []
         self.body = body or []
@@ -3229,10 +3197,10 @@ class Record(declaration):
     ):
         super().__init__(*vargs, **kwargs)
         if id is None:
-            raise JASTError("qname is required for Record")
+            raise JASTError("id is required for Record")
         self.modifiers = modifiers or []
-        self.name = id
-        self.type_params = type_params or []
+        self.id = id
+        self.type_params = type_params
         self.components = components or []
         self.implements = implements or []
         self.body = body or []
@@ -3240,7 +3208,7 @@ class Record(declaration):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "qname", self.name
+        yield "id", self.id
         if self.type_params:
             yield "type_params", self.type_params
         if self.components:

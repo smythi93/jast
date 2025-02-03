@@ -974,16 +974,16 @@ class TestConstructors(BaseTest):
         new_array = jast.NewArray(
             type=jast.Int(),
             dims=[jast.dim()],
-            initializer=jast.arrayinit(values=[jast.Constant(jast.IntLiteral(1))]),
+            init=jast.arrayinit(values=[jast.Constant(jast.IntLiteral(1))]),
         )
         self.assertIsInstance(new_array, jast.NewArray)
         self.assertIsInstance(new_array, jast.JAST)
         self.assertIsInstance(new_array.type, jast.Int)
         self.assertEqual(1, len(new_array.dims))
         self.assertIsInstance(new_array.dims[0], jast.dim)
-        self.assertIsInstance(new_array.initializer, jast.arrayinit)
-        self.assertEqual(1, len(new_array.initializer.values))
-        self._test_int_constant(new_array.initializer.values[0], 1)
+        self.assertIsInstance(new_array.init, jast.arrayinit)
+        self.assertEqual(1, len(new_array.init.values))
+        self._test_int_constant(new_array.init.values[0], 1)
         self._test_iteration(new_array)
 
     def test_NewArray_error(self):
@@ -997,7 +997,7 @@ class TestConstructors(BaseTest):
             jast.NewArray,
             type=jast.Int(),
             expr_dims=[jast.Constant(jast.IntLiteral(1))],
-            initializer=jast.arrayinit(values=[jast.Constant(jast.IntLiteral(1))]),
+            init=jast.arrayinit(values=[jast.Constant(jast.IntLiteral(1))]),
         )
 
     def test_ExpCase(self):
@@ -1404,50 +1404,44 @@ class TestConstructors(BaseTest):
         self.assertIsInstance(compound.body[1], jast.Empty)
         self._test_iteration(compound)
 
-    def test_LocalClass(self):
-        local_class = jast.LocalClass(
+    def test_LocalType_class(self):
+        local_class = jast.LocalType(
             decl=jast.Class(
                 id=jast.identifier("A"),
                 body=[jast.EmptyDecl()],
             )
         )
-        self.assertIsInstance(local_class, jast.LocalClass)
+        self.assertIsInstance(local_class, jast.LocalType)
         self.assertIsInstance(local_class, jast.JAST)
-        self.assertIsInstance(local_class.declaration, jast.Class)
+        self.assertIsInstance(local_class.decl, jast.Class)
         self._test_iteration(local_class)
 
-    def test_LocalClass_error(self):
-        self.assertRaises(JASTError, jast.LocalClass)
-
-    def test_LocalInterface(self):
-        local_interface = jast.LocalInterface(
+    def test_LocalType_interface(self):
+        local_interface = jast.LocalType(
             decl=jast.Interface(
                 id=jast.identifier("A"),
                 body=[jast.EmptyDecl()],
             )
         )
-        self.assertIsInstance(local_interface, jast.LocalInterface)
+        self.assertIsInstance(local_interface, jast.LocalType)
         self.assertIsInstance(local_interface, jast.JAST)
-        self.assertIsInstance(local_interface.declaration, jast.Interface)
+        self.assertIsInstance(local_interface.decl, jast.Interface)
         self._test_iteration(local_interface)
 
-    def test_LocalInterface_error(self):
-        self.assertRaises(JASTError, jast.LocalInterface)
-
-    def test_LocalRecord(self):
-        local_record = jast.LocalRecord(
+    def test_LocalType_record(self):
+        local_record = jast.LocalType(
             decl=jast.Record(
                 id=jast.identifier("A"),
                 body=[jast.EmptyDecl()],
             )
         )
-        self.assertIsInstance(local_record, jast.LocalRecord)
+        self.assertIsInstance(local_record, jast.LocalType)
         self.assertIsInstance(local_record, jast.JAST)
-        self.assertIsInstance(local_record.declaration, jast.Record)
+        self.assertIsInstance(local_record.decl, jast.Record)
         self._test_iteration(local_record)
 
-    def test_LocalRecord_error(self):
-        self.assertRaises(JASTError, jast.LocalRecord)
+    def test_LocalType_error(self):
+        self.assertRaises(JASTError, jast.LocalType)
 
     def test_LocalVariable(self):
         local_variable = jast.LocalVariable(
@@ -1998,7 +1992,7 @@ class TestConstructors(BaseTest):
             type=jast.Int(),
             variable=jast.declarator(
                 id=jast.variabledeclaratorid(jast.identifier("foo")),
-                initializer=jast.Constant(jast.IntLiteral(42)),
+                init=jast.Constant(jast.IntLiteral(42)),
             ),
         )
         self.assertIsInstance(resource, jast.resource)
@@ -2010,7 +2004,7 @@ class TestConstructors(BaseTest):
         self.assertIsInstance(resource.variable.id, jast.variabledeclaratorid)
         self._test_identifier(resource.variable.id.id, "foo")
         self.assertEqual(0, len(resource.variable.id.dims))
-        self._test_int_constant(resource.variable.initializer, 42)
+        self._test_int_constant(resource.variable.init, 42)
         self._test_iteration(resource)
 
     def test_resource_error(self):
@@ -2020,7 +2014,7 @@ class TestConstructors(BaseTest):
             jast.resource,
             variable=jast.declarator(
                 id=jast.variabledeclaratorid(jast.identifier("foo")),
-                initializer=jast.Constant(jast.IntLiteral(42)),
+                init=jast.Constant(jast.IntLiteral(42)),
             ),
         )
 
@@ -2032,7 +2026,7 @@ class TestConstructors(BaseTest):
                     type=jast.Int(),
                     variable=jast.declarator(
                         id=jast.variabledeclaratorid(jast.identifier("foo")),
-                        initializer=jast.Constant(jast.IntLiteral(42)),
+                        init=jast.Constant(jast.IntLiteral(42)),
                     ),
                 )
             ],
@@ -2071,7 +2065,7 @@ class TestConstructors(BaseTest):
                     type=jast.Int(),
                     variable=jast.declarator(
                         id=jast.variabledeclaratorid(jast.identifier("foo")),
-                        initializer=jast.Constant(jast.IntLiteral(42)),
+                        init=jast.Constant(jast.IntLiteral(42)),
                     ),
                 )
             ],

@@ -239,6 +239,13 @@ class BaseTest(unittest.TestCase):
         self.assertIsInstance(identifier, jast.identifier)
         self.assertEqual(expected, identifier)
 
+    def _test_variabledeclaratorid(self, vdi, expected: str, dims: int = 0):
+        self.assertIsInstance(vdi, jast.variabledeclaratorid)
+        self._test_identifier(vdi.id, expected)
+        self.assertEqual(dims, len(vdi.dims))
+        for dim in vdi.dims:
+            self.assertIsInstance(dim, jast.dim)
+
     def _test_name(self, name, expected: str):
         self.assertIsInstance(name, jast.Name)
         self._test_identifier(name.id, expected)

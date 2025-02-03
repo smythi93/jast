@@ -567,9 +567,9 @@ class _Unparser(JNodeVisitor):
             self.visit(node.type)
             self.interleave(node.expr_dims, "][", "[", "]")
             self.traverse(node.dims)
-            if node.initializer:
+            if node.init:
                 self.write(" ")
-                self.visit_arrayinit(node.initializer)
+                self.visit_arrayinit(node.init)
 
     def visit_Cast(self, node: jast.Cast):
         with self.require_parens(_Precedence.TYPE, node):
@@ -700,14 +700,8 @@ class _Unparser(JNodeVisitor):
     def visit_params(self, node: jast.params):
         self.items_view(filter(None, [node.receiver_param] + node.parameters))
 
-    def visit_LocalClass(self, node: jast.LocalClass):
-        pass
-
-    def visit_LocalInterface(self, node: jast.LocalInterface):
-        pass
-
-    def visit_LocalRecord(self, node: jast.LocalRecord):
-        pass
+    def visit_LocalType(self, node: jast.LocalType):
+        self.visit(node.decl)
 
     def visit_LocalVariable(self, node: jast.LocalVariable):
         self.fill()
