@@ -74,19 +74,24 @@ class _Unparser(JNodeVisitor):
         else:
             self.write(" ")
 
-    def maybe_newline(self):
+    def maybe_newline(self, force_newline: bool = False):
         """
         Add a newline if it isn't the start of the generated source and the indent is not negative.
+        :param force_newline:   If True, a newline is always added.
         """
         if self._source:
-            self.write(self.seperator())
+            if force_newline:
+                self.write("\n")
+            else:
+                self.write(self.seperator())
 
-    def fill(self, text=""):
+    def fill(self, text="", force_newline: bool = False):
         """
         Indent a piece of text and write it to the source.
-        :param text:
+        :param text:           The text to indent.
+        :param force_newline:  If True, a newline is always added.
         """
-        self.maybe_newline()
+        self.maybe_newline(force_newline)
         if self._indent_spaces >= 0:
             self.write(" " * self._indent_spaces * self._indent)
         self.write(text)
@@ -216,7 +221,10 @@ class _Unparser(JNodeVisitor):
         self.write(f'"{node.value}"')
 
     def visit_TextBlock(self, node: jast.TextBlock):
-        self.write(f'"""{node.value}"""')
+        with self.delimit('"""', '"""'):
+            with self.block():
+                for line in node.value:
+                    self.fill(line, force_newline=True)
 
     def visit_NullLiteral(self, node: jast.NullLiteral):
         self.write("null")

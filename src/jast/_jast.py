@@ -39,6 +39,9 @@ class JAST(abc.ABC):
         """
         obj = jtype(self).__new__(self.__class__)
         obj.__dict__.update(self.__dict__)
+        for field, value in self:
+            if isinstance(value, list):
+                setattr(obj, field, getattr(self, field)[:])
         return obj
 
 
@@ -213,7 +216,7 @@ class StringLiteral(literal, str):
         return StringLiteral(self.value)
 
 
-class TextBlock(literal, str):
+class TextBlock(literal):
     """
     Represents a text body literal in the Java AST.
     """
@@ -221,13 +224,8 @@ class TextBlock(literal, str):
     def __init__(self, value: str, *vargs, **kwargs):
         super().__init__(value, *vargs, **kwargs)
 
-    def __new__(cls, value, *vargs, **kwargs):
-        obj = str.__new__(cls, value)
-        TextBlock.__init__(obj, value, *vargs, **kwargs)
-        return obj
-
     def __copy__(self):
-        return TextBlock(self.value)
+        return TextBlock(self.value[:])
 
 
 class NullLiteral(literal):

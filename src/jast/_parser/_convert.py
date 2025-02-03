@@ -782,7 +782,17 @@ class JASTConverter(JavaParserVisitor):
         elif ctx.NULL_LITERAL():
             return jast.NullLiteral()
         else:
-            return jast.TextBlock(value=ctx.getText()[3:-3])
+            text = ctx.getText()[3:-3]
+            lines = text.split("\n")[1:]
+            min_spaces = min(
+                len(line) - len(line.lstrip()) for line in lines if line.strip()
+            )
+            return jast.TextBlock(
+                value=[
+                    line[min_spaces:] if line.strip() else line.strip()
+                    for line in lines
+                ]
+            )
 
     def visitIntegerLiteral(
         self, ctx: JavaParser.IntegerLiteralContext

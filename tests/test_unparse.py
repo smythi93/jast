@@ -56,8 +56,18 @@ class TestUnparse(unittest.TestCase):
         self.assertEqual('"foo"', jast.unparse(tree))
 
     def test_TextBlock(self):
-        tree = jast.TextBlock("foo")
-        self.assertEqual('"""foo"""', jast.unparse(tree))
+        tree = jast.TextBlock(["foo"])
+        self.assertEqual('"""\nfoo"""', jast.unparse(tree, indent=-1))
+
+    def test_TextBlock_new_line(self):
+        tree = jast.TextBlock(["foo", ""])
+        self.assertEqual('"""\n    foo\n    """', jast.unparse(tree))
+
+    def test_TextBlock_different_indents(self):
+        tree = jast.TextBlock(["foo", " bar", "", "\tbaz", ""])
+        self.assertEqual(
+            '"""\n    foo\n     bar\n    \n    \tbaz\n    """', jast.unparse(tree)
+        )
 
     def test_NullLiteral(self):
         tree = jast.NullLiteral()

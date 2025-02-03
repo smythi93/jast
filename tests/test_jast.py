@@ -85,10 +85,9 @@ class TestConstructors(BaseTest):
         self._test_iteration(string_literal)
 
     def test_TextBlock(self):
-        text_block = jast.TextBlock("foo")
+        text_block = jast.TextBlock(["foo"])
         self.assertIsInstance(text_block, jast.TextBlock)
-        self.assertIsInstance(text_block, str)
-        self.assertEqual("foo", text_block)
+        self.assertEqual(["foo"], text_block.value)
         self._test_iteration(text_block)
 
     def test_NullLiteral(self):

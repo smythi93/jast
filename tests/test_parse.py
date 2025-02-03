@@ -1,5 +1,4 @@
 import itertools
-import unittest
 
 from parameterized import parameterized
 
@@ -132,12 +131,25 @@ class TestParse(BaseTest):
         self.assertIsInstance(string_literal.value, jast.StringLiteral)
         self.assertEqual("foo", string_literal.value.value)
 
-    @unittest.skip("TextBlock does not work as expected")
     def test_TextBlock(self):
-        text_block = jast.parse('"""foo"""', jast.ParseMode.EXPR)
+        text_block = jast.parse('"""\nfoo"""', jast.ParseMode.EXPR)
         self.assertIsInstance(text_block, jast.Constant)
         self.assertIsInstance(text_block.value, jast.TextBlock)
-        self.assertEqual("foo", text_block.value.value)
+        self.assertEqual(["foo"], text_block.value.value)
+
+    def test_TextBlock_new_line(self):
+        text_block = jast.parse('"""\nfoo\n"""', jast.ParseMode.EXPR)
+        self.assertIsInstance(text_block, jast.Constant)
+        self.assertIsInstance(text_block.value, jast.TextBlock)
+        self.assertEqual(["foo", ""], text_block.value.value)
+
+    def test_TextBlock_different_indents(self):
+        text_block = jast.parse(
+            '"""\n  foo\n\t  bar\n    \n\t\t\tbaz\n  """', jast.ParseMode.EXPR
+        )
+        self.assertIsInstance(text_block, jast.Constant)
+        self.assertIsInstance(text_block.value, jast.TextBlock)
+        self.assertEqual(["foo", " bar", "", "\tbaz", ""], text_block.value.value)
 
     def test_Null(self):
         null = jast.parse("null", jast.ParseMode.EXPR)
