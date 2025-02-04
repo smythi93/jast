@@ -2544,7 +2544,7 @@ class TestJAST(BaseTest):
             id=jast.identifier("foo"),
         )
 
-    def teat_AnnotationDecl(self):
+    def test_AnnotationDecl(self):
         annotation_decl = jast.AnnotationDecl(
             modifiers=[jast.Public()],
             id=jast.identifier("foo"),
@@ -2835,3 +2835,15 @@ class TestJAST(BaseTest):
         self.assertIsInstance(modular_unit.imports[0], jast.Import)
         self.assertIsInstance(modular_unit.body, jast.Module)
         self._test_iteration(modular_unit)
+
+    def test_ModularUnit_error(self):
+        self.assertRaises(
+            JASTError,
+            jast.ModularUnit,
+            imports=[
+                jast.Import(
+                    static=True,
+                    name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+                )
+            ],
+        )
