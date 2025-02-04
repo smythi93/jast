@@ -240,8 +240,8 @@ class TestParse(BaseTest):
     def test_Transitive(self):
         tree = jast.parse("module A { requires transitive a; }", jast.ParseMode.DECL)
         self.assertIsInstance(tree, jast.Module)
-        self.assertEqual(1, len(tree.directives))
-        directive = tree.directives[0]
+        self.assertEqual(1, len(tree.body))
+        directive = tree.body[0]
         self.assertIsInstance(directive, jast.Requires)
         self.assertEqual(1, len(directive.modifiers))
         modifier = directive.modifiers[0]

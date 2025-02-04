@@ -1,5 +1,5 @@
 """
-This module contains the abstract syntax tree (AST) classes for the Java AST (JAST).
+This body contains the abstract syntax tree (AST) classes for the Java AST (JAST).
 """
 
 import abc
@@ -2485,7 +2485,7 @@ class Yield(stmt):
 # noinspection PyPep8Naming
 class declaration(_JAST, abc.ABC):
     """
-    Abstract base class for all declarations in the Java AST.
+    Abstract base class for all body in the Java AST.
     """
 
 
@@ -2495,9 +2495,6 @@ class EmptyDecl(declaration):
 
     ;
     """
-
-    def __init__(self, *vargs, **kwargs):
-        super().__init__(*vargs, **kwargs)
 
 
 # Package decl
@@ -2522,7 +2519,7 @@ class Package(declaration):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
             yield "annotations", self.annotations
-        yield "qname", self.name
+        yield "name", self.name
 
 
 # Import Declarations
@@ -2554,7 +2551,7 @@ class Import(declaration):
         self.on_demand = on_demand
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "qname", self.name
+        yield "name", self.name
 
 
 # Module decl
@@ -2562,7 +2559,7 @@ class Import(declaration):
 
 class directive(_JAST, abc.ABC):
     """
-    Abstract base class for all module directives in the Java AST.
+    Abstract base class for all body body in the Java AST.
     """
 
 
@@ -2589,7 +2586,7 @@ class Requires(directive):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "qname", self.name
+        yield "name", self.name
 
 
 class Exports(directive):
@@ -2613,7 +2610,7 @@ class Exports(directive):
         self.to = to
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "qname", self.name
+        yield "name", self.name
         if self.to:
             yield "to", self.to
 
@@ -2639,7 +2636,7 @@ class Opens(directive):
         self.to = to
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "qname", self.name
+        yield "name", self.name
         if self.to:
             yield "to", self.to
 
@@ -2663,7 +2660,7 @@ class Uses(directive):
         self.name = name
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "qname", self.name
+        yield "name", self.name
 
 
 class Provides(directive):
@@ -2683,21 +2680,21 @@ class Provides(directive):
         super().__init__(*vargs, **kwargs)
         if name is None:
             raise JASTError("type is required for Provides")
-        if not with_:
+        if with_ is None:
             raise JASTError("with_ is required for Provides")
         self.name = name
         self.with_ = with_
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "qname", self.name
-        yield "with", self.with_
+        yield "name", self.name
+        yield "with_", self.with_
 
 
 class Module(declaration):
     """
-    Represents a module decl in the Java AST.
+    Represents a body decl in the Java AST.
 
-    module <qname> { <directive> <directive> ... }
+    body <qname> { <directive> <directive> ... }
     """
 
     # noinspection PyShadowingBuiltins
@@ -2705,21 +2702,21 @@ class Module(declaration):
         self,
         open: bool = False,
         name: qname = None,
-        directives: List[directive] = None,
+        body: List[directive] = None,
         *vargs,
         **kwargs,
     ):
         super().__init__(*vargs, **kwargs)
-        if not name:
+        if name is None:
             raise JASTError("qname is required for Module")
         self.open = open
         self.name = name
-        self.directives = directives or []
+        self.body = body or []
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
-        yield "open", self.open
-        if self.directives:
-            yield "directives", self.directives
+        yield "name", self.name
+        if self.body:
+            yield "body", self.body
 
 
 # Field Declarations
@@ -2834,7 +2831,7 @@ class Method(declaration):
         yield "return_type", self.return_type
         yield "id", self.id
         if self.parameters:
-            yield "args", self.parameters
+            yield "parameters", self.parameters
         if self.dims:
             yield "dims", self.dims
         if self.throws:
@@ -2880,7 +2877,7 @@ class Constructor(declaration):
             yield "type_params", self.type_params
         yield "id", self.id
         if self.parameters:
-            yield "args", self.parameters
+            yield "parameters", self.parameters
         if self.body:
             yield "body", self.body
 
@@ -3011,7 +3008,7 @@ class AnnotationDecl(declaration):
         if id is None:
             raise JASTError("qname is required for AnnotationInterfaceDeclaration")
         self.modifiers = modifiers or []
-        self.name = id
+        self.id = id
         self.extends = extends or []
         self.permits = permits or []
         self.body = body or []
@@ -3019,7 +3016,7 @@ class AnnotationDecl(declaration):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "qname", self.name
+        yield "id", self.id
         if self.extends:
             yield "extends", self.extends
         if self.permits:
@@ -3082,7 +3079,7 @@ class enumconstant(JAST):
     """
     Represents an enum constant in the Java AST.
 
-    <annotation>* <qname> [(<argument>, <argument>, ...)] [<body>]
+    <annotation>* <id> [(<argument>, <argument>, ...)] [<body>]
     """
 
     # noinspection PyShadowingBuiltins
@@ -3099,14 +3096,14 @@ class enumconstant(JAST):
         if id is None:
             raise JASTError("qname is required for enumconstant")
         self.annotations = annotations or []
-        self.name = id
+        self.id = id
         self.args = args
         self.body = body
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.annotations:
             yield "annotations", self.annotations
-        yield "qname", self.name
+        yield "id", self.id
         if self.args:
             yield "args", self.args
         if self.body:
@@ -3135,7 +3132,7 @@ class Enum(declaration):
         if id is None:
             raise JASTError("qname is required for Enum")
         self.modifiers = modifiers or []
-        self.name = id
+        self.id = id
         self.implements = implements or []
         self.constants = constants or []
         self.body = body or []
@@ -3143,7 +3140,7 @@ class Enum(declaration):
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
-        yield "qname", self.name
+        yield "id", self.id
         if self.implements:
             yield "implements", self.implements
         if self.constants:
@@ -3240,44 +3237,44 @@ class CompilationUnit(mod):
         self,
         package: Package = None,
         imports: List[Import] = None,
-        declarations: List[declaration] = None,
+        body: List[declaration] = None,
         *vargs,
         **kwargs,
     ):
         super().__init__(*vargs, **kwargs)
         self.package = package
         self.imports = imports or []
-        self.declarations = declarations or []
+        self.body = body or []
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.package:
             yield "package", self.package
         if self.imports:
             yield "imports", self.imports
-        yield "declarations", self.declarations
+        yield "body", self.body
 
 
 class ModularUnit(mod):
     """
     Represents a modular compilation unit in the Java AST.
 
-    [<import> <import> ...] <module>
+    [<import> <import> ...] <body>
     """
 
     def __init__(
         self,
         imports: List[Import] = None,
-        module: Module = None,
+        body: Module = None,
         *vargs,
         **kwargs,
     ):
         super().__init__(*vargs, **kwargs)
-        if not module:
-            raise JASTError("module is required for ModularUnit")
+        if not body:
+            raise JASTError("body is required for ModularUnit")
         self.imports = imports or []
-        self.module = module
+        self.body = body
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.imports:
             yield "imports", self.imports
-        yield "module", self.module
+        yield "body", self.body

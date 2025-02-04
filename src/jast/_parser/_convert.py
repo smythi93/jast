@@ -60,7 +60,7 @@ class JASTConverter(JavaParserVisitor):
         return jast.CompilationUnit(
             package=package,
             imports=imports,
-            declarations=declarations,
+            body=declarations,
             **self._get_location_rule(ctx),
         )
 
@@ -73,7 +73,7 @@ class JASTConverter(JavaParserVisitor):
         ]
         module = self.visitModuleDeclaration(ctx.moduleDeclaration())
         return jast.ModularUnit(
-            imports=imports, module=module, **self._get_location_rule(ctx)
+            imports=imports, body=module, **self._get_location_rule(ctx)
         )
 
     def visitPackageDeclaration(
@@ -972,7 +972,7 @@ class JASTConverter(JavaParserVisitor):
         return jast.Module(
             open=open_,
             name=name,
-            directives=directives,
+            body=directives,
             **self._get_location_rule(ctx),
         )
 

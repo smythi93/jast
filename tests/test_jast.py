@@ -5,7 +5,7 @@ from jast import JASTError
 from utils import BaseTest
 
 
-class TestConstructors(BaseTest):
+class TestJAST(BaseTest):
     def _test_iteration(self, tree):
         for field, value in tree:
             self.assertIsInstance(field, str)
@@ -2087,3 +2087,751 @@ class TestConstructors(BaseTest):
 
     def test_Yield_error(self):
         self.assertRaises(JASTError, jast.Yield)
+
+    def test_EmptyDecl(self):
+        empty_decl = jast.EmptyDecl()
+        self.assertIsInstance(empty_decl, jast.EmptyDecl)
+        self.assertIsInstance(empty_decl, jast.JAST)
+        self._test_iteration(empty_decl)
+
+    def test_Package(self):
+        package = jast.Package(
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            name=jast.qname([jast.identifier("bar"), jast.identifier("baz")]),
+        )
+        self.assertIsInstance(package, jast.Package)
+        self.assertIsInstance(package, jast.JAST)
+        self.assertEqual(1, len(package.annotations))
+        self.assertIsInstance(package.annotations[0], jast.Annotation)
+        self.assertIsInstance(package.name, jast.qname)
+        self.assertEqual(2, len(package.name.identifiers))
+        self._test_identifier(package.name.identifiers[0], "bar")
+        self._test_identifier(package.name.identifiers[1], "baz")
+        self._test_iteration(package)
+
+    def test_Package_error(self):
+        self.assertRaises(
+            JASTError,
+            jast.Package,
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+        )
+
+    def test_Import(self):
+        import_ = jast.Import(
+            static=True,
+            name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+        )
+        self.assertIsInstance(import_, jast.Import)
+        self.assertIsInstance(import_, jast.JAST)
+        self.assertTrue(import_.static)
+        self.assertIsInstance(import_.name, jast.qname)
+        self.assertEqual(2, len(import_.name.identifiers))
+        self._test_identifier(import_.name.identifiers[0], "foo")
+        self._test_identifier(import_.name.identifiers[1], "bar")
+        self._test_iteration(import_)
+
+    def test_Import_on_demand(self):
+        import_ = jast.Import(
+            name=jast.qname([jast.identifier("foo")]),
+            on_demand=True,
+        )
+        self.assertIsInstance(import_, jast.Import)
+        self.assertIsInstance(import_, jast.JAST)
+        self.assertFalse(import_.static)
+        self.assertIsInstance(import_.name, jast.qname)
+        self.assertEqual(1, len(import_.name.identifiers))
+        self._test_identifier(import_.name.identifiers[0], "foo")
+        self.assertTrue(import_.on_demand)
+        self._test_iteration(import_)
+
+    def test_Import_error(self):
+        self.assertRaises(JASTError, jast.Import, static=True, on_demand=True)
+
+    def test_Requires(self):
+        requires = jast.Requires(
+            modifiers=[jast.Static()],
+            name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+        )
+        self.assertIsInstance(requires, jast.Requires)
+        self.assertIsInstance(requires, jast.JAST)
+        self.assertEqual(1, len(requires.modifiers))
+        self.assertIsInstance(requires.modifiers[0], jast.Static)
+        self.assertIsInstance(requires.name, jast.qname)
+        self.assertEqual(2, len(requires.name.identifiers))
+        self._test_identifier(requires.name.identifiers[0], "foo")
+        self._test_identifier(requires.name.identifiers[1], "bar")
+        self._test_iteration(requires)
+
+    def test_Requires_error(self):
+        self.assertRaises(
+            JASTError,
+            jast.Requires,
+            modifiers=[jast.Static()],
+        )
+
+    def test_Exports(self):
+        exports = jast.Exports(
+            name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+            to=jast.qname([jast.identifier("baz")]),
+        )
+        self.assertIsInstance(exports, jast.Exports)
+        self.assertIsInstance(exports, jast.JAST)
+        self.assertIsInstance(exports.name, jast.qname)
+        self.assertEqual(2, len(exports.name.identifiers))
+        self._test_identifier(exports.name.identifiers[0], "foo")
+        self._test_identifier(exports.name.identifiers[1], "bar")
+        self.assertIsInstance(exports.to, jast.qname)
+        self.assertEqual(1, len(exports.to.identifiers))
+        self._test_identifier(exports.to.identifiers[0], "baz")
+        self._test_iteration(exports)
+
+    def test_Exports_error(self):
+        self.assertRaises(
+            JASTError, jast.Exports, to=jast.qname([jast.identifier("baz")])
+        )
+
+    def test_Opens(self):
+        opens = jast.Opens(
+            name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+            to=jast.qname([jast.identifier("baz")]),
+        )
+        self.assertIsInstance(opens, jast.Opens)
+        self.assertIsInstance(opens, jast.JAST)
+        self.assertIsInstance(opens.name, jast.qname)
+        self.assertEqual(2, len(opens.name.identifiers))
+        self._test_identifier(opens.name.identifiers[0], "foo")
+        self._test_identifier(opens.name.identifiers[1], "bar")
+        self.assertIsInstance(opens.to, jast.qname)
+        self.assertEqual(1, len(opens.to.identifiers))
+        self._test_identifier(opens.to.identifiers[0], "baz")
+        self._test_iteration(opens)
+
+    def test_Opens_error(self):
+        self.assertRaises(
+            JASTError, jast.Opens, to=jast.qname([jast.identifier("baz")])
+        )
+
+    def test_Uses(self):
+        uses = jast.Uses(
+            name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+        )
+        self.assertIsInstance(uses, jast.Uses)
+        self.assertIsInstance(uses, jast.JAST)
+        self.assertIsInstance(uses.name, jast.qname)
+        self.assertEqual(2, len(uses.name.identifiers))
+        self._test_identifier(uses.name.identifiers[0], "foo")
+        self._test_identifier(uses.name.identifiers[1], "bar")
+        self._test_iteration(uses)
+
+    def test_Uses_error(self):
+        self.assertRaises(JASTError, jast.Uses)
+
+    def test_Provides(self):
+        provides = jast.Provides(
+            name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+            with_=jast.qname([jast.identifier("baz")]),
+        )
+        self.assertIsInstance(provides, jast.Provides)
+        self.assertIsInstance(provides, jast.JAST)
+        self.assertIsInstance(provides.name, jast.qname)
+        self.assertEqual(2, len(provides.name.identifiers))
+        self._test_identifier(provides.name.identifiers[0], "foo")
+        self._test_identifier(provides.name.identifiers[1], "bar")
+        self.assertIsInstance(provides.with_, jast.qname)
+        self.assertEqual(1, len(provides.with_.identifiers))
+        self._test_identifier(provides.with_.identifiers[0], "baz")
+        self._test_iteration(provides)
+
+    def test_Provides_error(self):
+        self.assertRaises(
+            JASTError, jast.Provides, with_=jast.qname([jast.identifier("baz")])
+        )
+        self.assertRaises(
+            JASTError, jast.Provides, name=jast.qname([jast.identifier("foo")])
+        )
+
+    def test_Module(self):
+        module = jast.Module(
+            open=True,
+            name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+            body=[jast.Uses(name=jast.qname([jast.identifier("baz")]))],
+        )
+        self.assertIsInstance(module, jast.Module)
+        self.assertIsInstance(module, jast.JAST)
+        self.assertTrue(module.open)
+        self.assertIsInstance(module.name, jast.qname)
+        self.assertEqual(2, len(module.name.identifiers))
+        self._test_identifier(module.name.identifiers[0], "foo")
+        self._test_identifier(module.name.identifiers[1], "bar")
+        self.assertEqual(1, len(module.body))
+        self.assertIsInstance(module.body[0], jast.Uses)
+        self._test_iteration(module)
+
+    def test_Module_error(self):
+        self.assertRaises(
+            JASTError,
+            jast.Module,
+            open=True,
+            body=[jast.Uses(name=jast.qname([jast.identifier("baz")]))],
+        )
+
+    def test_declarator(self):
+        declarator = jast.declarator(
+            id=jast.variabledeclaratorid(jast.identifier("foo")),
+            init=jast.Constant(jast.IntLiteral(42)),
+        )
+        self.assertIsInstance(declarator, jast.declarator)
+        self.assertIsInstance(declarator, jast.JAST)
+        self.assertIsInstance(declarator.id, jast.variabledeclaratorid)
+        self._test_identifier(declarator.id.id, "foo")
+        self.assertEqual(0, len(declarator.id.dims))
+        self.assertIsInstance(declarator.init, jast.Constant)
+        self._test_int_constant(declarator.init, 42)
+        self._test_iteration(declarator)
+
+    def test_declarator_error(self):
+        self.assertRaises(
+            JASTError, jast.declarator, init=jast.Constant(jast.IntLiteral(42))
+        )
+
+    def test_Field(self):
+        field = jast.Field(
+            modifiers=[jast.Final()],
+            type=jast.Int(),
+            declarators=[
+                jast.declarator(
+                    id=jast.variabledeclaratorid(jast.identifier("foo")),
+                    init=jast.Constant(jast.IntLiteral(42)),
+                ),
+                jast.declarator(id=jast.variabledeclaratorid(jast.identifier("bar"))),
+            ],
+        )
+        self.assertIsInstance(field, jast.Field)
+        self.assertIsInstance(field, jast.JAST)
+        self.assertEqual(1, len(field.modifiers))
+        self.assertIsInstance(field.modifiers[0], jast.Final)
+        self.assertIsInstance(field.type, jast.Int)
+        self.assertEqual(2, len(field.declarators))
+        self.assertIsInstance(field.declarators[0], jast.declarator)
+        self.assertIsInstance(field.declarators[1], jast.declarator)
+        self._test_iteration(field)
+
+    def test_Field_error(self):
+        self.assertRaises(
+            JASTError,
+            jast.Field,
+            declarators=[
+                jast.declarator(
+                    id=jast.variabledeclaratorid(jast.identifier("foo")),
+                    init=jast.Constant(jast.IntLiteral(42)),
+                )
+            ],
+        )
+        self.assertRaises(JASTError, jast.Field, type=jast.Int())
+        self.assertRaises(JASTError, jast.Field, type=jast.Int(), declarators=[])
+
+    def test_Method(self):
+        method = jast.Method(
+            modifiers=[jast.Public()],
+            type_params=jast.typeparams(
+                parameters=[jast.typeparam(id=jast.identifier("T"))],
+            ),
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            return_type=jast.Int(),
+            id=jast.identifier("bar"),
+            parameters=jast.params(
+                parameters=[
+                    jast.param(type=jast.Int(), id=jast.identifier("baz")),
+                    jast.param(type=jast.Int(), id=jast.identifier("qux")),
+                ],
+            ),
+            dims=[jast.dim()],
+            throws=[jast.qname([jast.identifier("quux")])],
+            body=jast.Block(),
+        )
+        self.assertIsInstance(method, jast.Method)
+        self.assertIsInstance(method, jast.JAST)
+        self.assertEqual(1, len(method.modifiers))
+        self.assertIsInstance(method.modifiers[0], jast.Public)
+        self.assertIsInstance(method.type_params, jast.typeparams)
+        self.assertEqual(1, len(method.type_params.parameters))
+        self.assertIsInstance(method.type_params.parameters[0], jast.typeparam)
+        self._test_identifier(method.type_params.parameters[0].id, "T")
+        self.assertEqual(1, len(method.annotations))
+        self.assertIsInstance(method.annotations[0], jast.Annotation)
+        self.assertIsInstance(method.return_type, jast.Int)
+        self._test_identifier(method.id, "bar")
+        self.assertIsInstance(method.parameters, jast.params)
+        self.assertEqual(2, len(method.parameters.parameters))
+        self.assertIsInstance(method.parameters.parameters[0], jast.param)
+        self.assertIsInstance(method.parameters.parameters[1], jast.param)
+        self.assertEqual(1, len(method.dims))
+        self.assertIsInstance(method.dims[0], jast.dim)
+        self.assertEqual(1, len(method.throws))
+        self.assertIsInstance(method.throws[0], jast.qname)
+        self._test_identifier(method.throws[0].identifiers[0], "quux")
+        self.assertIsInstance(method.body, jast.Block)
+        self._test_iteration(method)
+
+    def test_Method_error(self):
+        self.assertRaises(
+            JASTError,
+            jast.Method,
+            type_params=jast.typeparams(
+                parameters=[jast.typeparam(id=jast.identifier("T"))],
+            ),
+            id=jast.identifier("bar"),
+            parameters=jast.params(
+                parameters=[
+                    jast.param(type=jast.Int(), id=jast.identifier("baz")),
+                    jast.param(type=jast.Int(), id=jast.identifier("qux")),
+                ],
+            ),
+            dims=[jast.dim()],
+            throws=[jast.qname([jast.identifier("quux")])],
+        )
+        self.assertRaises(
+            JASTError,
+            jast.Method,
+            type_params=jast.typeparams(
+                parameters=[jast.typeparam(id=jast.identifier("T"))],
+            ),
+            return_type=jast.Int(),
+            parameters=jast.params(
+                parameters=[
+                    jast.param(type=jast.Int(), id=jast.identifier("baz")),
+                    jast.param(type=jast.Int(), id=jast.identifier("qux")),
+                ],
+            ),
+            dims=[jast.dim()],
+            throws=[jast.qname([jast.identifier("quux")])],
+        )
+
+    def test_Constructor(self):
+        constructor = jast.Constructor(
+            modifiers=[jast.Public()],
+            type_params=jast.typeparams(
+                parameters=[jast.typeparam(id=jast.identifier("T"))],
+            ),
+            id=jast.identifier("bar"),
+            parameters=jast.params(
+                parameters=[
+                    jast.param(type=jast.Int(), id=jast.identifier("baz")),
+                    jast.param(type=jast.Int(), id=jast.identifier("qux")),
+                ],
+            ),
+            body=jast.Block(),
+        )
+        self.assertIsInstance(constructor, jast.Constructor)
+        self.assertIsInstance(constructor, jast.JAST)
+        self.assertEqual(1, len(constructor.modifiers))
+        self.assertIsInstance(constructor.modifiers[0], jast.Public)
+        self.assertIsInstance(constructor.type_params, jast.typeparams)
+        self.assertEqual(1, len(constructor.type_params.parameters))
+        self.assertIsInstance(constructor.type_params.parameters[0], jast.typeparam)
+        self._test_identifier(constructor.type_params.parameters[0].id, "T")
+        self._test_identifier(constructor.id, "bar")
+        self.assertIsInstance(constructor.parameters, jast.params)
+        self.assertEqual(2, len(constructor.parameters.parameters))
+        self.assertIsInstance(constructor.parameters.parameters[0], jast.param)
+        self.assertIsInstance(constructor.parameters.parameters[1], jast.param)
+        self.assertIsInstance(constructor.body, jast.Block)
+        self._test_iteration(constructor)
+
+    def test_Constructor_error(self):
+        self.assertRaises(
+            JASTError,
+            jast.Constructor,
+            modifiers=[jast.Public()],
+            type_params=jast.typeparams(
+                parameters=[jast.typeparam(id=jast.identifier("T"))],
+            ),
+            parameters=jast.params(
+                parameters=[
+                    jast.param(type=jast.Int(), id=jast.identifier("baz")),
+                    jast.param(type=jast.Int(), id=jast.identifier("qux")),
+                ],
+            ),
+            body=jast.Block(),
+        )
+
+    def test_Initializer(self):
+        initializer = jast.Initializer(
+            static=True,
+            body=jast.Block(),
+        )
+        self.assertIsInstance(initializer, jast.Initializer)
+        self.assertIsInstance(initializer, jast.JAST)
+        self.assertTrue(initializer.static)
+        self.assertIsInstance(initializer.body, jast.Block)
+        self._test_iteration(initializer)
+
+    def test_Initializer_error(self):
+        self.assertRaises(JASTError, jast.Initializer, static=True)
+
+    def test_Interface(self):
+        interface = jast.Interface(
+            modifiers=[jast.Public()],
+            id=jast.identifier("foo"),
+            type_params=jast.typeparams(
+                parameters=[jast.typeparam(id=jast.identifier("T"))],
+            ),
+            extends=[jast.Coit(id=jast.identifier("bar"))],
+            permits=[jast.Coit(id=jast.identifier("baz"))],
+            body=[jast.Method(return_type=jast.Int(), id=jast.identifier("qux"))],
+        )
+        self.assertIsInstance(interface, jast.Interface)
+        self.assertIsInstance(interface, jast.JAST)
+        self.assertEqual(1, len(interface.modifiers))
+        self.assertIsInstance(interface.modifiers[0], jast.Public)
+        self._test_identifier(interface.id, "foo")
+        self.assertIsInstance(interface.type_params, jast.typeparams)
+        self.assertEqual(1, len(interface.type_params.parameters))
+        self.assertIsInstance(interface.type_params.parameters[0], jast.typeparam)
+        self._test_identifier(interface.type_params.parameters[0].id, "T")
+        self.assertEqual(1, len(interface.extends))
+        self.assertIsInstance(interface.extends[0], jast.Coit)
+        self._test_identifier(interface.extends[0].id, "bar")
+        self.assertEqual(1, len(interface.permits))
+        self.assertIsInstance(interface.permits[0], jast.Coit)
+        self._test_identifier(interface.permits[0].id, "baz")
+        self.assertEqual(1, len(interface.body))
+        self.assertIsInstance(interface.body[0], jast.Method)
+        self._test_iteration(interface)
+
+    def test_Interface_error(self):
+        self.assertRaises(
+            JASTError,
+            jast.Interface,
+            modifiers=[jast.Public()],
+            type_params=jast.typeparams(
+                parameters=[jast.typeparam(id=jast.identifier("T"))],
+            ),
+            extends=[jast.Coit(id=jast.identifier("bar"))],
+            permits=[jast.Coit(id=jast.identifier("baz"))],
+            body=[jast.Method(return_type=jast.Int(), id=jast.identifier("qux"))],
+        )
+
+    def test_AnnotationMethod(self):
+        annotation_method = jast.AnnotationMethod(
+            modifiers=[jast.Public()],
+            type=jast.Int(),
+            id=jast.identifier("foo"),
+            default=jast.Constant(jast.IntLiteral(42)),
+        )
+        self.assertIsInstance(annotation_method, jast.AnnotationMethod)
+        self.assertIsInstance(annotation_method, jast.JAST)
+        self.assertEqual(1, len(annotation_method.modifiers))
+        self.assertIsInstance(annotation_method.modifiers[0], jast.Public)
+        self.assertIsInstance(annotation_method.type, jast.Int)
+        self._test_identifier(annotation_method.id, "foo")
+        self.assertIsInstance(annotation_method.default, jast.Constant)
+        self._test_int_constant(annotation_method.default, 42)
+        self._test_iteration(annotation_method)
+
+    def test_AnnotationMethod_error(self):
+        self.assertRaises(
+            JASTError,
+            jast.AnnotationMethod,
+            modifiers=[jast.Public()],
+            type=jast.Int(),
+            default=jast.Constant(jast.IntLiteral(42)),
+        )
+        self.assertRaises(
+            JASTError,
+            jast.AnnotationMethod,
+            modifiers=[jast.Public()],
+            id=jast.identifier("foo"),
+        )
+
+    def teat_AnnotationDecl(self):
+        annotation_decl = jast.AnnotationDecl(
+            modifiers=[jast.Public()],
+            id=jast.identifier("foo"),
+            extends=[jast.Coit(id=jast.identifier("bar"))],
+            permits=[jast.Coit(id=jast.identifier("baz"))],
+            body=[jast.AnnotationMethod(type=jast.Int(), id=jast.identifier("qux"))],
+        )
+        self.assertIsInstance(annotation_decl, jast.AnnotationDecl)
+        self.assertIsInstance(annotation_decl, jast.JAST)
+        self.assertEqual(1, len(annotation_decl.modifiers))
+        self.assertIsInstance(annotation_decl.modifiers[0], jast.Public)
+        self._test_identifier(annotation_decl.id, "foo")
+        self.assertEqual(1, len(annotation_decl.extends))
+        self.assertIsInstance(annotation_decl.extends[0], jast.Coit)
+        self._test_identifier(annotation_decl.extends[0].id, "bar")
+        self.assertEqual(1, len(annotation_decl.permits))
+        self.assertIsInstance(annotation_decl.permits[0], jast.Coit)
+        self._test_identifier(annotation_decl.permits[0].id, "baz")
+        self.assertEqual(1, len(annotation_decl.body))
+        self.assertIsInstance(annotation_decl.body[0], jast.AnnotationMethod)
+        self._test_iteration(annotation_decl)
+
+    def test_AnnotationDecl_error(self):
+        self.assertRaises(
+            JASTError,
+            jast.AnnotationDecl,
+            modifiers=[jast.Public()],
+            extends=[jast.Coit(id=jast.identifier("bar"))],
+            permits=[jast.Coit(id=jast.identifier("baz"))],
+            body=[jast.AnnotationMethod(type=jast.Int(), id=jast.identifier("qux"))],
+        )
+
+    def test_Class(self):
+        class_ = jast.Class(
+            modifiers=[jast.Public()],
+            id=jast.identifier("foo"),
+            type_params=jast.typeparams(
+                parameters=[jast.typeparam(id=jast.identifier("T"))],
+            ),
+            extends=jast.Coit(id=jast.identifier("bar")),
+            implements=[jast.Coit(id=jast.identifier("baz"))],
+            permits=[jast.Coit(id=jast.identifier("qux"))],
+            body=[
+                jast.Method(
+                    return_type=jast.Int(),
+                    id=jast.identifier("quux"),
+                    body=jast.Block(),
+                )
+            ],
+        )
+        self.assertIsInstance(class_, jast.Class)
+        self.assertIsInstance(class_, jast.JAST)
+        self.assertEqual(1, len(class_.modifiers))
+        self.assertIsInstance(class_.modifiers[0], jast.Public)
+        self._test_identifier(class_.id, "foo")
+        self.assertIsInstance(class_.type_params, jast.typeparams)
+        self.assertEqual(1, len(class_.type_params.parameters))
+        self.assertIsInstance(class_.type_params.parameters[0], jast.typeparam)
+        self._test_identifier(class_.type_params.parameters[0].id, "T")
+        self.assertIsInstance(class_.extends, jast.Coit)
+        self._test_identifier(class_.extends.id, "bar")
+        self.assertEqual(1, len(class_.implements))
+        self.assertIsInstance(class_.implements[0], jast.Coit)
+        self._test_identifier(class_.implements[0].id, "baz")
+        self.assertEqual(1, len(class_.permits))
+        self.assertIsInstance(class_.permits[0], jast.Coit)
+        self._test_identifier(class_.permits[0].id, "qux")
+        self.assertEqual(1, len(class_.body))
+        self.assertIsInstance(class_.body[0], jast.Method)
+        self._test_iteration(class_)
+
+    def test_Class_error(self):
+        self.assertRaises(
+            JASTError,
+            jast.Class,
+            modifiers=[jast.Public()],
+            type_params=jast.typeparams(
+                parameters=[jast.typeparam(id=jast.identifier("T"))],
+            ),
+            implements=[jast.Coit(id=jast.identifier("baz"))],
+            permits=[jast.Coit(id=jast.identifier("qux"))],
+            body=[
+                jast.Method(
+                    return_type=jast.Int(),
+                    id=jast.identifier("quux"),
+                    body=jast.Block(),
+                )
+            ],
+        )
+
+    def test_enumconstant(self):
+        enumconstant = jast.enumconstant(
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            id=jast.identifier("bar"),
+            args=[jast.Constant(jast.IntLiteral(42))],
+            body=jast.Block(),
+        )
+        self.assertIsInstance(enumconstant, jast.enumconstant)
+        self.assertIsInstance(enumconstant, jast.JAST)
+        self.assertEqual(1, len(enumconstant.annotations))
+        self.assertIsInstance(enumconstant.annotations[0], jast.Annotation)
+        self._test_identifier(enumconstant.id, "bar")
+        self.assertEqual(1, len(enumconstant.args))
+        self._test_int_constant(enumconstant.args[0], 42)
+        self.assertIsInstance(enumconstant.body, jast.Block)
+        self._test_iteration(enumconstant)
+
+    def test_enumconstant_error(self):
+        self.assertRaises(
+            JASTError,
+            jast.enumconstant,
+            args=[jast.Constant(jast.IntLiteral(42))],
+            body=jast.Block(),
+        )
+
+    def test_Enum(self):
+        enum = jast.Enum(
+            modifiers=[jast.Public()],
+            id=jast.identifier("foo"),
+            implements=[jast.Coit(id=jast.identifier("bar"))],
+            constants=[jast.enumconstant(id=jast.identifier("baz"))],
+            body=[
+                jast.Method(
+                    return_type=jast.Int(), id=jast.identifier("qux"), body=jast.Block()
+                )
+            ],
+        )
+        self.assertIsInstance(enum, jast.Enum)
+        self.assertIsInstance(enum, jast.JAST)
+        self.assertEqual(1, len(enum.modifiers))
+        self.assertIsInstance(enum.modifiers[0], jast.Public)
+        self._test_identifier(enum.id, "foo")
+        self.assertEqual(1, len(enum.implements))
+        self.assertIsInstance(enum.implements[0], jast.Coit)
+        self._test_identifier(enum.implements[0].id, "bar")
+        self.assertEqual(1, len(enum.constants))
+        self.assertIsInstance(enum.constants[0], jast.enumconstant)
+        self.assertEqual(1, len(enum.body))
+        self.assertIsInstance(enum.body[0], jast.Method)
+        self._test_iteration(enum)
+
+    def test_Enum_error(self):
+        self.assertRaises(
+            JASTError,
+            jast.Enum,
+            modifiers=[jast.Public()],
+            implements=[jast.Coit(id=jast.identifier("bar"))],
+            constants=[jast.enumconstant(id=jast.identifier("baz"))],
+            body=[
+                jast.Method(
+                    return_type=jast.Int(), id=jast.identifier("qux"), body=jast.Block()
+                )
+            ],
+        )
+
+    def test_recordcomponent(self):
+        recordcomponent = jast.recordcomponent(
+            type=jast.Int(),
+            id=jast.identifier("foo"),
+        )
+        self.assertIsInstance(recordcomponent, jast.recordcomponent)
+        self.assertIsInstance(recordcomponent, jast.JAST)
+        self.assertIsInstance(recordcomponent.type, jast.Int)
+        self._test_identifier(recordcomponent.id, "foo")
+        self._test_iteration(recordcomponent)
+
+    def test_recordcomponent_error(self):
+        self.assertRaises(
+            JASTError,
+            jast.recordcomponent,
+            id=jast.identifier("foo"),
+        )
+        self.assertRaises(
+            JASTError,
+            jast.recordcomponent,
+            type=jast.Int(),
+        )
+
+    def test_Record(self):
+        record = jast.Record(
+            modifiers=[jast.Public()],
+            id=jast.identifier("foo"),
+            type_params=jast.typeparams(
+                parameters=[jast.typeparam(id=jast.identifier("T"))],
+            ),
+            components=[
+                jast.recordcomponent(type=jast.Int(), id=jast.identifier("bar"))
+            ],
+            implements=[jast.Coit(id=jast.identifier("baz"))],
+            body=[
+                jast.Method(
+                    return_type=jast.Int(), id=jast.identifier("qux"), body=jast.Block()
+                )
+            ],
+        )
+        self.assertIsInstance(record, jast.Record)
+        self.assertIsInstance(record, jast.JAST)
+        self.assertEqual(1, len(record.modifiers))
+        self.assertIsInstance(record.modifiers[0], jast.Public)
+        self._test_identifier(record.id, "foo")
+        self.assertIsInstance(record.type_params, jast.typeparams)
+        self.assertEqual(1, len(record.type_params.parameters))
+        self.assertIsInstance(record.type_params.parameters[0], jast.typeparam)
+        self._test_identifier(record.type_params.parameters[0].id, "T")
+        self.assertEqual(1, len(record.components))
+        self.assertIsInstance(record.components[0], jast.recordcomponent)
+        self.assertEqual(1, len(record.implements))
+        self.assertIsInstance(record.implements[0], jast.Coit)
+        self._test_identifier(record.implements[0].id, "baz")
+        self.assertEqual(1, len(record.body))
+        self.assertIsInstance(record.body[0], jast.Method)
+        self._test_iteration(record)
+
+    def test_Record_error(self):
+        self.assertRaises(
+            JASTError,
+            jast.Record,
+            modifiers=[jast.Public()],
+            type_params=jast.typeparams(
+                parameters=[jast.typeparam(id=jast.identifier("T"))],
+            ),
+            components=[
+                jast.recordcomponent(type=jast.Int(), id=jast.identifier("bar"))
+            ],
+            implements=[jast.Coit(id=jast.identifier("baz"))],
+            body=[
+                jast.Method(
+                    return_type=jast.Int(), id=jast.identifier("qux"), body=jast.Block()
+                )
+            ],
+        )
+
+    def test_CompilationUnit(self):
+        compilation_unit = jast.CompilationUnit(
+            package=jast.Package(
+                annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+                name=jast.qname([jast.identifier("bar"), jast.identifier("baz")]),
+            ),
+            imports=[
+                jast.Import(
+                    static=True,
+                    name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+                )
+            ],
+            body=[
+                jast.Class(
+                    modifiers=[jast.Public()],
+                    id=jast.identifier("foo"),
+                    type_params=jast.typeparams(
+                        parameters=[jast.typeparam(id=jast.identifier("T"))],
+                    ),
+                    extends=jast.Coit(id=jast.identifier("bar")),
+                    implements=[jast.Coit(id=jast.identifier("baz"))],
+                    permits=[jast.Coit(id=jast.identifier("qux"))],
+                    body=[
+                        jast.Method(
+                            return_type=jast.Int(),
+                            id=jast.identifier("quux"),
+                            body=jast.Block(),
+                        )
+                    ],
+                )
+            ],
+        )
+        self.assertIsInstance(compilation_unit, jast.CompilationUnit)
+        self.assertIsInstance(compilation_unit, jast.JAST)
+        self.assertIsInstance(compilation_unit.package, jast.Package)
+        self.assertIsInstance(compilation_unit.imports[0], jast.Import)
+        self.assertIsInstance(compilation_unit.body[0], jast.Class)
+        self._test_iteration(compilation_unit)
+
+    def test_ModularUnit(self):
+        modular_unit = jast.ModularUnit(
+            imports=[
+                jast.Import(
+                    static=True,
+                    name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+                )
+            ],
+            body=jast.Module(
+                open=True,
+                name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+                body=[jast.Uses(name=jast.qname([jast.identifier("baz")]))],
+            ),
+        )
+        self.assertIsInstance(modular_unit, jast.ModularUnit)
+        self.assertIsInstance(modular_unit, jast.JAST)
+        self.assertIsInstance(modular_unit.imports[0], jast.Import)
+        self.assertIsInstance(modular_unit.body, jast.Module)
+        self._test_iteration(modular_unit)
