@@ -1608,6 +1608,28 @@ class TestParse(BaseTest):
         self.assertIsNone(tree.id)
         self.assertTrue(tree.new)
 
+    def test_Reference_class_type_complex(self):
+        tree = jast.parse("X.Y.Z<int>::<int>new", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Reference)
+        self.assertIsInstance(tree.type, jast.ClassType)
+        self.assertEqual(3, len(tree.type.coits))
+        self.assertIsInstance(tree.type.coits[0], jast.Coit)
+        self._test_identifier(tree.type.coits[0].id, "X")
+        self.assertIsNone(tree.type.coits[0].type_args)
+        self.assertIsInstance(tree.type.coits[1], jast.Coit)
+        self._test_identifier(tree.type.coits[1].id, "Y")
+        self.assertIsNone(tree.type.coits[1].type_args)
+        self.assertIsInstance(tree.type.coits[2], jast.Coit)
+        self._test_identifier(tree.type.coits[2].id, "Z")
+        self.assertIsInstance(tree.type.coits[2].type_args, jast.typeargs)
+        self.assertEqual(1, len(tree.type.coits[2].type_args.types))
+        self.assertIsInstance(tree.type.coits[2].type_args.types[0], jast.Int)
+        self.assertIsInstance(tree.type_args, jast.typeargs)
+        self.assertEqual(1, len(tree.type_args.types))
+        self.assertIsInstance(tree.type_args.types[0], jast.Int)
+        self.assertIsNone(tree.id)
+        self.assertTrue(tree.new)
+
     def test_arrayinit(self):
         tree = jast.parse("int[] x = {42, 24};", jast.ParseMode.DECL)
         self.assertIsInstance(tree, jast.Field)
@@ -1737,10 +1759,11 @@ class TestParse(BaseTest):
         self.assertEqual(0, len(tree.decl.body))
 
     def test_LocalVariable(self):
-        tree = jast.parse("final int x = 24, y, z = 42;", jast.ParseMode.STMT)
+        tree = jast.parse("final @foo int x = 24, y, z = 42;", jast.ParseMode.STMT)
         self.assertIsInstance(tree, jast.LocalVariable)
-        self.assertEqual(1, len(tree.modifiers))
+        self.assertEqual(2, len(tree.modifiers))
         self.assertIsInstance(tree.modifiers[0], jast.Final)
+        self.assertIsInstance(tree.modifiers[1], jast.Annotation)
         self.assertIsInstance(tree.type, jast.Int)
         self.assertEqual(3, len(tree.declarators))
         declarator = tree.declarators[0]
