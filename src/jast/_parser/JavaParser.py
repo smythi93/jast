@@ -3853,12 +3853,12 @@ def serializedATN():
         126,
         1,
         126,
-        1,
-        126,
         3,
         126,
-        1777,
+        1776,
         8,
+        126,
+        1,
         126,
         1,
         126,
@@ -4563,7 +4563,7 @@ def serializedATN():
         29,
         37,
         37,
-        2169,
+        2168,
         0,
         302,
         1,
@@ -16145,64 +16145,58 @@ def serializedATN():
         0,
         0,
         1772,
-        1776,
+        1775,
         5,
         6,
         0,
         0,
         1773,
-        1777,
+        1776,
         3,
         204,
         102,
         0,
         1774,
-        1777,
-        5,
-        77,
-        0,
-        0,
-        1775,
-        1777,
+        1776,
         3,
         254,
         127,
         0,
-        1776,
+        1775,
         1773,
         1,
         0,
         0,
         0,
-        1776,
+        1775,
         1774,
         1,
         0,
         0,
         0,
         1776,
-        1775,
+        1777,
         1,
         0,
         0,
         0,
         1777,
         1778,
-        1,
-        0,
-        0,
-        0,
-        1778,
-        1779,
         7,
         13,
         0,
         0,
+        1778,
         1779,
-        1784,
         3,
         256,
         128,
+        0,
+        1779,
+        1784,
+        1,
+        0,
+        0,
         0,
         1780,
         1781,
@@ -17787,7 +17781,7 @@ def serializedATN():
         1755,
         1764,
         1770,
-        1776,
+        1775,
         1783,
         1793,
         1800,
@@ -30252,9 +30246,6 @@ class JavaParser(Parser):
         def expressionList(self):
             return self.getTypedRuleContext(JavaParser.ExpressionListContext, 0)
 
-        def NULL_LITERAL(self):
-            return self.getToken(JavaParser.NULL_LITERAL, 0)
-
         def guardedPattern(self):
             return self.getTypedRuleContext(JavaParser.GuardedPatternContext, 0)
 
@@ -30290,7 +30281,7 @@ class JavaParser(Parser):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 1772
                 self.match(JavaParser.CASE)
-                self.state = 1776
+                self.state = 1775
                 self._errHandler.sync(self)
                 la_ = self._interp.adaptivePredict(self._input, 208, self._ctx)
                 if la_ == 1:
@@ -30300,22 +30291,17 @@ class JavaParser(Parser):
 
                 elif la_ == 2:
                     self.state = 1774
-                    self.match(JavaParser.NULL_LITERAL)
-                    pass
-
-                elif la_ == 3:
-                    self.state = 1775
                     self.guardedPattern(0)
                     pass
 
-                self.state = 1778
+                self.state = 1777
                 _la = self._input.LA(1)
                 if not (_la == 93 or _la == 121):
                     self._errHandler.recoverInline(self)
                 else:
                     self._errHandler.reportMatch(self)
                     self.consume()
-                self.state = 1779
+                self.state = 1778
                 self.switchRuleOutcome()
                 pass
             elif token in [12]:

@@ -1919,9 +1919,7 @@ class JASTConverter(JavaParserVisitor):
         self, ctx: JavaParser.SwitchLabeledRuleContext
     ) -> jast.switchexprule:
         if ctx.CASE():
-            if ctx.NULL_LITERAL():
-                cases = [jast.Constant(jast.NullLiteral())]
-            elif ctx.expressionList():
+            if ctx.expressionList():
                 cases = self.visitExpressionList(ctx.expressionList())
             else:
                 cases = [self.visitGuardedPattern(ctx.guardedPattern())]
