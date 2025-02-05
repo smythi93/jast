@@ -15,8 +15,36 @@ from utils import (
     POST_OPERATORS,
 )
 
+from jast._unparse import _Precedence
+
 
 class TestUnparse(unittest.TestCase):
+    @parameterized.expand(
+        [
+            ("lambda", _Precedence.LAMBDA, _Precedence.ASSIGN),
+            ("assign", _Precedence.ASSIGN, _Precedence.TERNARY),
+            ("ternary", _Precedence.TERNARY, _Precedence.OR),
+            ("or", _Precedence.OR, _Precedence.AND),
+            ("and", _Precedence.AND, _Precedence.BIT_OR),
+            ("bit_or", _Precedence.BIT_OR, _Precedence.BIT_XOR),
+            ("bit_xor", _Precedence.BIT_XOR, _Precedence.BIT_AND),
+            ("bit_and", _Precedence.BIT_AND, _Precedence.EQ),
+            ("eq", _Precedence.EQ, _Precedence.COMP),
+            ("comp", _Precedence.COMP, _Precedence.SHIFT),
+            ("shift", _Precedence.SHIFT, _Precedence.ADD),
+            ("arith", _Precedence.ADD, _Precedence.MULT),
+            ("term", _Precedence.MULT, _Precedence.TYPE),
+            ("fact", _Precedence.TYPE, _Precedence.UNARY),
+            ("unary", _Precedence.UNARY, _Precedence.POST),
+            ("post", _Precedence.POST, _Precedence.PRIMARY),
+            ("primary", _Precedence.PRIMARY, _Precedence.PRIMARY),
+        ]
+    )
+    def test_precedence(self, _, left, right):
+        if left != right:
+            self.assertLess(left, right)
+        self.assertEqual(left.next(), right)
+
     def test_identifier(self):
         tree = jast.identifier("foo")
         self.assertEqual("foo", jast.unparse(tree))
@@ -1305,6 +1333,12 @@ class TestUnparse(unittest.TestCase):
         )
         self.assertEqual("foo()", jast.unparse(tree))
 
+    def test_Call_empty_args(self):
+        tree = jast.Call(
+            func=jast.Name(jast.identifier("foo")),
+            args=[],
+        )
+
     def test_Call_args(self):
         tree = jast.Call(
             func=jast.Name(jast.identifier("foo")),
@@ -1636,6 +1670,13 @@ class TestUnparse(unittest.TestCase):
             test=jast.Constant(jast.BoolLiteral(True)),
         )
         self.assertEqual("do\n    ;\nwhile (true);", jast.unparse(tree))
+
+    def test_DoWhile_block(self):
+        tree = jast.DoWhile(
+            body=jast.Block(body=[jast.Empty()]),
+            test=jast.Constant(jast.BoolLiteral(True)),
+        )
+        self.assertEqual("do {\n    ;\n} while (true);", jast.unparse(tree))
 
     def test_For(self):
         tree = jast.For(
@@ -2157,6 +2198,26 @@ class TestUnparse(unittest.TestCase):
             jast.unparse(tree),
         )
 
+    def test_Enum_inline(self):
+        tree = jast.Enum(
+            modifiers=[jast.Public()],
+            id=jast.identifier("foo"),
+            implements=[jast.Coit(id=jast.identifier("bar"))],
+            constants=[
+                jast.enumconstant(id=jast.identifier("A")),
+                jast.enumconstant(id=jast.identifier("B")),
+            ],
+            body=[
+                jast.Method(
+                    return_type=jast.Int(), id=jast.identifier("qux"), body=jast.Block()
+                )
+            ],
+        )
+        self.assertEqual(
+            "public enum foo implements bar { A, B; int qux() {} }",
+            jast.unparse(tree, indent=-1),
+        )
+
     def test_Enum_no_body(self):
         tree = jast.Enum(
             id=jast.identifier("foo"),
@@ -2177,6 +2238,12 @@ class TestUnparse(unittest.TestCase):
             ],
         )
         self.assertEqual("enum foo {\n    ;\n    int qux() {}\n}", jast.unparse(tree))
+
+    def test_Enum_no_constants_no_body(self):
+        tree = jast.Enum(
+            id=jast.identifier("foo"),
+        )
+        self.assertEqual("enum foo {}", jast.unparse(tree))
 
     def test_recordcomponent(self):
         tree = jast.recordcomponent(

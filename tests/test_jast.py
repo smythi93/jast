@@ -2471,6 +2471,21 @@ class TestJAST(BaseTest):
             ),
             body=jast.Block(),
         )
+        self.assertRaises(
+            JASTError,
+            jast.Constructor,
+            modifiers=[jast.Public()],
+            type_params=jast.typeparams(
+                parameters=[jast.typeparam(id=jast.identifier("T"))],
+            ),
+            id=jast.identifier("bar"),
+            parameters=jast.params(
+                parameters=[
+                    jast.param(type=jast.Int(), id=jast.identifier("baz")),
+                    jast.param(type=jast.Int(), id=jast.identifier("qux")),
+                ],
+            ),
+        )
 
     def test_Initializer(self):
         initializer = jast.Initializer(

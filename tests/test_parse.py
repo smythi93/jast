@@ -1,5 +1,6 @@
 import itertools
 
+from antlr4.error.Errors import ParseCancellationException
 from parameterized import parameterized
 
 import jast
@@ -18,6 +19,10 @@ from utils import (
 
 
 class TestParse(BaseTest):
+    def test_syntax_error(self):
+        with self.assertRaises(ParseCancellationException):
+            jast.parse("class A {", jast.ParseMode.UNIT)
+
     def _test_parse_mode_unit(self, src, mode):
         tree = jast.parse(src, mode)
         self.assertIsInstance(tree, jast.CompilationUnit)

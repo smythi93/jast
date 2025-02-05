@@ -77,7 +77,7 @@ class JNodeTransformer(JNodeVisitor):
             elif isinstance(old_value, JAST):
                 new_node = self.visit(old_value)
                 if new_node is None:
-                    delattr(node, field)
+                    setattr(node, field, None)
                 else:
                     setattr(node, field, new_node)
         return node
@@ -110,7 +110,7 @@ class JNodeKeepTransformer(JNodeTransformer):
             elif isinstance(old_value, JAST):
                 new_node = self.visit(old_value)
                 if new_node is None:
-                    delattr(node, field)
+                    setattr(node, field, None)
                 else:
                     setattr(node, field, new_node)
         return node

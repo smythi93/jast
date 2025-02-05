@@ -20,6 +20,14 @@ class TestVisitor(unittest.TestCase):
         )
         self.example = jast.parse(self.source)
 
+    def test_default_visitor(self):
+        class DefaultVisitor(jast.JNodeVisitor):
+            pass
+
+        visitor = DefaultVisitor()
+        result = visitor.visit(self.example)
+        self.assertIsNone(result)
+
     def test_IdentifierVisitor(self):
         class IdentifierVisitor(jast.JNodeVisitor):
             def default_result(self):
@@ -179,6 +187,23 @@ class TestVisitor(unittest.TestCase):
             "    public static void main(String[] args) {\n"
             "        System.out.println(add(27, 55));\n"
             "    }\n"
+            "}",
+            code,
+        )
+
+    def test_DeleteBlock(self):
+        class DeleteBlock(jast.JNodeTransformer):
+            def visit_Block(self, node):
+                return None
+
+        delete_block = DeleteBlock()
+        new_tree = delete_block.visit(self.example)
+        code = jast.unparse(new_tree)
+        self.assertEqual(
+            "public class Example {\n"
+            "    public int add(int a, int b);\n"
+            "    \n"
+            "    public static void main(String[] args);\n"
             "}",
             code,
         )

@@ -20,13 +20,13 @@ class _Precedence(IntEnum):
     BIT_XOR = auto()  # ^
     BIT_AND = auto()  # &
     EQ = auto()  # ==, !=
-    COMPARE = auto()  # <, <=, >, >=, instanceof
+    COMP = auto()  # <, <=, >, >=, instanceof
     SHIFT = auto()  # <<, >>, >>>
     ADD = auto()  # +, -
     MULT = auto()  # *, /, %
     TYPE = auto()  # (type) <value>, new <type>(...), new <type>[]...
     UNARY = auto()  # +, -, !, ~, ++, --
-    POSTFIX = auto()  # ++, --
+    POST = auto()  # ++, --
     PRIMARY = auto()  # everything else
 
     def next(self):
@@ -109,14 +109,10 @@ class _Unparser(JNodeVisitor):
         if items:
             self.write(start)
             seq = iter(items)
-            try:
-                self.visit(next(seq))
-            except StopIteration:
-                pass
-            else:
-                for item in seq:
-                    self.write(sep)
-                    self.visit(item)
+            self.visit(next(seq))
+            for item in seq:
+                self.write(sep)
+                self.visit(item)
             self.write(end)
 
     def traverse(self, items, start="", end=""):
@@ -357,8 +353,6 @@ class _Unparser(JNodeVisitor):
             self.write(" super ")
         elif node.extends:
             self.write(" extends ")
-        else:
-            raise ValueError("wildcardbound must have either super or extends")
         self.visit(node.type)
 
     def visit_Wildcard(self, node: jast.Wildcard):
@@ -550,10 +544,10 @@ class _Unparser(JNodeVisitor):
         jast.BitAnd: _Precedence.BIT_AND,
         jast.Eq: _Precedence.EQ,
         jast.NotEq: _Precedence.EQ,
-        jast.Lt: _Precedence.COMPARE,
-        jast.LtE: _Precedence.COMPARE,
-        jast.Gt: _Precedence.COMPARE,
-        jast.GtE: _Precedence.COMPARE,
+        jast.Lt: _Precedence.COMP,
+        jast.LtE: _Precedence.COMP,
+        jast.Gt: _Precedence.COMP,
+        jast.GtE: _Precedence.COMP,
         jast.LShift: _Precedence.SHIFT,
         jast.RShift: _Precedence.SHIFT,
         jast.URShift: _Precedence.SHIFT,
@@ -576,8 +570,8 @@ class _Unparser(JNodeVisitor):
             self.visit(node.right)
 
     def visit_InstanceOf(self, node: jast.InstanceOf):
-        with self.require_parens(_Precedence.COMPARE, node):
-            self.set_precedence(_Precedence.COMPARE, node.value)
+        with self.require_parens(_Precedence.COMP, node):
+            self.set_precedence(_Precedence.COMP, node.value)
             self.visit(node.value)
             self.write(" instanceof ")
             self.visit(node.type)
@@ -621,8 +615,8 @@ class _Unparser(JNodeVisitor):
             self.visit(node.operand)
 
     def visit_PostOp(self, node: jast.PostOp):
-        with self.require_parens(_Precedence.POSTFIX, node):
-            self.set_precedence(_Precedence.POSTFIX, node.operand)
+        with self.require_parens(_Precedence.POST, node):
+            self.set_precedence(_Precedence.POST, node.operand)
             self.visit(node.operand)
             self.visit(node.op)
 
