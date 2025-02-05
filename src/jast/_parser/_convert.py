@@ -1400,11 +1400,6 @@ class JASTConverter(JavaParserVisitor):
         else:
             if ctx.constantExpression:
                 expression = self.visitExpression(ctx.constantExpression)
-            elif ctx.enumConstantName:
-                expression = jast.Name(
-                    id=self.visitIdentifier(ctx.enumConstantName),
-                    **self._get_location_rule(ctx.enumConstantName),
-                )
             else:
                 start = self._get_location_rule(ctx.typeType())
                 end = self._get_location_rule(ctx.varName)
@@ -2230,10 +2225,6 @@ class JASTConverter(JavaParserVisitor):
         elif ctx.annotationMethodDeclaration():
             decl = self.visitAnnotationMethodDeclaration(
                 ctx.annotationMethodDeclaration()
-            )
-        elif ctx.annotationConstantDeclaration():
-            decl = self.visitAnnotationConstantDeclaration(
-                ctx.annotationConstantDeclaration()
             )
         elif ctx.annotationTypeDeclaration():
             decl = self.visitAnnotationTypeDeclaration(ctx.annotationTypeDeclaration())

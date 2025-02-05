@@ -41,7 +41,6 @@ class _Unparser(JNodeVisitor):
         self._source = []
         self._indent_spaces = indent
         self._indent = 0
-        self._current_expr_level = -1
         self._precedences = {}
         self._context_newline = False
         self._no_fill = False
@@ -135,7 +134,7 @@ class _Unparser(JNodeVisitor):
 
     @contextmanager
     def block(self):
-        if self._indent >= 0:
+        if self._indent_spaces >= 0:
             self._indent += 1
             yield
             self._indent -= 1

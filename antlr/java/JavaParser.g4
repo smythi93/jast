@@ -56,7 +56,6 @@ declarationStart
     | modifier* constructorDeclaration EOF
     | compactConstructorDeclaration EOF
     | modifier* annotationMethodDeclaration EOF
-    | modifier* annotationConstantDeclaration EOF
     | modifier* interfaceDeclaration EOF
     | modifier* annotationTypeDeclaration EOF
     | modifier* classDeclaration EOF
@@ -607,7 +606,6 @@ switchBlockStatementGroup
 switchLabel
     : CASE (
         constantExpression = expression
-        | enumConstantName = IDENTIFIER
         | typeType varName = identifier
     ) ':'
     | DEFAULT ':'
