@@ -7,16 +7,17 @@ from copy import copy
 
 class TestVisitor(unittest.TestCase):
     def setUp(self):
-        self.source = """public class Example {
-    
-    public int add(int a, int b) {
-        return a + b;
-    }
-    
-    public static void main(String[] args) {
-        System.out.println(add(27, 55));
-    }
-}"""
+        self.source = (
+            "public class Example {\n"
+            "    public int add(int a, int b) {\n"
+            "        return a + b;\n"
+            "    }\n"
+            "    \n"
+            "    public static void main(String[] args) {\n"
+            "        System.out.println(add(27, 55));\n"
+            "    }\n"
+            "}"
+        )
         self.example = jast.parse(self.source)
 
     def test_IdentifierVisitor(self):
@@ -69,16 +70,15 @@ class TestVisitor(unittest.TestCase):
         new_tree = change_add.visit(self.example)
         code = jast.unparse(new_tree)
         self.assertEqual(
-            """public class Example {
-    
-    public int add(int a, int b) {
-        return a - b;
-    }
-    
-    public static void main(String[] args) {
-        System.out.println(add(27, 55));
-    }
-}""",
+            "public class Example {\n"
+            "    public int add(int a, int b) {\n"
+            "        return a - b;\n"
+            "    }\n"
+            "    \n"
+            "    public static void main(String[] args) {\n"
+            "        System.out.println(add(27, 55));\n"
+            "    }\n"
+            "}",
             code,
         )
         self.assertIs(self.example, new_tree)
@@ -99,16 +99,15 @@ class TestVisitor(unittest.TestCase):
         new_tree = change_add.visit(self.example)
         code = jast.unparse(new_tree)
         self.assertEqual(
-            """public class Example {
-    
-    public int add(int a, int b) {
-        return a - b;
-    }
-    
-    public static void main(String[] args) {
-        System.out.println(add(27, 55));
-    }
-}""",
+            "public class Example {\n"
+            "    public int add(int a, int b) {\n"
+            "        return a - b;\n"
+            "    }\n"
+            "    \n"
+            "    public static void main(String[] args) {\n"
+            "        System.out.println(add(27, 55));\n"
+            "    }\n"
+            "}",
             code,
         )
         self.assertIsNot(self.example, new_tree)
@@ -174,15 +173,13 @@ class TestVisitor(unittest.TestCase):
         new_tree = delete_return.visit(self.example)
         code = jast.unparse(new_tree)
         self.assertEqual(
-            """public class Example {
-    
-    public int add(int a, int b) {
-    }
-    
-    public static void main(String[] args) {
-        System.out.println(add(27, 55));
-    }
-}""",
+            "public class Example {\n"
+            "    public int add(int a, int b) {}\n"
+            "    \n"
+            "    public static void main(String[] args) {\n"
+            "        System.out.println(add(27, 55));\n"
+            "    }\n"
+            "}",
             code,
         )
 
@@ -195,15 +192,13 @@ class TestVisitor(unittest.TestCase):
         new_tree = delete_return.visit(self.example)
         code = jast.unparse(new_tree)
         self.assertEqual(
-            """public class Example {
-    
-    public int add(int a, int b) {
-    }
-    
-    public static void main(String[] args) {
-        System.out.println(add(27, 55));
-    }
-}""",
+            "public class Example {\n"
+            "    public int add(int a, int b) {}\n"
+            "    \n"
+            "    public static void main(String[] args) {\n"
+            "        System.out.println(add(27, 55));\n"
+            "    }\n"
+            "}",
             code,
         )
         self.assertIsNot(self.example, new_tree)
@@ -229,16 +224,15 @@ class TestVisitor(unittest.TestCase):
         new_tree = delete_and_add.visit(self.example)
         code = jast.unparse(new_tree)
         self.assertEqual(
-            """public class Example {
-    
-    public static void main(String[] args) {
-        System.out.println(add(27, 55));
-    }
-    
-    public int add(int a, int b) {
-        return a + b;
-    }
-}""",
+            "public class Example {\n"
+            "    public static void main(String[] args) {\n"
+            "        System.out.println(add(27, 55));\n"
+            "    }\n"
+            "    \n"
+            "    public int add(int a, int b) {\n"
+            "        return a + b;\n"
+            "    }\n"
+            "}",
             code,
         )
 
@@ -259,16 +253,15 @@ class TestVisitor(unittest.TestCase):
         new_tree = delete_and_add.visit(self.example)
         code = jast.unparse(new_tree)
         self.assertEqual(
-            """public class Example {
-    
-    public static void main(String[] args) {
-        System.out.println(add(27, 55));
-    }
-    
-    public int add(int a, int b) {
-        return a + b;
-    }
-}""",
+            "public class Example {\n"
+            "    public static void main(String[] args) {\n"
+            "        System.out.println(add(27, 55));\n"
+            "    }\n"
+            "    \n"
+            "    public int add(int a, int b) {\n"
+            "        return a + b;\n"
+            "    }\n"
+            "}",
             code,
         )
         self.assertIsNot(self.example, new_tree)

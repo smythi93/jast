@@ -44,6 +44,8 @@ class _Unparser(JNodeVisitor):
         self._current_expr_level = -1
         self._precedences = {}
         self._context_newline = False
+        self._no_fill = False
+        self._double_fill = False
 
     def unparse(self, node: jast.JAST):
         """
@@ -124,6 +126,14 @@ class _Unparser(JNodeVisitor):
                 self.visit(item)
             self.write(end)
 
+    def traverse_double_fill(self, items):
+        if items:
+            self._double_fill, original = False, self._double_fill
+            for item in items:
+                self.visit(item)
+                self._double_fill = True
+            self._double_fill = original
+
     def items_view(self, items):
         self.interleave(items, ", ")
 
@@ -139,18 +149,41 @@ class _Unparser(JNodeVisitor):
     def optional_block(self, node):
         if isinstance(node, jast.Block):
             self.write(" ")
-            return nullcontext()
+            return self.not_filled()
         else:
             return self.block()
 
     def block_end(self):
         return self._source[-1].endswith("}")
 
-    def braced_block(self, elements):
-        self.write("{")
-        with self.block():
-            self.traverse(elements)
-        self.fill("}")
+    def braced_block(self, elements, double_fill=False):
+        if not self._no_fill:
+            self.fill()
+        with self.filled():
+            self.write("{")
+            with self.block():
+                self.traverse_double_fill(elements)
+            if elements:
+                self.fill("}")
+            else:
+                self.write("}")
+
+    @contextmanager
+    def not_filled(self):
+        self._no_fill, original = True, self._no_fill
+        yield
+        self._no_fill = original
+
+    @contextmanager
+    def filled(self):
+        self._no_fill, original = False, self._no_fill
+        yield
+        self._no_fill = original
+
+    def double_fill(self):
+        if self._double_fill:
+            self.fill()
+        self.fill()
 
     @contextmanager
     def buffered(self):
@@ -485,7 +518,8 @@ class _Unparser(JNodeVisitor):
             else:
                 self.visit_identifier(node.args)
             self.write(" -> ")
-            self.visit(node.body)
+            with self.not_filled():
+                self.visit(node.body)
 
     def visit_Assign(self, node: jast.Assign):
         with self.require_parens(_Precedence.ASSIGN, node):
@@ -558,7 +592,8 @@ class _Unparser(JNodeVisitor):
                 self.items_view(node.args)
             if node.body:
                 self.write(" ")
-                self.braced_block(node.body)
+                with self.not_filled():
+                    self.braced_block(node.body)
 
     def visit_NewArray(self, node: jast.NewArray):
         with self.require_parens(_Precedence.TYPE, node):
@@ -596,7 +631,8 @@ class _Unparser(JNodeVisitor):
         with self.parens():
             self.visit(node.value)
         self.write(" ")
-        self.braced_block(node.rules)
+        with self.not_filled():
+            self.braced_block(node.rules)
 
     def visit_Reference(self, node: jast.Reference):
         self.visit(node.type)
@@ -667,7 +703,8 @@ class _Unparser(JNodeVisitor):
         if node.body:
             if len(node.body) == 1 and isinstance(node.body[0], jast.Block):
                 self.write(" ")
-                self.traverse(node.body)
+                with self.not_filled():
+                    self.visit_Block(node.body[0])
             else:
                 with self.block():
                     self.traverse(node.body)
@@ -837,26 +874,31 @@ class _Unparser(JNodeVisitor):
         with self.parens():
             self.visit(node.lock)
         self.write(" ")
-        self.visit(node.body)
+        with self.not_filled():
+            self.visit(node.body)
 
     def visit_Try(self, node: jast.Try):
         self.fill("try ")
-        self.visit(node.body)
+        with self.not_filled():
+            self.visit(node.body)
         self.interleave(node.catches, " ", start=" ")
         if node.final:
             self.write(" finally ")
-            self.visit(node.final)
+            with self.not_filled():
+                self.visit(node.final)
 
     def visit_TryWithResources(self, node: jast.TryWithResources):
         self.fill("try ")
         with self.parens():
             self.interleave(node.resources, "; ")
         self.write(" ")
-        self.visit(node.body)
+        with self.not_filled():
+            self.visit(node.body)
         self.interleave(node.catches, " ", start=" ")
         if node.final:
             self.write(" finally ")
-            self.visit(node.final)
+            with self.not_filled():
+                self.visit(node.final)
 
     def visit_Yield(self, node: jast.Yield):
         self.fill("yield ")
@@ -882,7 +924,8 @@ class _Unparser(JNodeVisitor):
             self.traverse(node.body)
 
     def visit_switchblock(self, node: jast.switchblock):
-        self.braced_block(node.groups + node.labels)
+        with self.not_filled():
+            self.braced_block(node.groups + node.labels)
 
     def visit_catch(self, node: jast.catch):
         self.write("catch ")
@@ -891,7 +934,8 @@ class _Unparser(JNodeVisitor):
             self.interleave(node.excs, " | ", end=" ")
             self.visit_identifier(node.id)
         self.write(" ")
-        self.visit(node.body)
+        with self.not_filled():
+            self.visit(node.body)
 
     def visit_resource(self, node: jast.resource):
         self.interleave(node.modifiers, " ", end=" ")
@@ -906,7 +950,9 @@ class _Unparser(JNodeVisitor):
             self.visit(node.init)
 
     def visit_Package(self, node: jast.Package):
-        self.fill("package ")
+        self.fill()
+        self.interleave(node.annotations, " ", end=" ")
+        self.write("package ")
         self.visit_qname(node.name)
         self.write(";")
 
@@ -922,9 +968,6 @@ class _Unparser(JNodeVisitor):
     def visit_EmptyDecl(self, node: jast.EmptyDecl):
         self.fill(";")
 
-    def visit_Module(self, node: jast.Module):
-        pass
-
     def visit_Field(self, node: jast.Field):
         self.fill()
         self.interleave(node.modifiers, " ", end=" ")
@@ -934,27 +977,54 @@ class _Unparser(JNodeVisitor):
         self.write(";")
 
     def visit_Method(self, node: jast.Method):
-        self.fill()
-        self.fill()
+        self.double_fill()
         self.interleave(node.modifiers, " ", end=" ")
+        if node.type_params:
+            self.visit(node.type_params)
+            self.write(" ")
+        self.interleave(node.annotations, " ", end=" ")
         self.visit(node.return_type)
         self.write(" ")
         self.visit_identifier(node.id)
         with self.parens():
-            self.visit_params(node.parameters)
+            self.visit(node.parameters)
         self.traverse(node.dims)
         if node.throws:
             self.write(" throws ")
             self.items_view(node.throws)
-        self.write(" ")
         if node.body:
-            self.visit(node.body)
+            self.write(" ")
+            with self.not_filled():
+                self.visit_Block(node.body)
         else:
             self.write(";")
 
+    def visit_Constructor(self, node: jast.Constructor):
+        self.double_fill()
+        self.interleave(node.modifiers, " ", end=" ")
+        if node.type_params:
+            self.visit(node.type_params)
+            self.write(" ")
+        self.visit_identifier(node.id)
+        if node.parameters:
+            with self.parens():
+                self.visit_params(node.parameters)
+        if node.throws:
+            self.write(" throws ")
+            self.items_view(node.throws)
+        self.write(" ")
+        with self.not_filled():
+            self.visit_Block(node.body)
+
+    def visit_Initializer(self, node):
+        self.fill()
+        if node.static:
+            self.write("static ")
+        with self.not_filled():
+            self.visit_Block(node.body)
+
     def visit_Class(self, node: jast.Class):
-        self.fill()
-        self.fill()
+        self.double_fill()
         self.interleave(node.modifiers, " ", end=" ")
         self.write("class ")
         self.visit_identifier(node.id)
@@ -966,30 +1036,134 @@ class _Unparser(JNodeVisitor):
             self.write(" implements ")
             self.items_view(node.implements)
         if node.permits:
-            self.write(" implements ")
+            self.write(" permits ")
             self.items_view(node.permits)
         self.write(" ")
-        self.braced_block(node.body)
+        with self.not_filled():
+            self.braced_block(node.body)
 
     def visit_Interface(self, node: jast.Interface):
-        self.fill()
-        self.fill()
+        self.double_fill()
         self.interleave(node.modifiers, " ", end=" ")
         self.write("interface ")
         self.visit_identifier(node.id)
         self.visit(node.type_params)
         if node.extends:
             self.write(" extends ")
-            self.items_view(node.extends)
+            self.visit(node.extends)
         if node.implements:
             self.write(" implements ")
             self.items_view(node.implements)
         self.write(" ")
-        self.braced_block(node.body)
+        with self.not_filled():
+            self.braced_block(node.body)
+
+    def visit_Requires(self, node: jast.Requires):
+        self.fill("requires ")
+        self.interleave(node.modifiers, " ", end=" ")
+        self.visit_qname(node.name)
+        self.write(";")
+
+    def visit_Exports(self, node: jast.Exports):
+        self.fill("exports ")
+        self.visit_qname(node.name)
+        if node.to:
+            self.write(" to ")
+            self.visit_qname(node.to)
+        self.write(";")
+
+    def visit_Opens(self, node: jast.Opens):
+        self.fill("opens ")
+        self.visit_qname(node.name)
+        if node.to:
+            self.write(" to ")
+            self.visit_qname(node.to)
+        self.write(";")
+
+    def visit_Uses(self, node: jast.Uses):
+        self.fill("uses ")
+        self.visit_qname(node.name)
+        self.write(";")
+
+    def visit_Provides(self, node: jast.Provides):
+        self.fill("provides ")
+        self.visit_qname(node.name)
+        self.write(" with ")
+        self.visit_qname(node.with_)
+        self.write(";")
+
+    def visit_Module(self, node: jast.Module):
+        self.double_fill()
+        if node.open:
+            self.write("open ")
+        self.write("module ")
+        self.visit_qname(node.name)
+        self.write(" ")
+        with self.not_filled():
+            self.braced_block(node.body)
+
+    def visit_AnnotationMethod(self, node: jast.AnnotationMethod):
+        self.double_fill()
+        self.interleave(node.modifiers, " ", end=" ")
+        self.visit(node.type)
+        self.write(" ")
+        self.visit_identifier(node.id)
+        self.write("()")
+        if node.default:
+            self.write(" default ")
+            self.visit(node.default)
+        self.write(";")
+
+    def visit_AnnotationDecl(self, node: jast.AnnotationDecl):
+        self.double_fill()
+        self.interleave(node.modifiers, " ", end=" ")
+        self.write("@interface ")
+        self.visit_identifier(node.id)
+        self.write(" ")
+        with self.not_filled():
+            self.braced_block(node.body)
+
+    def visit_enumconstant(self, node: jast.enumconstant):
+        self.fill()
+        self.interleave(node.annotations, " ", end=" ")
+        self.visit_identifier(node.id)
+        if node.args:
+            with self.parens():
+                self.items_view(node.args)
+        if node.body:
+            self.write(" ")
+            with self.not_filled():
+                self.braced_block(node.body)
+
+    def visit_Enum(self, node: jast.Enum):
+        self.double_fill()
+        self.interleave(node.modifiers, " ", end=" ")
+        self.write("enum ")
+        self.visit_identifier(node.id)
+        if node.implements:
+            self.write(" implements ")
+            self.items_view(node.implements)
+        self.write(" ")
+        self.write("{")
+        with self.block():
+            self.interleave(node.constants, ",")
+            if node.body:
+                if not node.constants:
+                    self.fill()
+                self.write(";")
+                self.traverse_double_fill(node.body)
+        if node.constants or node.body:
+            self.fill("}")
+        else:
+            self.write("}")
+
+    def visit_recordcomponent(self, node: jast.recordcomponent):
+        self.visit(node.type)
+        self.write(" ")
+        self.visit_identifier(node.id)
 
     def visit_Record(self, node: jast.Record):
-        self.fill()
-        self.fill()
+        self.double_fill()
         self.interleave(node.modifiers, " ", end=" ")
         self.write("record ")
         self.visit_identifier(node.id)
@@ -1000,7 +1174,21 @@ class _Unparser(JNodeVisitor):
             self.write(" implements ")
             self.items_view(node.implements)
         self.write(" ")
-        self.braced_block(node.body)
+        with self.not_filled():
+            self.braced_block(node.body)
+
+    def visit_CompilationUnit(self, node):
+        if node.package:
+            self.visit(node.package)
+            self.fill()
+        self.traverse(node.imports)
+        self._double_fill = True
+        self.traverse(node.body)
+
+    def visit_ModularUnit(self, node: jast.ModularUnit):
+        self.traverse(node.imports)
+        self._double_fill = True
+        self.visit_Module(node.body)
 
 
 def unparse(node, indent=4):

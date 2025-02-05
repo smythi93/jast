@@ -2341,8 +2341,14 @@ class TestJAST(BaseTest):
             id=jast.identifier("bar"),
             parameters=jast.params(
                 parameters=[
-                    jast.param(type=jast.Int(), id=jast.identifier("baz")),
-                    jast.param(type=jast.Int(), id=jast.identifier("qux")),
+                    jast.param(
+                        type=jast.Int(),
+                        id=jast.variabledeclaratorid(jast.identifier("baz")),
+                    ),
+                    jast.param(
+                        type=jast.Int(),
+                        id=jast.variabledeclaratorid(jast.identifier("qux")),
+                    ),
                 ],
             ),
             dims=[jast.dim()],
@@ -2383,8 +2389,14 @@ class TestJAST(BaseTest):
             id=jast.identifier("bar"),
             parameters=jast.params(
                 parameters=[
-                    jast.param(type=jast.Int(), id=jast.identifier("baz")),
-                    jast.param(type=jast.Int(), id=jast.identifier("qux")),
+                    jast.param(
+                        type=jast.Int(),
+                        id=jast.variabledeclaratorid(jast.identifier("baz")),
+                    ),
+                    jast.param(
+                        type=jast.Int(),
+                        id=jast.variabledeclaratorid(jast.identifier("qux")),
+                    ),
                 ],
             ),
             dims=[jast.dim()],
@@ -2481,7 +2493,7 @@ class TestJAST(BaseTest):
             type_params=jast.typeparams(
                 parameters=[jast.typeparam(id=jast.identifier("T"))],
             ),
-            extends=[jast.Coit(id=jast.identifier("bar"))],
+            extends=jast.Coit(id=jast.identifier("bar")),
             implements=[jast.Coit(id=jast.identifier("baz"))],
             body=[jast.Method(return_type=jast.Int(), id=jast.identifier("qux"))],
         )
@@ -2494,9 +2506,8 @@ class TestJAST(BaseTest):
         self.assertEqual(1, len(interface.type_params.parameters))
         self.assertIsInstance(interface.type_params.parameters[0], jast.typeparam)
         self._test_identifier(interface.type_params.parameters[0].id, "T")
-        self.assertEqual(1, len(interface.extends))
-        self.assertIsInstance(interface.extends[0], jast.Coit)
-        self._test_identifier(interface.extends[0].id, "bar")
+        self.assertIsInstance(interface.extends, jast.Coit)
+        self._test_identifier(interface.extends.id, "bar")
         self.assertEqual(1, len(interface.implements))
         self.assertIsInstance(interface.implements[0], jast.Coit)
         self._test_identifier(interface.implements[0].id, "baz")
@@ -2512,7 +2523,7 @@ class TestJAST(BaseTest):
             type_params=jast.typeparams(
                 parameters=[jast.typeparam(id=jast.identifier("T"))],
             ),
-            extends=[jast.Coit(id=jast.identifier("bar"))],
+            extends=jast.Coit(id=jast.identifier("bar")),
             permits=[jast.Coit(id=jast.identifier("baz"))],
             body=[jast.Method(return_type=jast.Int(), id=jast.identifier("qux"))],
         )
@@ -2553,8 +2564,6 @@ class TestJAST(BaseTest):
         annotation_decl = jast.AnnotationDecl(
             modifiers=[jast.Public()],
             id=jast.identifier("foo"),
-            extends=[jast.Coit(id=jast.identifier("bar"))],
-            permits=[jast.Coit(id=jast.identifier("baz"))],
             body=[jast.AnnotationMethod(type=jast.Int(), id=jast.identifier("qux"))],
         )
         self.assertIsInstance(annotation_decl, jast.AnnotationDecl)
@@ -2562,12 +2571,6 @@ class TestJAST(BaseTest):
         self.assertEqual(1, len(annotation_decl.modifiers))
         self.assertIsInstance(annotation_decl.modifiers[0], jast.Public)
         self._test_identifier(annotation_decl.id, "foo")
-        self.assertEqual(1, len(annotation_decl.extends))
-        self.assertIsInstance(annotation_decl.extends[0], jast.Coit)
-        self._test_identifier(annotation_decl.extends[0].id, "bar")
-        self.assertEqual(1, len(annotation_decl.permits))
-        self.assertIsInstance(annotation_decl.permits[0], jast.Coit)
-        self._test_identifier(annotation_decl.permits[0].id, "baz")
         self.assertEqual(1, len(annotation_decl.body))
         self.assertIsInstance(annotation_decl.body[0], jast.AnnotationMethod)
         self._test_iteration(annotation_decl)
@@ -2577,8 +2580,6 @@ class TestJAST(BaseTest):
             JASTError,
             jast.AnnotationDecl,
             modifiers=[jast.Public()],
-            extends=[jast.Coit(id=jast.identifier("bar"))],
-            permits=[jast.Coit(id=jast.identifier("baz"))],
             body=[jast.AnnotationMethod(type=jast.Int(), id=jast.identifier("qux"))],
         )
 

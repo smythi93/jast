@@ -1007,7 +1007,7 @@ class TestUnparse(unittest.TestCase):
             arrow=False,
             body=[jast.Block()],
         )
-        self.assertEqual("case 42: { }", jast.unparse(tree, indent=-1))
+        self.assertEqual("case 42: {}", jast.unparse(tree, indent=-1))
 
     def test_switchexprule_empty(self):
         tree = jast.switchexprule(
@@ -1775,7 +1775,7 @@ class TestUnparse(unittest.TestCase):
 
     def test_Synch(self):
         tree = jast.Synch(lock=jast.Constant(jast.IntLiteral(42)), body=jast.Block())
-        self.assertEqual("synchronized (42) { }", jast.unparse(tree, indent=-1))
+        self.assertEqual("synchronized (42) {}", jast.unparse(tree, indent=-1))
 
     def test_catch(self):
         catch = jast.catch(
@@ -1784,7 +1784,7 @@ class TestUnparse(unittest.TestCase):
             id=jast.identifier("bar"),
             body=jast.Block(),
         )
-        self.assertEqual("catch (final foo bar) { }", jast.unparse(catch, indent=-1))
+        self.assertEqual("catch (final foo bar) {}", jast.unparse(catch, indent=-1))
 
     def test_Try(self):
         tree = jast.Try(
@@ -1800,7 +1800,7 @@ class TestUnparse(unittest.TestCase):
             final=jast.Block(),
         )
         self.assertEqual(
-            "try {\n} catch (final foo bar) {\n} finally {\n}", jast.unparse(tree)
+            "try {} catch (final foo bar) {} finally {}", jast.unparse(tree)
         )
 
     def test_resource(self):
@@ -1838,10 +1838,487 @@ class TestUnparse(unittest.TestCase):
             final=jast.Block(),
         )
         self.assertEqual(
-            "try (final X foo = 42) {\n} catch (final foo bar) {\n} finally {\n}",
+            "try (final X foo = 42) {} catch (final foo bar) {} finally {}",
             jast.unparse(tree),
         )
 
     def test_Yield(self):
         tree = jast.Yield(value=jast.Constant(jast.IntLiteral(42)))
         self.assertEqual("yield 42;", jast.unparse(tree))
+
+    def test_EmptyDecl(self):
+        tree = jast.EmptyDecl()
+        self.assertEqual(";", jast.unparse(tree))
+
+    def test_Package(self):
+        tree = jast.Package(
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            name=jast.qname([jast.identifier("bar"), jast.identifier("baz")]),
+        )
+        self.assertEqual("@foo package bar.baz;", jast.unparse(tree))
+
+    def test_Import(self):
+        tree = jast.Import(
+            static=True,
+            name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+        )
+        self.assertEqual("import static foo.bar;", jast.unparse(tree))
+
+    def test_Import_on_demand(self):
+        tree = jast.Import(
+            name=jast.qname([jast.identifier("foo")]),
+            on_demand=True,
+        )
+        self.assertEqual("import foo.*;", jast.unparse(tree))
+
+    def test_Requires(self):
+        tree = jast.Requires(
+            modifiers=[jast.Static()],
+            name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+        )
+        self.assertEqual("requires static foo.bar;", jast.unparse(tree))
+
+    def test_Exports(self):
+        tree = jast.Exports(
+            name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+        )
+        self.assertEqual("exports foo.bar;", jast.unparse(tree))
+
+    def test_Exports_to(self):
+        tree = jast.Exports(
+            name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+            to=jast.qname([jast.identifier("baz")]),
+        )
+        self.assertEqual("exports foo.bar to baz;", jast.unparse(tree))
+
+    def test_Opens(self):
+        tree = jast.Opens(
+            name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+        )
+        self.assertEqual("opens foo.bar;", jast.unparse(tree))
+
+    def test_Opens_to(self):
+        tree = jast.Opens(
+            name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+            to=jast.qname([jast.identifier("baz")]),
+        )
+        self.assertEqual("opens foo.bar to baz;", jast.unparse(tree))
+
+    def test_Uses(self):
+        tree = jast.Uses(
+            name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+        )
+        self.assertEqual("uses foo.bar;", jast.unparse(tree))
+
+    def test_Provides(self):
+        tree = jast.Provides(
+            name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+            with_=jast.qname([jast.identifier("baz")]),
+        )
+        self.assertEqual("provides foo.bar with baz;", jast.unparse(tree))
+
+    def test_Module(self):
+        tree = jast.Module(
+            name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+            body=[jast.Uses(name=jast.qname([jast.identifier("baz")]))],
+        )
+        self.assertEqual("module foo.bar {\n    uses baz;\n}", jast.unparse(tree))
+
+    def test_Module_open(self):
+        tree = jast.Module(
+            open=True,
+            name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+            body=[jast.Uses(name=jast.qname([jast.identifier("baz")]))],
+        )
+        self.assertEqual("open module foo.bar {\n    uses baz;\n}", jast.unparse(tree))
+
+    def test_declarator(self):
+        tree = jast.declarator(
+            id=jast.variabledeclaratorid(jast.identifier("foo")),
+            init=jast.Constant(jast.IntLiteral(42)),
+        )
+        self.assertEqual("foo = 42", jast.unparse(tree))
+
+    def test_declarator_no_init(self):
+        tree = jast.declarator(
+            id=jast.variabledeclaratorid(jast.identifier("foo")),
+        )
+        self.assertEqual("foo", jast.unparse(tree))
+
+    def test_Field(self):
+        tree = jast.Field(
+            modifiers=[jast.Final()],
+            type=jast.Int(),
+            declarators=[
+                jast.declarator(
+                    id=jast.variabledeclaratorid(jast.identifier("foo")),
+                    init=jast.Constant(jast.IntLiteral(42)),
+                ),
+                jast.declarator(id=jast.variabledeclaratorid(jast.identifier("bar"))),
+            ],
+        )
+        self.assertEqual("final int foo = 42, bar;", jast.unparse(tree))
+
+    def test_Method(self):
+        tree = jast.Method(
+            modifiers=[jast.Public()],
+            type_params=jast.typeparams(
+                parameters=[jast.typeparam(id=jast.identifier("T"))],
+            ),
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            return_type=jast.Int(),
+            id=jast.identifier("bar"),
+            parameters=jast.params(
+                parameters=[
+                    jast.param(
+                        type=jast.Int(),
+                        id=jast.variabledeclaratorid(jast.identifier("baz")),
+                    ),
+                    jast.param(
+                        type=jast.Int(),
+                        id=jast.variabledeclaratorid(jast.identifier("qux")),
+                    ),
+                ],
+            ),
+            dims=[jast.dim()],
+            throws=[jast.qname([jast.identifier("quux")])],
+            body=jast.Block(),
+        )
+        self.assertEqual(
+            "public <T> @foo int bar(int baz, int qux)[] throws quux {}",
+            jast.unparse(tree),
+        )
+
+    def test_Method_no_body(self):
+        tree = jast.Method(
+            return_type=jast.Int(),
+            id=jast.identifier("bar"),
+        )
+        self.assertEqual("int bar();", jast.unparse(tree))
+
+    def test_Constructor(self):
+        tree = jast.Constructor(
+            modifiers=[jast.Public()],
+            type_params=jast.typeparams(
+                parameters=[jast.typeparam(id=jast.identifier("T"))],
+            ),
+            id=jast.identifier("bar"),
+            parameters=jast.params(
+                parameters=[
+                    jast.param(
+                        type=jast.Int(),
+                        id=jast.variabledeclaratorid(jast.identifier("baz")),
+                    ),
+                    jast.param(
+                        type=jast.Int(),
+                        id=jast.variabledeclaratorid(jast.identifier("qux")),
+                    ),
+                ],
+            ),
+            throws=[jast.qname([jast.identifier("quux")])],
+            body=jast.Block(),
+        )
+        self.assertEqual(
+            "public <T> bar(int baz, int qux) throws quux {}", jast.unparse(tree)
+        )
+
+    def test_Constructor_no_params(self):
+        tree = jast.Constructor(
+            id=jast.identifier("bar"),
+            body=jast.Block(),
+        )
+        self.assertEqual("bar {}", jast.unparse(tree))
+
+    def test_Initializer(self):
+        tree = jast.Initializer(
+            body=jast.Block(
+                body=[jast.Expression(value=jast.Constant(jast.IntLiteral(42)))]
+            ),
+        )
+        self.assertEqual("{\n    42;\n}", jast.unparse(tree))
+
+    def test_Initializer_static(self):
+        tree = jast.Initializer(
+            static=True,
+            body=jast.Block(
+                body=[jast.Expression(value=jast.Constant(jast.IntLiteral(42)))]
+            ),
+        )
+        self.assertEqual("static {\n    42;\n}", jast.unparse(tree))
+
+    def test_Interface(self):
+        tree = jast.Interface(
+            modifiers=[jast.Public()],
+            id=jast.identifier("foo"),
+            type_params=jast.typeparams(
+                parameters=[jast.typeparam(id=jast.identifier("T"))],
+            ),
+            extends=jast.Coit(id=jast.identifier("bar")),
+            implements=[jast.Coit(id=jast.identifier("baz"))],
+            body=[jast.Method(return_type=jast.Int(), id=jast.identifier("qux"))],
+        )
+        self.assertEqual(
+            "public interface foo<T> extends bar implements baz {\n    int qux();\n}",
+            jast.unparse(tree),
+        )
+
+    def test_AnnotationMethod(self):
+        tree = jast.AnnotationMethod(
+            modifiers=[jast.Public()],
+            type=jast.Int(),
+            id=jast.identifier("foo"),
+            default=jast.Constant(jast.IntLiteral(42)),
+        )
+        self.assertEqual("public int foo() default 42;", jast.unparse(tree))
+
+    def test_AnnotationMethod_no_default(self):
+        tree = jast.AnnotationMethod(
+            modifiers=[jast.Public()],
+            type=jast.Int(),
+            id=jast.identifier("foo"),
+        )
+        self.assertEqual("public int foo();", jast.unparse(tree))
+
+    def test_AnnotationDecl(self):
+        tree = jast.AnnotationDecl(
+            modifiers=[jast.Public()],
+            id=jast.identifier("foo"),
+            body=[jast.AnnotationMethod(type=jast.Int(), id=jast.identifier("qux"))],
+        )
+        self.assertEqual(
+            "public @interface foo {\n    int qux();\n}",
+            jast.unparse(tree),
+        )
+
+    def test_Class(self):
+        tree = jast.Class(
+            modifiers=[jast.Public()],
+            id=jast.identifier("foo"),
+            type_params=jast.typeparams(
+                parameters=[jast.typeparam(id=jast.identifier("T"))],
+            ),
+            extends=jast.Coit(id=jast.identifier("bar")),
+            implements=[jast.Coit(id=jast.identifier("baz"))],
+            permits=[jast.Coit(id=jast.identifier("qux"))],
+            body=[
+                jast.Initializer(
+                    body=jast.Block(
+                        body=[
+                            jast.Expression(value=jast.Constant(jast.IntLiteral(42))),
+                            jast.Block(),
+                        ]
+                    ),
+                ),
+                jast.Method(
+                    return_type=jast.Int(),
+                    id=jast.identifier("quux"),
+                    body=jast.Block(),
+                ),
+            ],
+        )
+        self.assertEqual(
+            "public class foo<T> extends bar implements baz permits qux {\n"
+            "    {\n"
+            "        42;\n"
+            "        {}\n"
+            "    }\n"
+            "    \n"
+            "    int quux() {}\n"
+            "}",
+            jast.unparse(tree),
+        )
+
+    def test_enumconstant(self):
+        tree = jast.enumconstant(
+            annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+            id=jast.identifier("bar"),
+            args=[jast.Constant(jast.IntLiteral(42))],
+            body=[jast.Method(return_type=jast.Int(), id=jast.identifier("qux"))],
+        )
+        self.assertEqual("@foo bar(42) {\n    int qux();\n}", jast.unparse(tree))
+
+    def test_Enum(self):
+        tree = jast.Enum(
+            modifiers=[jast.Public()],
+            id=jast.identifier("foo"),
+            implements=[jast.Coit(id=jast.identifier("bar"))],
+            constants=[
+                jast.enumconstant(id=jast.identifier("A")),
+                jast.enumconstant(id=jast.identifier("B")),
+            ],
+            body=[
+                jast.Method(
+                    return_type=jast.Int(), id=jast.identifier("qux"), body=jast.Block()
+                )
+            ],
+        )
+        self.assertEqual(
+            "public enum foo implements bar {\n    A,\n    B;\n    int qux() {}\n}",
+            jast.unparse(tree),
+        )
+
+    def test_Enum_no_body(self):
+        tree = jast.Enum(
+            id=jast.identifier("foo"),
+            constants=[
+                jast.enumconstant(id=jast.identifier("A")),
+                jast.enumconstant(id=jast.identifier("B")),
+            ],
+        )
+        self.assertEqual("enum foo {\n    A,\n    B\n}", jast.unparse(tree))
+
+    def test_Enum_no_constants(self):
+        tree = jast.Enum(
+            id=jast.identifier("foo"),
+            body=[
+                jast.Method(
+                    return_type=jast.Int(), id=jast.identifier("qux"), body=jast.Block()
+                )
+            ],
+        )
+        self.assertEqual("enum foo {\n    ;\n    int qux() {}\n}", jast.unparse(tree))
+
+    def test_recordcomponent(self):
+        tree = jast.recordcomponent(
+            type=jast.Int(),
+            id=jast.identifier("foo"),
+        )
+        self.assertEqual("int foo", jast.unparse(tree))
+
+    def test_Record(self):
+        tree = jast.Record(
+            modifiers=[jast.Public()],
+            id=jast.identifier("foo"),
+            type_params=jast.typeparams(
+                parameters=[jast.typeparam(id=jast.identifier("T"))],
+            ),
+            components=[
+                jast.recordcomponent(type=jast.Int(), id=jast.identifier("bar")),
+                jast.recordcomponent(type=jast.Int(), id=jast.identifier("baz")),
+            ],
+            implements=[jast.Coit(id=jast.identifier("qux"))],
+            body=[
+                jast.Method(
+                    return_type=jast.Int(),
+                    id=jast.identifier("quux"),
+                    body=jast.Block(),
+                )
+            ],
+        )
+        self.assertEqual(
+            "public record foo<T>(int bar, int baz) implements qux {\n    int quux() {}\n}",
+            jast.unparse(tree),
+        )
+
+    def test_CompilationUnit(self):
+        tree = jast.CompilationUnit(
+            package=jast.Package(
+                annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
+                name=jast.qname([jast.identifier("bar"), jast.identifier("baz")]),
+            ),
+            imports=[
+                jast.Import(
+                    static=True,
+                    name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+                )
+            ],
+            body=[
+                jast.Class(
+                    modifiers=[jast.Public()],
+                    id=jast.identifier("foo"),
+                    type_params=jast.typeparams(
+                        parameters=[jast.typeparam(id=jast.identifier("T"))],
+                    ),
+                    extends=jast.Coit(id=jast.identifier("bar")),
+                    implements=[jast.Coit(id=jast.identifier("baz"))],
+                    permits=[jast.Coit(id=jast.identifier("qux"))],
+                    body=[
+                        jast.Method(
+                            return_type=jast.Int(),
+                            id=jast.identifier("quux"),
+                            body=jast.Block(),
+                        )
+                    ],
+                )
+            ],
+        )
+        self.assertEqual(
+            "@foo package bar.baz;\n"
+            "\n"
+            "import static foo.bar;\n"
+            "\n"
+            "public class foo<T> extends bar implements baz permits qux {\n"
+            "    int quux() {}\n"
+            "}",
+            jast.unparse(tree),
+        )
+
+    def test_CompilationUnit_no_package(self):
+        tree = jast.CompilationUnit(
+            imports=[
+                jast.Import(
+                    static=True,
+                    name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+                ),
+                jast.Import(
+                    name=jast.qname([jast.identifier("baz")]),
+                ),
+            ],
+            body=[
+                jast.Class(
+                    modifiers=[jast.Public()],
+                    id=jast.identifier("qux"),
+                    body=[
+                        jast.Method(
+                            return_type=jast.Int(),
+                            id=jast.identifier("quux"),
+                            body=jast.Block(),
+                        )
+                    ],
+                ),
+                jast.Enum(
+                    id=jast.identifier("A"),
+                    constants=[
+                        jast.enumconstant(id=jast.identifier("B")),
+                        jast.enumconstant(id=jast.identifier("C")),
+                    ],
+                ),
+            ],
+        )
+        self.assertEqual(
+            "import static foo.bar;\n"
+            "import baz;\n"
+            "\n"
+            "public class qux {\n"
+            "    int quux() {}\n"
+            "}\n"
+            "\n"
+            "enum A {\n"
+            "    B,\n"
+            "    C\n"
+            "}",
+            jast.unparse(tree),
+        )
+
+    def test_ModularUnit(self):
+        tree = jast.ModularUnit(
+            imports=[
+                jast.Import(
+                    static=True,
+                    name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+                )
+            ],
+            body=jast.Module(
+                open=True,
+                name=jast.qname([jast.identifier("foo"), jast.identifier("bar")]),
+                body=[jast.Uses(name=jast.qname([jast.identifier("baz")]))],
+            ),
+        )
+        self.assertEqual(
+            "import static foo.bar;\n"
+            "\n"
+            "open module foo.bar {\n"
+            "    uses baz;\n"
+            "}",
+            jast.unparse(tree),
+        )

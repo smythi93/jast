@@ -1652,7 +1652,7 @@ class TestParse(BaseTest):
         self._test_identifier(tree.decl.id, "X")
         self.assertIsNone(tree.decl.type_params)
         self.assertEqual(0, len(tree.decl.modifiers))
-        self.assertEqual(0, len(tree.decl.extends))
+        self.assertIsNone(tree.decl.extends)
         self.assertEqual(0, len(tree.decl.implements))
         self.assertEqual(0, len(tree.decl.body))
 

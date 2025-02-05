@@ -2847,7 +2847,7 @@ class Constructor(declaration):
     """
     Represents a constructor decl in the Java AST.
 
-    <modifier>* <label>(<parameter>, <parameter>, ...) <body>
+    <modifier>* <id>(<parameter>, <parameter>, ...) <body>
     """
 
     # noinspection PyShadowingBuiltins
@@ -2864,7 +2864,9 @@ class Constructor(declaration):
     ):
         super().__init__(*vargs, **kwargs)
         if id is None:
-            raise JASTError("label is required for Constructor")
+            raise JASTError("id is required for Constructor")
+        if body is None:
+            raise JASTError("body is required for Constructor")
         self.modifiers = modifiers or []
         self.type_params = type_params
         self.id = id
@@ -2924,7 +2926,7 @@ class Interface(declaration):
         modifiers: List[modifier] = None,
         id: identifier = None,
         type_params: typeparams = None,
-        extends: List[jtype] = None,
+        extends: jtype = None,
         implements: List[jtype] = None,
         body: List[declaration] = None,
         *vargs,
@@ -2936,7 +2938,7 @@ class Interface(declaration):
         self.modifiers = modifiers or []
         self.id = id
         self.type_params = type_params
-        self.extends = extends or []
+        self.extends = extends
         self.implements = implements or []
         self.body = body or []
 
@@ -2975,7 +2977,7 @@ class AnnotationMethod(declaration):
         if type is None:
             raise JASTError("type is required for AnnotationMethod")
         if id is None:
-            raise JASTError("qname is required for AnnotationMethod")
+            raise JASTError("id is required for AnnotationMethod")
         self.modifiers = modifiers or []
         self.type = type
         self.id = id
@@ -3002,8 +3004,6 @@ class AnnotationDecl(declaration):
         self,
         modifiers: List[modifier] = None,
         id: identifier = None,
-        extends: List[jtype] = None,
-        permits: List[jtype] = None,
         body: List[declaration] = None,
         *vargs,
         **kwargs,
@@ -3013,18 +3013,12 @@ class AnnotationDecl(declaration):
             raise JASTError("qname is required for AnnotationInterfaceDeclaration")
         self.modifiers = modifiers or []
         self.id = id
-        self.extends = extends or []
-        self.permits = permits or []
         self.body = body or []
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
         if self.modifiers:
             yield "modifiers", self.modifiers
         yield "id", self.id
-        if self.extends:
-            yield "extends", self.extends
-        if self.permits:
-            yield "permits", self.permits
         if self.body:
             yield "body", self.body
 
