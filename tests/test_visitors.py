@@ -208,6 +208,28 @@ class TestVisitor(unittest.TestCase):
             code,
         )
 
+    def test_DeleteBlock_keep(self):
+        class DeleteBlock(jast.JNodeKeepTransformer):
+            def visit_Block(self, node):
+                return None
+
+        delete_block = DeleteBlock()
+        new_tree = delete_block.visit(self.example)
+        code = jast.unparse(new_tree)
+        self.assertEqual(
+            "public class Example {\n"
+            "    public int add(int a, int b);\n"
+            "    \n"
+            "    public static void main(String[] args);\n"
+            "}",
+            code,
+        )
+        self.assertIsNot(self.example, new_tree)
+        self.assertEqual(
+            self.source,
+            jast.unparse(self.example),
+        )
+
     def test_DeleteReturn_keep(self):
         class DeleteReturn(jast.JNodeKeepTransformer):
             def visit_Return(self, node):
