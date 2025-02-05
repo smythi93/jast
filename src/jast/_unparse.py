@@ -966,7 +966,7 @@ class _Unparser(JNodeVisitor):
             self.write(" implements ")
             self.items_view(node.implements)
         if node.permits:
-            self.write(" permits ")
+            self.write(" implements ")
             self.items_view(node.permits)
         self.write(" ")
         self.braced_block(node.body)
@@ -981,9 +981,9 @@ class _Unparser(JNodeVisitor):
         if node.extends:
             self.write(" extends ")
             self.items_view(node.extends)
-        if node.permits:
-            self.write(" permits ")
-            self.items_view(node.permits)
+        if node.implements:
+            self.write(" implements ")
+            self.items_view(node.implements)
         self.write(" ")
         self.braced_block(node.body)
 

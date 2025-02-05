@@ -18,6 +18,58 @@ from utils import (
 
 
 class TestParse(BaseTest):
+    def _test_parse_mode_unit(self, src, mode):
+        tree = jast.parse(src, mode)
+        self.assertIsInstance(tree, jast.CompilationUnit)
+        self.assertEqual(1, len(tree.body))
+        self.assertIsInstance(tree.body[0], jast.Class)
+
+    def test_parse_mode_unit(self):
+        src = "class A {}"
+        self._test_parse_mode_unit(src, jast.ParseMode.UNIT)
+        self._test_parse_mode_unit(src, "unit")
+        self._test_parse_mode_unit(src, 0)
+
+    def _test_parse_mode_decl(self, src, mode):
+        tree = jast.parse(src, mode)
+        self.assertIsInstance(tree, jast.Class)
+
+    def test_parse_mode_decl(self):
+        src = "class A {}"
+        self._test_parse_mode_decl(src, jast.ParseMode.DECL)
+        self._test_parse_mode_decl(src, "decl")
+        self._test_parse_mode_decl(src, 1)
+
+    def _test_parse_mode_stmt(self, src, mode):
+        tree = jast.parse(src, mode)
+        self.assertIsInstance(tree, jast.Return)
+
+    def test_parse_mode_stmt(self):
+        src = "return;"
+        self._test_parse_mode_stmt(src, jast.ParseMode.STMT)
+        self._test_parse_mode_stmt(src, "stmt")
+        self._test_parse_mode_stmt(src, 2)
+
+    def _test_parse_mode_expr(self, src, mode):
+        tree = jast.parse(src, mode)
+        self.assertIsInstance(tree, jast.Name)
+
+    def test_parse_mode_expr(self):
+        src = "foo"
+        self._test_parse_mode_expr(src, jast.ParseMode.EXPR)
+        self._test_parse_mode_expr(src, "expr")
+        self._test_parse_mode_expr(src, 3)
+
+    def _test_parse_mode_dire(self, src, mode):
+        tree = jast.parse(src, mode)
+        self.assertIsInstance(tree, jast.Uses)
+
+    def test_parse_mode_dire(self):
+        src = "uses foo;"
+        self._test_parse_mode_dire(src, jast.ParseMode.DIRE)
+        self._test_parse_mode_dire(src, "dire")
+        self._test_parse_mode_dire(src, 4)
+
     def test_identifier(self):
         name = jast.parse("foo", jast.ParseMode.EXPR)
         self._test_name(name, "foo")
@@ -332,13 +384,10 @@ class TestParse(BaseTest):
 
     def _test_Wildcard(self, tree, extends, super_):
         self.assertIsInstance(tree, jast.LocalVariable)
-        self.assertIsInstance(tree.type, jast.ClassType)
-        self.assertEqual(1, len(tree.type.coits))
-        coit = tree.type.coits[0]
-        self.assertIsInstance(coit, jast.Coit)
-        self.assertEqual("List", coit.id)
-        self.assertEqual(1, len(coit.type_args.types))
-        type_arg = coit.type_args.types[0]
+        self.assertIsInstance(tree.type, jast.Coit)
+        self.assertEqual("List", tree.type.id)
+        self.assertEqual(1, len(tree.type.type_args.types))
+        type_arg = tree.type.type_args.types[0]
         self.assertIsInstance(type_arg, jast.Wildcard)
         if extends or super_:
             self.assertIsNotNone(type_arg.bound)
@@ -349,11 +398,8 @@ class TestParse(BaseTest):
             else:
                 self.assertFalse(type_arg.bound.extends)
                 self.assertTrue(type_arg.bound.super_)
-            self.assertIsInstance(type_arg.bound.type, jast.ClassType)
-            self.assertEqual(1, len(type_arg.bound.type.coits))
-            coit = type_arg.bound.type.coits[0]
-            self.assertIsInstance(coit, jast.Coit)
-            self.assertEqual("Int", coit.id)
+            self.assertIsInstance(type_arg.bound.type, jast.Coit)
+            self.assertEqual("Int", type_arg.bound.type.id)
         else:
             self.assertIsNone(type_arg.bound)
 
@@ -375,14 +421,11 @@ class TestParse(BaseTest):
     def test_typeargs(self):
         tree = jast.parse("List<int, boolean> list;", jast.ParseMode.STMT)
         self.assertIsInstance(tree, jast.LocalVariable)
-        self.assertIsInstance(tree.type, jast.ClassType)
-        self.assertEqual(1, len(tree.type.coits))
-        coit = tree.type.coits[0]
-        self.assertIsInstance(coit, jast.Coit)
-        self.assertEqual("List", coit.id)
-        self.assertEqual(2, len(coit.type_args.types))
-        self.assertIsInstance(coit.type_args.types[0], jast.Int)
-        self.assertIsInstance(coit.type_args.types[1], jast.Boolean)
+        self.assertIsInstance(tree.type, jast.Coit)
+        self.assertEqual("List", tree.type.id)
+        self.assertEqual(2, len(tree.type.type_args.types))
+        self.assertIsInstance(tree.type.type_args.types[0], jast.Int)
+        self.assertIsInstance(tree.type.type_args.types[1], jast.Boolean)
 
     def test_ClassType(self):
         tree = jast.parse("List.ArrayList<int> list;", jast.ParseMode.STMT)
@@ -814,11 +857,8 @@ class TestParse(BaseTest):
         self.assertIsInstance(tree, jast.InstanceOf)
         self.assertIsInstance(tree.value, jast.Name)
         self.assertEqual("x", tree.value.id)
-        self.assertIsInstance(tree.type, jast.ClassType)
-        self.assertEqual(1, len(tree.type.coits))
-        coit = tree.type.coits[0]
-        self.assertIsInstance(coit, jast.Coit)
-        self.assertEqual("y", coit.id)
+        self.assertIsInstance(tree.type, jast.Coit)
+        self.assertEqual("y", tree.type.id)
 
     def _test_Instanceof_left(self, tree, operator):
         self.assertIsInstance(tree, jast.InstanceOf)
@@ -828,11 +868,8 @@ class TestParse(BaseTest):
         self.assertEqual("x", tree.value.left.id)
         self.assertIsInstance(tree.value.right, jast.Name)
         self.assertEqual("y", tree.value.right.id)
-        self.assertIsInstance(tree.type, jast.ClassType)
-        self.assertEqual(1, len(tree.type.coits))
-        coit = tree.type.coits[0]
-        self.assertIsInstance(coit, jast.Coit)
-        self.assertEqual("z", coit.id)
+        self.assertIsInstance(tree.type, jast.Coit)
+        self.assertEqual("z", tree.type.id)
 
     @parameterized.expand(INSTANCEOF_HIGHER_SAME_PRECEDENCE)
     def test_Instanceof_order(self, _, rep, operator):
@@ -852,16 +889,10 @@ class TestParse(BaseTest):
         self.assertIsInstance(tree.value, jast.InstanceOf)
         self.assertIsInstance(tree.value.value, jast.Name)
         self.assertEqual("x", tree.value.value.id)
-        self.assertIsInstance(tree.value.type, jast.ClassType)
-        self.assertEqual(1, len(tree.value.type.coits))
-        coit = tree.value.type.coits[0]
-        self.assertIsInstance(coit, jast.Coit)
-        self.assertEqual("y", coit.id)
-        self.assertIsInstance(tree.type, jast.ClassType)
-        self.assertEqual(1, len(tree.type.coits))
-        coit = tree.type.coits[0]
-        self.assertIsInstance(coit, jast.Coit)
-        self.assertEqual("z", coit.id)
+        self.assertIsInstance(tree.value.type, jast.Coit)
+        self.assertEqual("y", tree.value.type.id)
+        self.assertIsInstance(tree.type, jast.Coit)
+        self.assertEqual("z", tree.type.id)
 
     def _test_Instanceof_right(self, tree, operator):
         self.assertIsInstance(tree, jast.BinOp)
@@ -871,11 +902,8 @@ class TestParse(BaseTest):
         self.assertIsInstance(tree.right, jast.InstanceOf)
         self.assertIsInstance(tree.right.value, jast.Name)
         self.assertEqual("y", tree.right.value.id)
-        self.assertIsInstance(tree.right.type, jast.ClassType)
-        self.assertEqual(1, len(tree.right.type.coits))
-        coit = tree.right.type.coits[0]
-        self.assertIsInstance(coit, jast.Coit)
-        self.assertEqual("z", coit.id)
+        self.assertIsInstance(tree.right.type, jast.Coit)
+        self.assertEqual("z", tree.right.type.id)
 
     @parameterized.expand(INSTANCEOF_HIGHER_SAME_PRECEDENCE)
     def test_Instanceof_reversed(self, _, rep, operator):
@@ -897,11 +925,8 @@ class TestParse(BaseTest):
         self.assertIsInstance(tree.left, jast.InstanceOf)
         self.assertIsInstance(tree.left.value, jast.Name)
         self.assertEqual("x", tree.left.value.id)
-        self.assertIsInstance(tree.left.type, jast.ClassType)
-        self.assertEqual(1, len(tree.left.type.coits))
-        coit = tree.left.type.coits[0]
-        self.assertIsInstance(coit, jast.Coit)
-        self.assertEqual("y", coit.id)
+        self.assertIsInstance(tree.left.type, jast.Coit)
+        self.assertEqual("y", tree.left.type.id)
         self.assertIsInstance(tree.right, jast.Name)
         self.assertEqual("z", tree.right.id)
 
@@ -1041,11 +1066,8 @@ class TestParse(BaseTest):
     def test_NewObject(self):
         tree = jast.parse("new X()", jast.ParseMode.EXPR)
         self.assertIsInstance(tree, jast.NewObject)
-        self.assertIsInstance(tree.type, jast.ClassType)
-        self.assertEqual(1, len(tree.type.coits))
-        coit = tree.type.coits[0]
-        self.assertIsInstance(coit, jast.Coit)
-        self.assertEqual("X", coit.id)
+        self.assertIsInstance(tree.type, jast.Coit)
+        self.assertEqual("X", tree.type.id)
         self.assertEqual(0, len(tree.args))
         self.assertIsNone(tree.body)
 
@@ -1053,11 +1075,8 @@ class TestParse(BaseTest):
         tree = jast.parse("new X(y, z)", jast.ParseMode.EXPR)
         self.assertIsInstance(tree, jast.NewObject)
         self.assertIsNone(tree.type_args)
-        self.assertIsInstance(tree.type, jast.ClassType)
-        self.assertEqual(1, len(tree.type.coits))
-        coit = tree.type.coits[0]
-        self.assertIsInstance(coit, jast.Coit)
-        self.assertEqual("X", coit.id)
+        self.assertIsInstance(tree.type, jast.Coit)
+        self.assertEqual("X", tree.type.id)
         self.assertEqual(2, len(tree.args))
         self.assertIsInstance(tree.args[0], jast.Name)
         self.assertEqual("y", tree.args[0].id)
@@ -1072,22 +1091,16 @@ class TestParse(BaseTest):
         self.assertEqual(2, len(tree.type_args.types))
         self.assertIsInstance(tree.type_args.types[0], jast.Int)
         self.assertIsInstance(tree.type_args.types[1], jast.Boolean)
-        self.assertIsInstance(tree.type, jast.ClassType)
-        self.assertEqual(1, len(tree.type.coits))
-        coit = tree.type.coits[0]
-        self.assertIsInstance(coit, jast.Coit)
-        self.assertEqual("X", coit.id)
+        self.assertIsInstance(tree.type, jast.Coit)
+        self.assertEqual("X", tree.type.id)
         self.assertEqual(0, len(tree.args))
         self.assertIsNone(tree.body)
 
     def test_NewObject_body(self):
         tree = jast.parse("new X() {;;}", jast.ParseMode.EXPR)
         self.assertIsInstance(tree, jast.NewObject)
-        self.assertIsInstance(tree.type, jast.ClassType)
-        self.assertEqual(1, len(tree.type.coits))
-        coit = tree.type.coits[0]
-        self.assertIsInstance(coit, jast.Coit)
-        self.assertEqual("X", coit.id)
+        self.assertIsInstance(tree.type, jast.Coit)
+        self.assertEqual("X", tree.type.id)
         self.assertIsNotNone(tree.body)
         self.assertEqual(2, len(tree.body))
         self.assertIsInstance(tree.body[0], jast.EmptyDecl)
@@ -1515,14 +1528,11 @@ class TestParse(BaseTest):
     def test_Reference_class_type(self):
         tree = jast.parse("X<int>::<int>new", jast.ParseMode.EXPR)
         self.assertIsInstance(tree, jast.Reference)
-        self.assertIsInstance(tree.type, jast.ClassType)
-        self.assertEqual(1, len(tree.type.coits))
-        coit = tree.type.coits[0]
-        self.assertIsInstance(coit, jast.Coit)
-        self.assertEqual("X", coit.id)
-        self.assertIsInstance(coit.type_args, jast.typeargs)
-        self.assertEqual(1, len(coit.type_args.types))
-        self.assertIsInstance(coit.type_args.types[0], jast.Int)
+        self.assertIsInstance(tree.type, jast.Coit)
+        self._test_identifier(tree.type.id, "X")
+        self.assertIsInstance(tree.type.type_args, jast.typeargs)
+        self.assertEqual(1, len(tree.type.type_args.types))
+        self.assertIsInstance(tree.type.type_args.types[0], jast.Int)
         self.assertIsInstance(tree.type_args, jast.typeargs)
         self.assertEqual(1, len(tree.type_args.types))
         self.assertIsInstance(tree.type_args.types[0], jast.Int)
@@ -1643,7 +1653,7 @@ class TestParse(BaseTest):
         self.assertIsNone(tree.decl.type_params)
         self.assertEqual(0, len(tree.decl.modifiers))
         self.assertEqual(0, len(tree.decl.extends))
-        self.assertEqual(0, len(tree.decl.permits))
+        self.assertEqual(0, len(tree.decl.implements))
         self.assertEqual(0, len(tree.decl.body))
 
     def test_LocalType_record(self):
@@ -1953,12 +1963,9 @@ class TestParse(BaseTest):
         self.assertEqual(2, len(tree.resources))
         resource = tree.resources[0]
         self.assertIsInstance(resource, jast.resource)
-        self.assertIsInstance(resource.type, jast.ClassType)
-        self.assertEqual(1, len(resource.type.coits))
-        coit = resource.type.coits[0]
-        self.assertIsInstance(coit, jast.Coit)
-        self.assertEqual("A", coit.id)
-        self.assertIsNone(coit.type_args)
+        self.assertIsInstance(resource.type, jast.Coit)
+        self.assertEqual("A", resource.type.id)
+        self.assertIsNone(resource.type.type_args)
         self.assertIsInstance(resource.variable, jast.declarator)
         self._test_variabledeclaratorid(resource.variable.id, "a")
         self._test_name(resource.variable.init, "c")
@@ -1966,12 +1973,9 @@ class TestParse(BaseTest):
         self.assertIsInstance(resource, jast.resource)
         self.assertEqual(1, len(resource.modifiers))
         self.assertIsInstance(resource.modifiers[0], jast.Final)
-        self.assertIsInstance(resource.type, jast.ClassType)
-        self.assertEqual(1, len(resource.type.coits))
-        coit = resource.type.coits[0]
-        self.assertIsInstance(coit, jast.Coit)
-        self.assertEqual("B", coit.id)
-        self.assertIsNone(coit.type_args)
+        self.assertIsInstance(resource.type, jast.Coit)
+        self.assertEqual("B", resource.type.id)
+        self.assertIsNone(resource.type.type_args)
         self.assertIsInstance(resource.variable, jast.declarator)
         self._test_variabledeclaratorid(resource.variable.id, "b")
         self._test_name(resource.variable.init, "d")
@@ -2066,3 +2070,678 @@ class TestParse(BaseTest):
         tree = jast.parse("yield x;", jast.ParseMode.STMT)
         self.assertIsInstance(tree, jast.Yield)
         self._test_name(tree.value, "x")
+
+    def test_EmptyDecl(self):
+        tree = jast.parse(";", jast.ParseMode.DECL)
+        self.assertIsInstance(tree, jast.EmptyDecl)
+
+    def test_Package(self):
+        tree = jast.parse("@foo package x.y.z;", jast.ParseMode.DECL)
+        self.assertIsInstance(tree, jast.Package)
+        self.assertEqual(1, len(tree.annotations))
+        self.assertIsInstance(tree.annotations[0], jast.Annotation)
+        self.assertIsInstance(tree.name, jast.qname)
+        self.assertEqual("x.y.z", jast.unparse(tree.name))
+
+    def test_Import(self):
+        tree = jast.parse("import x.y.z;", jast.ParseMode.DECL)
+        self.assertIsInstance(tree, jast.Import)
+        self.assertIsInstance(tree.name, jast.qname)
+        self.assertEqual("x.y.z", jast.unparse(tree.name))
+        self.assertFalse(tree.static)
+        self.assertFalse(tree.on_demand)
+
+    def test_Import_static(self):
+        tree = jast.parse("import static x.y.z;", jast.ParseMode.DECL)
+        self.assertIsInstance(tree, jast.Import)
+        self.assertTrue(tree.static)
+        self.assertIsInstance(tree.name, jast.qname)
+        self.assertEqual("x.y.z", jast.unparse(tree.name))
+        self.assertFalse(tree.on_demand)
+
+    def test_Import_on_demand(self):
+        tree = jast.parse("import x.y.z.*;", jast.ParseMode.DECL)
+        self.assertIsInstance(tree, jast.Import)
+        self.assertFalse(tree.static)
+        self.assertIsInstance(tree.name, jast.qname)
+        self.assertEqual("x.y.z", jast.unparse(tree.name))
+        self.assertTrue(tree.on_demand)
+
+    def test_Import_static_on_demand(self):
+        tree = jast.parse("import static x.y.z.*;", jast.ParseMode.DECL)
+        self.assertIsInstance(tree, jast.Import)
+        self.assertTrue(tree.static)
+        self.assertIsInstance(tree.name, jast.qname)
+        self.assertEqual("x.y.z", jast.unparse(tree.name))
+        self.assertTrue(tree.on_demand)
+
+    def test_Requires(self):
+        tree = jast.parse("requires static transitive x.y.z;", jast.ParseMode.DIRE)
+        self.assertIsInstance(tree, jast.Requires)
+        self.assertIsInstance(tree.name, jast.qname)
+        self.assertEqual("x.y.z", jast.unparse(tree.name))
+        self.assertEqual(2, len(tree.modifiers))
+        self.assertIsInstance(tree.modifiers[0], jast.Static)
+        self.assertIsInstance(tree.modifiers[1], jast.Transitive)
+
+    def test_Requires_no_modifiers(self):
+        tree = jast.parse("requires x.y.z;", jast.ParseMode.DIRE)
+        self.assertIsInstance(tree, jast.Requires)
+        self.assertIsInstance(tree.name, jast.qname)
+        self.assertEqual("x.y.z", jast.unparse(tree.name))
+        self.assertEqual(0, len(tree.modifiers))
+
+    def test_Exports(self):
+        tree = jast.parse("exports x.y.z;", jast.ParseMode.DIRE)
+        self.assertIsInstance(tree, jast.Exports)
+        self.assertIsInstance(tree.name, jast.qname)
+        self.assertEqual("x.y.z", jast.unparse(tree.name))
+        self.assertIsNone(tree.to)
+
+    def test_Exports_to(self):
+        tree = jast.parse("exports x.y.z to a.b.c;", jast.ParseMode.DIRE)
+        self.assertIsInstance(tree, jast.Exports)
+        self.assertIsInstance(tree.name, jast.qname)
+        self.assertEqual("x.y.z", jast.unparse(tree.name))
+        self.assertIsInstance(tree.to, jast.qname)
+        self.assertEqual("a.b.c", jast.unparse(tree.to))
+
+    def test_Opens(self):
+        tree = jast.parse("opens x.y.z;", jast.ParseMode.DIRE)
+        self.assertIsInstance(tree, jast.Opens)
+        self.assertIsInstance(tree.name, jast.qname)
+        self.assertEqual("x.y.z", jast.unparse(tree.name))
+        self.assertIsNone(tree.to)
+
+    def test_Opens_to(self):
+        tree = jast.parse("opens x.y.z to a.b.c;", jast.ParseMode.DIRE)
+        self.assertIsInstance(tree, jast.Opens)
+        self.assertIsInstance(tree.name, jast.qname)
+        self.assertEqual("x.y.z", jast.unparse(tree.name))
+        self.assertIsInstance(tree.to, jast.qname)
+        self.assertEqual("a.b.c", jast.unparse(tree.to))
+
+    def test_Uses(self):
+        tree = jast.parse("uses x.y.z;", jast.ParseMode.DIRE)
+        self.assertIsInstance(tree, jast.Uses)
+        self.assertIsInstance(tree.name, jast.qname)
+        self.assertEqual("x.y.z", jast.unparse(tree.name))
+
+    def test_Provides(self):
+        tree = jast.parse("provides x.y.z with a.b.c;", jast.ParseMode.DIRE)
+        self.assertIsInstance(tree, jast.Provides)
+        self.assertIsInstance(tree.name, jast.qname)
+        self.assertEqual("x.y.z", jast.unparse(tree.name))
+        self.assertIsInstance(tree.with_, jast.qname)
+        self.assertEqual("a.b.c", jast.unparse(tree.with_))
+
+    def test_Module(self):
+        tree = jast.parse(
+            "module x.y {\n"
+            "   requires x.y.z;\n"
+            "   exports x.y.z;\n"
+            "   opens x.y.z;\n"
+            "   uses x.y.z;\n"
+            "   provides x.y.z with a.b.c;\n"
+            "}",
+            jast.ParseMode.DECL,
+        )
+        self.assertIsInstance(tree, jast.Module)
+        self.assertFalse(tree.open)
+        self.assertIsInstance(tree.name, jast.qname)
+        self.assertEqual("x.y", jast.unparse(tree.name))
+        self.assertEqual(5, len(tree.body))
+        self.assertIsInstance(tree.body[0], jast.Requires)
+        self.assertIsInstance(tree.body[1], jast.Exports)
+        self.assertIsInstance(tree.body[2], jast.Opens)
+        self.assertIsInstance(tree.body[3], jast.Uses)
+        self.assertIsInstance(tree.body[4], jast.Provides)
+
+    def test_Module_open_empty_body(self):
+        tree = jast.parse(
+            "open module x.y {}",
+            jast.ParseMode.DECL,
+        )
+        self.assertIsInstance(tree, jast.Module)
+        self.assertTrue(tree.open)
+        self.assertIsInstance(tree.name, jast.qname)
+        self.assertEqual("x.y", jast.unparse(tree.name))
+        self.assertEqual(0, len(tree.body))
+
+    def test_Field(self):
+        tree = jast.parse("static final int x=42, y[];", jast.ParseMode.DECL)
+        self.assertIsInstance(tree, jast.Field)
+        self.assertEqual(2, len(tree.modifiers))
+        self.assertIsInstance(tree.modifiers[0], jast.Static)
+        self.assertIsInstance(tree.modifiers[1], jast.Final)
+        self.assertIsInstance(tree.type, jast.Int)
+        self.assertEqual(2, len(tree.declarators))
+        declarator = tree.declarators[0]
+        self.assertIsInstance(declarator, jast.declarator)
+        self.assertIsInstance(declarator.id, jast.variabledeclaratorid)
+        self._test_identifier(declarator.id.id, "x")
+        self.assertEqual(0, len(declarator.id.dims))
+        self.assertIsNotNone(declarator.init)
+        self._test_int_constant(declarator.init, 42)
+        declarator = tree.declarators[1]
+        self.assertIsInstance(declarator, jast.declarator)
+        self.assertIsInstance(declarator.id, jast.variabledeclaratorid)
+        self._test_identifier(declarator.id.id, "y")
+        self.assertEqual(1, len(declarator.id.dims))
+        self.assertIsInstance(declarator.id.dims[0], jast.dim)
+        self.assertIsNone(declarator.init)
+
+    def test_Method(self):
+        tree = jast.parse(
+            "public <A> void foo(int x)[] throws B, C.D {return x;}",
+            jast.ParseMode.DECL,
+        )
+        self.assertIsInstance(tree, jast.Method)
+        self.assertEqual(1, len(tree.modifiers))
+        self.assertIsInstance(tree.modifiers[0], jast.Public)
+        self.assertIsInstance(tree.type_params, jast.typeparams)
+        self.assertEqual(1, len(tree.type_params.parameters))
+        param = tree.type_params.parameters[0]
+        self.assertIsInstance(param, jast.typeparam)
+        self._test_identifier(param.id, "A")
+        self.assertIsNone(param.bound)
+        self.assertEqual(0, len(tree.annotations))
+        self.assertIsInstance(tree.return_type, jast.Void)
+        self._test_identifier(tree.id, "foo")
+        self.assertIsInstance(tree.parameters, jast.params)
+        self.assertIsNone(tree.parameters.receiver_param)
+        self.assertEqual(1, len(tree.parameters.parameters))
+        param = tree.parameters.parameters[0]
+        self.assertIsInstance(param, jast.param)
+        self.assertIsInstance(param.type, jast.Int)
+        self.assertIsInstance(param.id, jast.variabledeclaratorid)
+        self._test_identifier(param.id.id, "x")
+        self.assertEqual(0, len(param.id.dims))
+        self.assertEqual(1, len(tree.dims))
+        self.assertIsInstance(tree.dims[0], jast.dim)
+        self.assertEqual(2, len(tree.throws))
+        self.assertEqual("B", jast.unparse(tree.throws[0]))
+        self.assertEqual("C.D", jast.unparse(tree.throws[1]))
+        self.assertIsInstance(tree.body, jast.Block)
+        self.assertEqual(1, len(tree.body.body))
+        self.assertIsInstance(tree.body.body[0], jast.Return)
+        self._test_name(tree.body.body[0].value, "x")
+
+    def test_Method_no_body(self):
+        tree = jast.parse(
+            "protected static int foo();",
+            jast.ParseMode.DECL,
+        )
+        self.assertIsInstance(tree, jast.Method)
+        self.assertEqual(2, len(tree.modifiers))
+        self.assertIsInstance(tree.modifiers[0], jast.Protected)
+        self.assertIsInstance(tree.modifiers[1], jast.Static)
+        self.assertIsNone(tree.type_params)
+        self.assertEqual(0, len(tree.annotations))
+        self.assertIsInstance(tree.return_type, jast.Int)
+        self._test_identifier(tree.id, "foo")
+        self.assertIsInstance(tree.parameters, jast.params)
+        self.assertIsNone(tree.parameters.receiver_param)
+        self.assertEqual(0, len(tree.parameters.parameters))
+        self.assertEqual(0, len(tree.dims))
+        self.assertEqual(0, len(tree.throws))
+        self.assertIsNone(tree.body)
+
+    def test_Method_interface(self):
+        tree = jast.parse(
+            "@foo public abstract default static strictfp <A> @bar @baz void foo(int x)[] throws B, C.D {return x;}",
+            jast.ParseMode.DECL,
+        )
+        self.assertIsInstance(tree, jast.Method)
+        self.assertEqual(6, len(tree.modifiers))
+        self.assertIsInstance(tree.modifiers[0], jast.Annotation)
+        self.assertIsInstance(tree.modifiers[1], jast.Public)
+        self.assertIsInstance(tree.modifiers[2], jast.Abstract)
+        self.assertIsInstance(tree.modifiers[3], jast.Default)
+        self.assertIsInstance(tree.modifiers[4], jast.Static)
+        self.assertIsInstance(tree.modifiers[5], jast.Strictfp)
+        self.assertIsInstance(tree.type_params, jast.typeparams)
+        self.assertEqual(1, len(tree.type_params.parameters))
+        param = tree.type_params.parameters[0]
+        self.assertIsInstance(param, jast.typeparam)
+        self._test_identifier(param.id, "A")
+        self.assertIsNone(param.bound)
+        self.assertEqual(2, len(tree.annotations))
+        self.assertIsInstance(tree.annotations[0], jast.Annotation)
+        self.assertIsInstance(tree.annotations[1], jast.Annotation)
+        self.assertIsInstance(tree.return_type, jast.Void)
+        self._test_identifier(tree.id, "foo")
+        self.assertIsInstance(tree.parameters, jast.params)
+        self.assertIsNone(tree.parameters.receiver_param)
+        self.assertEqual(1, len(tree.parameters.parameters))
+        param = tree.parameters.parameters[0]
+        self.assertIsInstance(param, jast.param)
+        self.assertIsInstance(param.type, jast.Int)
+        self.assertIsInstance(param.id, jast.variabledeclaratorid)
+        self._test_identifier(param.id.id, "x")
+        self.assertEqual(0, len(param.id.dims))
+        self.assertEqual(1, len(tree.dims))
+        self.assertIsInstance(tree.dims[0], jast.dim)
+        self.assertEqual(2, len(tree.throws))
+        self.assertEqual("B", jast.unparse(tree.throws[0]))
+        self.assertEqual("C.D", jast.unparse(tree.throws[1]))
+        self.assertIsInstance(tree.body, jast.Block)
+        self.assertEqual(1, len(tree.body.body))
+        self.assertIsInstance(tree.body.body[0], jast.Return)
+        self._test_name(tree.body.body[0].value, "x")
+
+    def test_Method_interface_no_body(self):
+        tree = jast.parse(
+            "default int foo();",
+            jast.ParseMode.DECL,
+        )
+        self.assertIsInstance(tree, jast.Method)
+        self.assertEqual(1, len(tree.modifiers))
+        self.assertIsInstance(tree.modifiers[0], jast.Default)
+        self.assertIsNone(tree.type_params)
+        self.assertEqual(0, len(tree.annotations))
+        self.assertIsInstance(tree.return_type, jast.Int)
+        self._test_identifier(tree.id, "foo")
+        self.assertIsInstance(tree.parameters, jast.params)
+        self.assertIsNone(tree.parameters.receiver_param)
+        self.assertEqual(0, len(tree.parameters.parameters))
+        self.assertEqual(0, len(tree.dims))
+        self.assertEqual(0, len(tree.throws))
+        self.assertIsNone(tree.body)
+
+    def test_Constructor(self):
+        tree = jast.parse(
+            "public <A> B(int x) throws C.D {super(x);}",
+            jast.ParseMode.DECL,
+        )
+        self.assertIsInstance(tree, jast.Constructor)
+        self.assertEqual(1, len(tree.modifiers))
+        self.assertIsInstance(tree.modifiers[0], jast.Public)
+        self.assertIsInstance(tree.type_params, jast.typeparams)
+        self.assertEqual(1, len(tree.type_params.parameters))
+        param = tree.type_params.parameters[0]
+        self.assertIsInstance(param, jast.typeparam)
+        self._test_identifier(param.id, "A")
+        self.assertIsNone(param.bound)
+        self._test_identifier(tree.id, "B")
+        self.assertIsInstance(tree.parameters, jast.params)
+        self.assertIsNone(tree.parameters.receiver_param)
+        self.assertEqual(1, len(tree.parameters.parameters))
+        param = tree.parameters.parameters[0]
+        self.assertIsInstance(param, jast.param)
+        self.assertIsInstance(param.type, jast.Int)
+        self.assertIsInstance(param.id, jast.variabledeclaratorid)
+        self._test_identifier(param.id.id, "x")
+        self.assertEqual(0, len(param.id.dims))
+        self.assertEqual(1, len(tree.throws))
+        self.assertEqual("C.D", jast.unparse(tree.throws[0]))
+        self.assertIsInstance(tree.body, jast.Block)
+        self.assertEqual(1, len(tree.body.body))
+        stmt = tree.body.body[0]
+        self.assertIsInstance(stmt, jast.Expression)
+        expr = stmt.value
+        self.assertIsInstance(expr, jast.Call)
+        self.assertIsInstance(expr.func, jast.Super)
+        self.assertEqual(1, len(expr.args))
+        self._test_name(expr.args[0], "x")
+
+    def test_Constructor_compact(self):
+        tree = jast.parse(
+            "protected A{super();}",
+            jast.ParseMode.DECL,
+        )
+        self.assertIsInstance(tree, jast.Constructor)
+        self.assertEqual(1, len(tree.modifiers))
+        self.assertIsInstance(tree.modifiers[0], jast.Protected)
+        self.assertIsNone(tree.type_params)
+        self._test_identifier(tree.id, "A")
+        self.assertIsNone(tree.parameters)
+        self.assertEqual(0, len(tree.throws))
+        self.assertIsInstance(tree.body, jast.Block)
+        self.assertEqual(1, len(tree.body.body))
+        stmt = tree.body.body[0]
+        self.assertIsInstance(stmt, jast.Expression)
+        expr = stmt.value
+        self.assertIsInstance(expr, jast.Call)
+        self.assertIsInstance(expr.func, jast.Super)
+        self.assertEqual(0, len(expr.args))
+
+    def test_Initializer(self):
+        tree = jast.parse(
+            "{x;}",
+            jast.ParseMode.DECL,
+        )
+        self.assertIsInstance(tree, jast.Initializer)
+        self.assertFalse(tree.static)
+        self.assertIsInstance(tree.body, jast.Block)
+        self.assertEqual(1, len(tree.body.body))
+        stmt = tree.body.body[0]
+        self.assertIsInstance(stmt, jast.Expression)
+        self._test_name(stmt.value, "x")
+
+    def test_Initializer_static(self):
+        tree = jast.parse(
+            "static {x;}",
+            jast.ParseMode.DECL,
+        )
+        self.assertIsInstance(tree, jast.Initializer)
+        self.assertTrue(tree.static)
+        self.assertIsInstance(tree.body, jast.Block)
+        self.assertEqual(1, len(tree.body.body))
+        stmt = tree.body.body[0]
+        self.assertIsInstance(stmt, jast.Expression)
+        self._test_name(stmt.value, "x")
+
+    def test_Interface(self):
+        tree = jast.parse(
+            "public interface A<G> extends B implements C.D, E.F {int foo();}",
+            jast.ParseMode.DECL,
+        )
+        self.assertIsInstance(tree, jast.Interface)
+        self.assertEqual(1, len(tree.modifiers))
+        self.assertIsInstance(tree.modifiers[0], jast.Public)
+        self._test_identifier(tree.id, "A")
+        self.assertIsInstance(tree.type_params, jast.typeparams)
+        self.assertEqual(1, len(tree.type_params.parameters))
+        param = tree.type_params.parameters[0]
+        self.assertIsInstance(param, jast.typeparam)
+        self._test_identifier(param.id, "G")
+        self.assertIsNone(param.bound)
+        self.assertIsInstance(tree.extends, jast.Coit)
+        self.assertEqual("B", tree.extends.id)
+        self.assertEqual(2, len(tree.implements))
+        self.assertIsInstance(tree.implements[0], jast.ClassType)
+        self.assertEqual("C.D", jast.unparse(tree.implements[0]))
+        self.assertIsInstance(tree.implements[1], jast.ClassType)
+        self.assertEqual("E.F", jast.unparse(tree.implements[1]))
+        self.assertEqual(1, len(tree.body))
+        self.assertIsInstance(tree.body[0], jast.Method)
+
+    def test_AnnotationMethod(self):
+        tree = jast.parse(
+            "public int foo() default 42;",
+            jast.ParseMode.DECL,
+        )
+        self.assertIsInstance(tree, jast.AnnotationMethod)
+        self.assertEqual(1, len(tree.modifiers))
+        self.assertIsInstance(tree.modifiers[0], jast.Public)
+        self.assertIsInstance(tree.type, jast.Int)
+        self._test_identifier(tree.id, "foo")
+        self.assertIsNotNone(tree.default)
+        self._test_int_constant(tree.default, 42)
+
+    def test_AnnotationMethod_default_annotation(self):
+        tree = jast.parse(
+            "public int foo() default @bar;",
+            jast.ParseMode.DECL,
+        )
+        self.assertIsInstance(tree, jast.AnnotationMethod)
+        self.assertEqual(1, len(tree.modifiers))
+        self.assertIsInstance(tree.modifiers[0], jast.Public)
+        self.assertIsInstance(tree.type, jast.Int)
+        self._test_identifier(tree.id, "foo")
+        self.assertIsNotNone(tree.default)
+        self.assertIsInstance(tree.default, jast.Annotation)
+        self.assertIsInstance(tree.default.name, jast.qname)
+        self.assertEqual("bar", jast.unparse(tree.default.name))
+
+    def test_AnnotationMethod_array(self):
+        tree = jast.parse(
+            "public int[] foo() default {42, 24};",
+            jast.ParseMode.DECL,
+        )
+        self.assertIsInstance(tree, jast.AnnotationMethod)
+        self.assertEqual(1, len(tree.modifiers))
+        self.assertIsInstance(tree.modifiers[0], jast.Public)
+        self.assertIsInstance(tree.type, jast.ArrayType)
+        self.assertIsInstance(tree.type.type, jast.Int)
+        self.assertEqual(1, len(tree.type.dims))
+        self.assertIsInstance(tree.type.dims[0], jast.dim)
+        self._test_identifier(tree.id, "foo")
+        self.assertIsNotNone(tree.default)
+        self.assertIsInstance(tree.default, jast.elementarrayinit)
+        self.assertEqual(2, len(tree.default.values))
+        self._test_int_constant(tree.default.values[0], 42)
+        self._test_int_constant(tree.default.values[1], 24)
+
+    def test_AnnotationDecl(self):
+        tree = jast.parse(
+            "public @interface A {"
+            "public int x=24; "
+            "int foo() default 42; "
+            "int bar();"
+            "class B {} "
+            "interface C {} "
+            "record D() {} "
+            "enum E {} "
+            "@interface F {}}",
+            jast.ParseMode.DECL,
+        )
+        self.assertIsInstance(tree, jast.AnnotationDecl)
+        self.assertEqual(1, len(tree.modifiers))
+        self.assertIsInstance(tree.modifiers[0], jast.Public)
+        self._test_identifier(tree.id, "A")
+        self.assertEqual(8, len(tree.body))
+        self.assertIsInstance(tree.body[0], jast.Field)
+        self.assertIsInstance(tree.body[1], jast.AnnotationMethod)
+        self.assertIsInstance(tree.body[2], jast.AnnotationMethod)
+        self.assertIsInstance(tree.body[3], jast.Class)
+        self.assertIsInstance(tree.body[4], jast.Interface)
+        self.assertIsInstance(tree.body[5], jast.Record)
+        self.assertIsInstance(tree.body[6], jast.Enum)
+        self.assertIsInstance(tree.body[7], jast.AnnotationDecl)
+
+    def test_Class(self):
+        tree = jast.parse(
+            "public class A extends B implements C.D permits E.F {"
+            ";"
+            "static {} "
+            "record G() {} "
+            "int foo() {} "
+            "int x=42; "
+            "A() {} "
+            "interface H {} "
+            "@interface I {} "
+            "class J {} "
+            "enum K {} "
+            "}",
+            jast.ParseMode.DECL,
+        )
+        self.assertIsInstance(tree, jast.Class)
+        self.assertEqual(1, len(tree.modifiers))
+        self.assertIsInstance(tree.modifiers[0], jast.Public)
+        self._test_identifier(tree.id, "A")
+        self.assertIsInstance(tree.extends, jast.Coit)
+        self.assertEqual("B", tree.extends.id)
+        self.assertEqual(1, len(tree.implements))
+        self.assertIsInstance(tree.implements[0], jast.ClassType)
+        self.assertEqual("C.D", jast.unparse(tree.implements[0]))
+        self.assertEqual(1, len(tree.permits))
+        self.assertIsInstance(tree.permits[0], jast.ClassType)
+        self.assertEqual("E.F", jast.unparse(tree.permits[0]))
+        self.assertEqual(10, len(tree.body))
+        self.assertIsInstance(tree.body[0], jast.EmptyDecl)
+        self.assertIsInstance(tree.body[1], jast.Initializer)
+        self.assertIsInstance(tree.body[2], jast.Record)
+        self.assertIsInstance(tree.body[3], jast.Method)
+        self.assertIsInstance(tree.body[4], jast.Field)
+        self.assertIsInstance(tree.body[5], jast.Constructor)
+        self.assertIsInstance(tree.body[6], jast.Interface)
+        self.assertIsInstance(tree.body[7], jast.AnnotationDecl)
+        self.assertIsInstance(tree.body[8], jast.Class)
+        self.assertIsInstance(tree.body[9], jast.Enum)
+
+    def test_Enum(self):
+        tree = jast.parse(
+            "public enum A implements B.C {\n"
+            "@foo D(42){int bar();},\n"
+            "E,\n"
+            "F(),\n"
+            "G{};\n"
+            "int baz() {return 42;}\n"
+            "}",
+            jast.ParseMode.DECL,
+        )
+        self.assertIsInstance(tree, jast.Enum)
+        self.assertEqual(1, len(tree.modifiers))
+        self.assertIsInstance(tree.modifiers[0], jast.Public)
+        self._test_identifier(tree.id, "A")
+        self.assertEqual(4, len(tree.constants))
+        constant = tree.constants[0]
+        self.assertIsInstance(constant, jast.enumconstant)
+        self.assertEqual(1, len(constant.annotations))
+        self.assertIsInstance(constant.annotations[0], jast.Annotation)
+        self._test_identifier(constant.id, "D")
+        self.assertEqual(1, len(constant.args))
+        self._test_int_constant(constant.args[0], 42)
+        self.assertIsNotNone(constant.body)
+        self.assertEqual(1, len(constant.body))
+        self.assertIsInstance(constant.body[0], jast.Method)
+        constant = tree.constants[1]
+        self.assertIsInstance(constant, jast.enumconstant)
+        self.assertEqual(0, len(constant.annotations))
+        self._test_identifier(constant.id, "E")
+        self.assertIsNone(constant.args)
+        self.assertIsNone(constant.body)
+        constant = tree.constants[2]
+        self.assertIsInstance(constant, jast.enumconstant)
+        self.assertEqual(0, len(constant.annotations))
+        self._test_identifier(constant.id, "F")
+        self.assertEqual(0, len(constant.args))
+        self.assertIsNone(constant.body)
+        constant = tree.constants[3]
+        self.assertIsInstance(constant, jast.enumconstant)
+        self.assertEqual(0, len(constant.annotations))
+        self._test_identifier(constant.id, "G")
+        self.assertIsNone(constant.args)
+        self.assertIsNotNone(constant.body)
+        self.assertEqual(0, len(constant.body))
+        self.assertEqual(1, len(tree.body))
+        self.assertIsInstance(tree.body[0], jast.Method)
+
+    def test_Record(self):
+        tree = jast.parse(
+            "public record A<B>(int x, boolean y) implements C.D {\n"
+            "int foo() {return x;}\n"
+            "A{}\n"
+            "}",
+            jast.ParseMode.DECL,
+        )
+        self.assertIsInstance(tree, jast.Record)
+        self.assertEqual(1, len(tree.modifiers))
+        self.assertIsInstance(tree.modifiers[0], jast.Public)
+        self._test_identifier(tree.id, "A")
+        self.assertIsInstance(tree.type_params, jast.typeparams)
+        self.assertEqual(1, len(tree.type_params.parameters))
+        param = tree.type_params.parameters[0]
+        self.assertIsInstance(param, jast.typeparam)
+        self._test_identifier(param.id, "B")
+        self.assertIsNone(param.bound)
+        self.assertEqual(2, len(tree.components))
+        component = tree.components[0]
+        self.assertIsInstance(component, jast.recordcomponent)
+        self.assertIsInstance(component.type, jast.Int)
+        self._test_identifier(component.id, "x")
+        component = tree.components[1]
+        self.assertIsInstance(component, jast.recordcomponent)
+        self.assertIsInstance(component.type, jast.Boolean)
+        self._test_identifier(component.id, "y")
+        self.assertEqual(1, len(tree.implements))
+        self.assertIsInstance(tree.implements[0], jast.ClassType)
+        self.assertEqual("C.D", jast.unparse(tree.implements[0]))
+        self.assertEqual(2, len(tree.body))
+        self.assertIsInstance(tree.body[0], jast.Method)
+        self.assertIsInstance(tree.body[1], jast.Constructor)
+
+    def test_CompilationUnit(self):
+        tree = jast.parse(
+            "package x.y.z;\n"
+            "import a.b.c;\n"
+            "import static d.e.f;\n"
+            "public class A{}",
+            jast.ParseMode.UNIT,
+        )
+        self.assertIsInstance(tree, jast.CompilationUnit)
+        self.assertIsInstance(tree.package, jast.Package)
+        self.assertEqual(2, len(tree.imports))
+        self.assertIsInstance(tree.imports[0], jast.Import)
+        self.assertIsInstance(tree.imports[1], jast.Import)
+        self.assertEqual(1, len(tree.body))
+        self.assertIsInstance(tree.body[0], jast.Class)
+
+    def test_CompilationUnit_no_package(self):
+        tree = jast.parse(
+            "import a.b.c;\nimport static d.e.f;\npublic class A{}",
+            jast.ParseMode.UNIT,
+        )
+        self.assertIsInstance(tree, jast.CompilationUnit)
+        self.assertIsNone(tree.package)
+        self.assertEqual(2, len(tree.imports))
+        self.assertIsInstance(tree.imports[0], jast.Import)
+        self.assertIsInstance(tree.imports[1], jast.Import)
+        self.assertEqual(1, len(tree.body))
+        self.assertIsInstance(tree.body[0], jast.Class)
+
+    def test_CompilationUnit_no_imports(self):
+        tree = jast.parse(
+            "package x.y.z;\npublic class A{}",
+            jast.ParseMode.UNIT,
+        )
+        self.assertIsInstance(tree, jast.CompilationUnit)
+        self.assertIsInstance(tree.package, jast.Package)
+        self.assertEqual(0, len(tree.imports))
+        self.assertEqual(1, len(tree.body))
+        self.assertIsInstance(tree.body[0], jast.Class)
+
+    def test_CompilationUnit_no_package_no_imports(self):
+        tree = jast.parse(
+            "public class A{}",
+            jast.ParseMode.UNIT,
+        )
+        self.assertIsInstance(tree, jast.CompilationUnit)
+        self.assertIsNone(tree.package)
+        self.assertEqual(0, len(tree.imports))
+        self.assertEqual(1, len(tree.body))
+        self.assertIsInstance(tree.body[0], jast.Class)
+
+    def test_CompilationUnit_no_body(self):
+        tree = jast.parse(
+            "package x.y.z;\nimport a.b.c;\nimport static d.e.f;",
+            jast.ParseMode.UNIT,
+        )
+        self.assertIsInstance(tree, jast.CompilationUnit)
+        self.assertIsInstance(tree.package, jast.Package)
+        self.assertEqual(2, len(tree.imports))
+        self.assertIsInstance(tree.imports[0], jast.Import)
+        self.assertIsInstance(tree.imports[1], jast.Import)
+        self.assertEqual(0, len(tree.body))
+
+    def test_CompilationUnit_empty(self):
+        tree = jast.parse(
+            "",
+            jast.ParseMode.UNIT,
+        )
+        self.assertIsInstance(tree, jast.CompilationUnit)
+        self.assertIsNone(tree.package)
+        self.assertEqual(0, len(tree.imports))
+        self.assertEqual(0, len(tree.body))
+
+    def test_ModularUnit(self):
+        tree = jast.parse(
+            "import x.y.z;\nimport static a.b.c;\nmodule x.y {}",
+            jast.ParseMode.UNIT,
+        )
+        self.assertIsInstance(tree, jast.ModularUnit)
+        self.assertEqual(2, len(tree.imports))
+        self.assertIsInstance(tree.imports[0], jast.Import)
+        self.assertIsInstance(tree.imports[1], jast.Import)
+        self.assertIsInstance(tree.body, jast.Module)
+
+    def test_ModularUnit_no_imports(self):
+        tree = jast.parse(
+            "module x.y {}",
+            jast.ParseMode.UNIT,
+        )
+        self.assertIsInstance(tree, jast.ModularUnit)
+        self.assertEqual(0, len(tree.imports))
+        self.assertIsInstance(tree.body, jast.Module)

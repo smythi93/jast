@@ -32,6 +32,10 @@ class ParseMode(enum.Enum):
     Parse a Java expression.
     """
     EXPR = "expr"
+    """
+    Parse a Java module directive.
+    """
+    DIRE = "dire"
 
 
 class _SimpleErrorListener(ErrorListener):
@@ -64,10 +68,10 @@ class _Parser:
             tree = parser.declarationStart()
         elif mode == ParseMode.STMT:
             tree = parser.statementStart()
-        elif mode == ParseMode.EXPR:
-            tree = parser.expressionStart()
+        elif mode == ParseMode.DIRE:
+            tree = parser.directiveStart()
         else:
-            raise ValueError(f"Invalid ParseMode: {mode}")
+            tree = parser.expressionStart()
 
         return self._converter.visit(tree)
 

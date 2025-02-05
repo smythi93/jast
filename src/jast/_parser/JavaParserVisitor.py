@@ -26,6 +26,10 @@ class JavaParserVisitor(ParseTreeVisitor):
     def visitExpressionStart(self, ctx: JavaParser.ExpressionStartContext):
         return self.visitChildren(ctx)
 
+    # Visit a parse tree produced by JavaParser#directiveStart.
+    def visitDirectiveStart(self, ctx: JavaParser.DirectiveStartContext):
+        return self.visitChildren(ctx)
+
     # Visit a parse tree produced by JavaParser#ordinaryCompilationUnit.
     def visitOrdinaryCompilationUnit(
         self, ctx: JavaParser.OrdinaryCompilationUnitContext

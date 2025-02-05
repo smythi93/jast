@@ -51,10 +51,10 @@ declarationStart
     | moduleDeclaration EOF
     | modifier* fieldDeclaration EOF
     | modifier* methodDeclaration EOF
-    | modifier* interfaceMethodDeclaration EOF
+    | interfaceMethodDeclaration EOF
     | STATIC? block EOF
     | modifier* constructorDeclaration EOF
-    | modifier* compactConstructorDeclaration EOF
+    | compactConstructorDeclaration EOF
     | modifier* annotationMethodDeclaration EOF
     | modifier* annotationConstantDeclaration EOF
     | modifier* interfaceDeclaration EOF
@@ -62,6 +62,7 @@ declarationStart
     | modifier* classDeclaration EOF
     | modifier* enumDeclaration EOF
     | modifier* recordDeclaration EOF
+    | ';' EOF
     ;
 
 statementStart
@@ -70,6 +71,10 @@ statementStart
 
 expressionStart
     : expression EOF
+    ;
+
+directiveStart
+    : moduleDirective EOF
     ;
 
 ordinaryCompilationUnit

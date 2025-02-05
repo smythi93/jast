@@ -2559,7 +2559,7 @@ class Import(declaration):
 
 class directive(_JAST, abc.ABC):
     """
-    Abstract base class for all body body in the Java AST.
+    Abstract base class for all module directives in the Java AST.
     """
 
 
@@ -2694,7 +2694,7 @@ class Module(declaration):
     """
     Represents a body decl in the Java AST.
 
-    body <qname> { <directive> <directive> ... }
+    body <name> { <directive> <directive> ... }
     """
 
     # noinspection PyShadowingBuiltins
@@ -2812,7 +2812,7 @@ class Method(declaration):
         if id is None:
             raise JASTError("qname is required for Method")
         self.modifiers = modifiers or []
-        self.type_params = type_params or []
+        self.type_params = type_params
         self.annotations = annotations or []
         self.return_type = return_type
         self.id = id
@@ -2857,6 +2857,7 @@ class Constructor(declaration):
         type_params: typeparams = None,
         id: identifier = None,
         parameters: params = None,
+        throws: List[qname] = None,
         body: Block = None,
         *vargs,
         **kwargs,
@@ -2865,9 +2866,10 @@ class Constructor(declaration):
         if id is None:
             raise JASTError("label is required for Constructor")
         self.modifiers = modifiers or []
-        self.type_params = type_params or []
+        self.type_params = type_params
         self.id = id
-        self.parameters = parameters or []
+        self.parameters = parameters
+        self.throws = throws or []
         self.body = body
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -2878,6 +2880,8 @@ class Constructor(declaration):
         yield "id", self.id
         if self.parameters:
             yield "parameters", self.parameters
+        if self.throws:
+            yield "throws", self.throws
         if self.body:
             yield "body", self.body
 
@@ -2921,19 +2925,19 @@ class Interface(declaration):
         id: identifier = None,
         type_params: typeparams = None,
         extends: List[jtype] = None,
-        permits: List[jtype] = None,
+        implements: List[jtype] = None,
         body: List[declaration] = None,
         *vargs,
         **kwargs,
     ):
         super().__init__(*vargs, **kwargs)
         if id is None:
-            raise JASTError("qname is required for Interface")
+            raise JASTError("id is required for Interface")
         self.modifiers = modifiers or []
         self.id = id
         self.type_params = type_params
         self.extends = extends or []
-        self.permits = permits or []
+        self.implements = implements or []
         self.body = body or []
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -2944,8 +2948,8 @@ class Interface(declaration):
             yield "type_params", self.type_params
         if self.extends:
             yield "extends", self.extends
-        if self.permits:
-            yield "permits", self.permits
+        if self.implements:
+            yield "implements", self.implements
         if self.body:
             yield "body", self.body
 
@@ -3088,7 +3092,7 @@ class enumconstant(JAST):
         annotations: List[Annotation] = None,
         id: identifier = None,
         args: List[expr] = None,
-        body: Block = None,
+        body: List[declaration] = None,
         *vargs,
         **kwargs,
     ):
@@ -3153,7 +3157,7 @@ class recordcomponent(JAST):
     """
     Represents a record component in the Java AST.
 
-    <jtype> <qname>
+    <jtype> <id>
     """
 
     # noinspection PyShadowingBuiltins

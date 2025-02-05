@@ -10091,7 +10091,7 @@ class JavaLexer(Lexer):
         "'yield'",
         "'record'",
         "'sealed'",
-        "'permits'",
+        "'implements'",
         "'non-sealed'",
         "'null'",
         "'('",

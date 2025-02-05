@@ -12,11 +12,15 @@ from jast._parser.JavaParserVisitor import JavaParserVisitor
 class JASTConverter(JavaParserVisitor):
     @staticmethod
     def _get_location_rule(ctx: ParserRuleContext) -> Dict[str, int]:
+        if ctx.stop:
+            stop = ctx.stop
+        else:
+            stop = ctx.start
         return {
             "lineno": ctx.start.line,
             "col_offset": ctx.start.column,
-            "end_lineno": ctx.stop.line,
-            "end_col_offset": ctx.stop.column,
+            "end_lineno": stop.line,
+            "end_col_offset": stop.column,
         }
 
     @staticmethod
@@ -79,9 +83,9 @@ class JASTConverter(JavaParserVisitor):
     def visitPackageDeclaration(
         self, ctx: JavaParser.PackageDeclarationContext
     ) -> jast.Package:
-        annotations = (
+        annotations = [
             self.visitAnnotation(annotation) for annotation in ctx.annotation()
-        )
+        ]
         name = self.visitQualifiedName(ctx.qualifiedName())
         return jast.Package(
             annotations=annotations, name=name, **self._get_location_rule(ctx)
@@ -322,7 +326,7 @@ class JASTConverter(JavaParserVisitor):
         body = self.visitInterfaceBody(ctx.interfaceBody())
         return jast.Interface(
             id=identifier,
-            type_parameters=type_parameters,
+            type_params=type_parameters,
             extends=extends,
             implements=implements,
             body=body,
@@ -352,7 +356,7 @@ class JASTConverter(JavaParserVisitor):
             return jast.EmptyDecl(**self._get_location_rule(ctx))
         elif ctx.block():
             return jast.Initializer(
-                block=self.visitBlock(ctx.block()),
+                body=self.visitBlock(ctx.block()),
                 static=ctx.STATIC() is not None,
                 **self._get_location_rule(ctx),
             )
@@ -399,7 +403,7 @@ class JASTConverter(JavaParserVisitor):
         throws = self.visitThrows_(ctx.throws_()) if ctx.throws_() else None
         body = self.visitMethodBody(ctx.methodBody())
         return jast.Method(
-            type_parameters=type_parameters,
+            type_params=type_parameters,
             return_type=return_type,
             id=identifier,
             parameters=parameters,
@@ -449,7 +453,7 @@ class JASTConverter(JavaParserVisitor):
         throws = self.visitThrows_(ctx.throws_()) if ctx.throws_() else None
         body = self.visitBlock(ctx.constructorBody)
         return jast.Constructor(
-            type_parameters=type_parameters,
+            type_params=type_parameters,
             id=identifier,
             parameters=parameters,
             throws=throws,
@@ -565,7 +569,7 @@ class JASTConverter(JavaParserVisitor):
         body = self.visitMethodBody(ctx.methodBody())
         return jast.Method(
             modifiers=modifiers,
-            type_parameters=type_parameters,
+            type_params=type_parameters,
             annotations=annotations,
             return_type=return_type,
             id=identifier,
@@ -624,9 +628,10 @@ class JASTConverter(JavaParserVisitor):
         )
 
     def visitClassOrInterfaceType(self, ctx: JavaParser.ClassOrInterfaceTypeContext):
-        return jast.ClassType(
-            coits=[self.visitCoit(coit) for coit in ctx.coit()],
-        )
+        coits = [self.visitCoit(coit) for coit in ctx.coit()]
+        if len(coits) == 1:
+            return coits[0]
+        return jast.ClassType(coits=coits)
 
     def visitCoit(self, ctx: JavaParser.CoitContext):
         identifier = self.visitTypeIdentifier(ctx.typeIdentifier())
@@ -1054,7 +1059,7 @@ class JASTConverter(JavaParserVisitor):
         body = self.visitRecordBody(ctx.recordBody())
         return jast.Record(
             id=identifier,
-            type_parameters=type_parameters,
+            type_params=type_parameters,
             components=components,
             implements=implements,
             body=body,
@@ -1987,10 +1992,13 @@ class JASTConverter(JavaParserVisitor):
         )
         if ctx.DOT():
             class_type = self.visitClassOrInterfaceType(ctx.classOrInterfaceType())
-            class_type.coits.append(coit)
+            if isinstance(class_type, jast.ClassType):
+                class_type.coits.append(coit)
+            else:
+                class_type = jast.ClassType(coits=[class_type, coit])
             return class_type
         else:
-            return jast.ClassType(coits=[coit])
+            return coit
 
     def visitCreator(self, ctx: JavaParser.CreatorContext) -> jast.expr:
         if ctx.objectCreator():
@@ -2015,9 +2023,11 @@ class JASTConverter(JavaParserVisitor):
         if ctx.primitiveType():
             return self.visitPrimitiveType(ctx.primitiveType())
         else:
-            return jast.ClassType(
-                coits=[self.visitCoitDiamond(coit) for coit in ctx.coitDiamond()],
-            )
+            coits = [self.visitCoitDiamond(coit) for coit in ctx.coitDiamond()]
+            if len(coits) == 1:
+                return coits[0]
+            else:
+                return jast.ClassType(coits=coits)
 
     def visitCoitDiamond(self, ctx: JavaParser.CoitDiamondContext) -> jast.Coit:
         return jast.Coit(
@@ -2231,8 +2241,10 @@ class JASTConverter(JavaParserVisitor):
             decl = self.visitClassDeclaration(ctx.classDeclaration())
         elif ctx.enumDeclaration():
             decl = self.visitEnumDeclaration(ctx.enumDeclaration())
-        else:
+        elif ctx.recordDeclaration():
             decl = self.visitRecordDeclaration(ctx.recordDeclaration())
+        else:
+            decl = jast.EmptyDecl(**self._get_location_rule(ctx))
         if ctx.modifier():
             modifiers = [self.visitModifier(modifier) for modifier in ctx.modifier()]
             setattr(decl, "modifiers", modifiers)
@@ -2243,3 +2255,6 @@ class JASTConverter(JavaParserVisitor):
 
     def visitExpressionStart(self, ctx: JavaParser.ExpressionStartContext) -> jast.expr:
         return self.visitExpression(ctx.expression())
+
+    def visitDirectiveStart(self, ctx: JavaParser.DirectiveStartContext):
+        return self.visitModuleDirective(ctx.moduleDirective())

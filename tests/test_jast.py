@@ -2420,6 +2420,7 @@ class TestJAST(BaseTest):
                     jast.param(type=jast.Int(), id=jast.identifier("qux")),
                 ],
             ),
+            throws=[jast.qname([jast.identifier("quux")])],
             body=jast.Block(),
         )
         self.assertIsInstance(constructor, jast.Constructor)
@@ -2435,6 +2436,10 @@ class TestJAST(BaseTest):
         self.assertEqual(2, len(constructor.parameters.parameters))
         self.assertIsInstance(constructor.parameters.parameters[0], jast.param)
         self.assertIsInstance(constructor.parameters.parameters[1], jast.param)
+        self.assertEqual(1, len(constructor.throws))
+        self.assertIsInstance(constructor.throws[0], jast.qname)
+        self.assertEqual(1, len(constructor.throws[0].identifiers))
+        self._test_identifier(constructor.throws[0].identifiers[0], "quux")
         self.assertIsInstance(constructor.body, jast.Block)
         self._test_iteration(constructor)
 
@@ -2477,7 +2482,7 @@ class TestJAST(BaseTest):
                 parameters=[jast.typeparam(id=jast.identifier("T"))],
             ),
             extends=[jast.Coit(id=jast.identifier("bar"))],
-            permits=[jast.Coit(id=jast.identifier("baz"))],
+            implements=[jast.Coit(id=jast.identifier("baz"))],
             body=[jast.Method(return_type=jast.Int(), id=jast.identifier("qux"))],
         )
         self.assertIsInstance(interface, jast.Interface)
@@ -2492,9 +2497,9 @@ class TestJAST(BaseTest):
         self.assertEqual(1, len(interface.extends))
         self.assertIsInstance(interface.extends[0], jast.Coit)
         self._test_identifier(interface.extends[0].id, "bar")
-        self.assertEqual(1, len(interface.permits))
-        self.assertIsInstance(interface.permits[0], jast.Coit)
-        self._test_identifier(interface.permits[0].id, "baz")
+        self.assertEqual(1, len(interface.implements))
+        self.assertIsInstance(interface.implements[0], jast.Coit)
+        self._test_identifier(interface.implements[0].id, "baz")
         self.assertEqual(1, len(interface.body))
         self.assertIsInstance(interface.body[0], jast.Method)
         self._test_iteration(interface)
