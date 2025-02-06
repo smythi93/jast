@@ -1658,7 +1658,7 @@ class Reference(expr):
         if new and id:
             raise JASTError("new and id are mutually exclusive for Reference")
         elif not new and not id:
-            raise JASTError("now or id is required for Reference")
+            raise JASTError("new or id is required for Reference")
         self.type = type
         self.type_args = type_args
         self.id = id
