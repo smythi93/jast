@@ -1334,6 +1334,7 @@ class JASTConverter(JavaParserVisitor):
             excs=type_,
             id=identifier,
             body=body,
+            **self._get_location_rule(ctx),
         )
 
     def visitCatchType(self, ctx: JavaParser.CatchTypeContext) -> List[jast.qname]:
@@ -1392,6 +1393,7 @@ class JASTConverter(JavaParserVisitor):
                 self.visitBlockStatement(blockStatement)
                 for blockStatement in ctx.blockStatement()
             ],
+            **self._get_location_rule(ctx),
         )
 
     def visitSwitchLabel(self, ctx: JavaParser.SwitchLabelContext) -> jast.switchlabel:
@@ -1932,6 +1934,7 @@ class JASTConverter(JavaParserVisitor):
             label=label,
             cases=cases,
             body=body,
+            **self._get_location_rule(ctx),
         )
 
     def visitGuardedPattern(

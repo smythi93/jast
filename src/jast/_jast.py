@@ -1396,7 +1396,7 @@ class ExpDefault(switchexplabel):
     """
 
 
-class switchexprule(JAST):
+class switchexprule(_JAST):
     """
     Represents a rule in a switch value in the Java AST.
     """
@@ -2049,7 +2049,7 @@ class DefaultCase(switchlabel):
     """
 
 
-class switchgroup(JAST):
+class switchgroup(_JAST):
     """
     Represents a group of switch labels in the Java AST.
 
@@ -2326,7 +2326,7 @@ class Synch(stmt):
         yield "body", self.body
 
 
-class catch(JAST):
+class catch(_JAST):
     """
     Represents a catch clause in the Java AST.
 

@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "java-ast"
-version = "1.0.1"
+version = "1.0.2"
 authors = [
     { name = "Marius Smytzek", email = "marius.smytzek@cispa.de" },
     { name = "Martin Eberlein", email = "martin.eberlein@hu-berlin.de" },
