@@ -1795,7 +1795,7 @@ class TestParse(BaseTest):
 
     def test_Expression(self):
         tree = jast.parse("x;", jast.ParseMode.STMT)
-        self.assertIsInstance(tree, jast.Expression)
+        self.assertIsInstance(tree, jast.Expr)
         self._test_name(tree.value, "x")
 
     def test_If(self):
@@ -1863,7 +1863,7 @@ class TestParse(BaseTest):
         self.assertIsInstance(label, jast.Case)
         self._test_int_constant(label.guard, 24)
         self.assertEqual(2, len(group.body))
-        self.assertIsInstance(group.body[0], jast.Expression)
+        self.assertIsInstance(group.body[0], jast.Expr)
         self.assertIsInstance(group.body[1], jast.Return)
         group = block.groups[1]
         self.assertIsInstance(group, jast.switchgroup)
@@ -2481,7 +2481,7 @@ class TestParse(BaseTest):
         self.assertIsInstance(tree.body, jast.Block)
         self.assertEqual(1, len(tree.body.body))
         stmt = tree.body.body[0]
-        self.assertIsInstance(stmt, jast.Expression)
+        self.assertIsInstance(stmt, jast.Expr)
         expr = stmt.value
         self.assertIsInstance(expr, jast.Call)
         self.assertIsInstance(expr.func, jast.Super)
@@ -2503,7 +2503,7 @@ class TestParse(BaseTest):
         self.assertIsInstance(tree.body, jast.Block)
         self.assertEqual(1, len(tree.body.body))
         stmt = tree.body.body[0]
-        self.assertIsInstance(stmt, jast.Expression)
+        self.assertIsInstance(stmt, jast.Expr)
         expr = stmt.value
         self.assertIsInstance(expr, jast.Call)
         self.assertIsInstance(expr.func, jast.Super)
@@ -2519,7 +2519,7 @@ class TestParse(BaseTest):
         self.assertIsInstance(tree.body, jast.Block)
         self.assertEqual(1, len(tree.body.body))
         stmt = tree.body.body[0]
-        self.assertIsInstance(stmt, jast.Expression)
+        self.assertIsInstance(stmt, jast.Expr)
         self._test_name(stmt.value, "x")
 
     def test_Initializer_static(self):
@@ -2532,7 +2532,7 @@ class TestParse(BaseTest):
         self.assertIsInstance(tree.body, jast.Block)
         self.assertEqual(1, len(tree.body.body))
         stmt = tree.body.body[0]
-        self.assertIsInstance(stmt, jast.Expression)
+        self.assertIsInstance(stmt, jast.Expr)
         self._test_name(stmt.value, "x")
 
     def test_Interface(self):

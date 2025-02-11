@@ -1497,16 +1497,16 @@ class TestJAST(BaseTest):
         self.assertRaises(JASTError, jast.Labeled, label=jast.identifier("foo"))
 
     def test_Expression(self):
-        expression = jast.Expression(
+        expression = jast.Expr(
             value=jast.Constant(jast.IntLiteral(42)),
         )
-        self.assertIsInstance(expression, jast.Expression)
+        self.assertIsInstance(expression, jast.Expr)
         self.assertIsInstance(expression, jast.JAST)
         self._test_int_constant(expression.value, 42)
         self._test_iteration(expression)
 
     def test_Expression_error(self):
-        self.assertRaises(JASTError, jast.Expression)
+        self.assertRaises(JASTError, jast.Expr)
 
     def test_If(self):
         if_ = jast.If(
@@ -2087,6 +2087,15 @@ class TestJAST(BaseTest):
 
     def test_Yield_error(self):
         self.assertRaises(JASTError, jast.Yield)
+
+    def test_CompoundDecl(self):
+        compound_decl = jast.CompoundDecl(body=[jast.EmptyDecl(), jast.EmptyDecl()])
+        self.assertIsInstance(compound_decl, jast.CompoundDecl)
+        self.assertIsInstance(compound_decl, jast.JAST)
+        self.assertEqual(2, len(compound_decl.body))
+        self.assertIsInstance(compound_decl.body[0], jast.EmptyDecl)
+        self.assertIsInstance(compound_decl.body[1], jast.EmptyDecl)
+        self._test_iteration(compound_decl)
 
     def test_EmptyDecl(self):
         empty_decl = jast.EmptyDecl()

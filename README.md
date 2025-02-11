@@ -39,6 +39,7 @@ module Java
         | ModularUnit(Import* imports, Module body)
 
     declaration = EmptyDecl()
+        | CompoundDecl(declaration* body)
         | Package(Annotation* annotations, qname name)
         | Import(bool? static, qname name, bool? on_demand)
         | Module(bool? open, qname name, directive* directives)
@@ -90,7 +91,7 @@ module Java
                            Block body, catch* catches, Block? final)
         | Assert(expr test, expr? msg)
         | Throw(expr exc)
-        | Expression(expr value)
+        | Expr(expr value)
         | Return(expr? value)
         | Yield(expr value)
         | Break(identifier? label)

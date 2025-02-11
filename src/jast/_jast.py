@@ -1930,7 +1930,7 @@ class Labeled(stmt):
         yield "body", self.body
 
 
-class Expression(stmt):
+class Expr(stmt):
     """
     Represents an exc statement in the Java AST.
 
@@ -1940,7 +1940,7 @@ class Expression(stmt):
     def __init__(self, value: expr = None, *vargs, **kwargs):
         super().__init__(*vargs, **kwargs)
         if value is None:
-            raise JASTError("value is required for Expression")
+            raise JASTError("value is required for Expr")
         self.value = value
 
     def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
@@ -2495,6 +2495,22 @@ class EmptyDecl(declaration):
 
     ;
     """
+
+
+class CompoundDecl(declaration):
+    """
+    Represents a compound decl in the Java AST.
+
+    <decl> <decl> ...
+    """
+
+    def __init__(self, body: List[declaration] = None, *vargs, **kwargs):
+        super().__init__(*vargs, **kwargs)
+        self.body = body or []
+
+    def __iter__(self) -> Iterator[Tuple[str, JAST | List[JAST]]]:
+        if self.body:
+            yield "body", self.body
 
 
 # Package decl

@@ -1300,7 +1300,7 @@ class JASTConverter(JavaParserVisitor):
                 **self._get_location_rule(ctx),
             )
         elif ctx.statementExpression:
-            return jast.Expression(
+            return jast.Expr(
                 value=self.visitExpression(ctx.statementExpression),
                 **self._get_location_rule(ctx),
             )
@@ -1417,7 +1417,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitForInit(
         self, ctx: JavaParser.ForInitContext
-    ) -> jast.LocalVariable | List[jast.Expression]:
+    ) -> jast.LocalVariable | List[jast.Expr]:
         if ctx.localVariableDeclaration():
             return self.visitLocalVariableDeclaration(ctx.localVariableDeclaration())
         else:
@@ -1428,7 +1428,7 @@ class JASTConverter(JavaParserVisitor):
 
     def visitExpressionList(
         self, ctx: JavaParser.ExpressionListContext
-    ) -> List[jast.Expression]:
+    ) -> List[jast.Expr]:
         return [self.visitExpression(expression) for expression in ctx.expression()]
 
     def visitMethodCall(self, ctx: JavaParser.MethodCallContext) -> jast.Call:

@@ -755,7 +755,7 @@ class _Unparser(JNodeVisitor):
         self.write(":")
         self.visit(node.body)
 
-    def visit_Expression(self, node: jast.Expression):
+    def visit_Expr(self, node: jast.Expr):
         self.fill()
         self.visit(node.value)
         self.write(";")
@@ -960,6 +960,9 @@ class _Unparser(JNodeVisitor):
 
     def visit_EmptyDecl(self, node: jast.EmptyDecl):
         self.fill(";")
+
+    def visit_CompoundDecl(self, node):
+        self.traverse(node.body)
 
     def visit_Field(self, node: jast.Field):
         self.fill()

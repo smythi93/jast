@@ -1538,7 +1538,7 @@ class TestUnparse(unittest.TestCase):
         self.assertEqual("foo:\n;", jast.unparse(tree))
 
     def test_Expression(self):
-        tree = jast.Expression(
+        tree = jast.Expr(
             value=jast.Constant(jast.IntLiteral(42)),
         )
         self.assertEqual("42;", jast.unparse(tree))
@@ -1891,6 +1891,35 @@ class TestUnparse(unittest.TestCase):
         tree = jast.EmptyDecl()
         self.assertEqual(";", jast.unparse(tree))
 
+    def test_CompoundDecl(self):
+        tree = jast.CompoundDecl(
+            body=[
+                jast.Field(
+                    type=jast.Int(),
+                    declarators=[
+                        jast.declarator(
+                            id=jast.variabledeclaratorid(id=jast.identifier("x"))
+                        )
+                    ],
+                ),
+                jast.EmptyDecl(),
+                jast.Method(
+                    return_type=jast.Int(),
+                    id=jast.identifier("foo"),
+                    parameters=jast.params(
+                        parameters=[
+                            jast.param(
+                                type=jast.Int(),
+                                id=jast.variabledeclaratorid(id=jast.identifier("y")),
+                            )
+                        ]
+                    ),
+                    body=jast.Block(),
+                ),
+            ]
+        )
+        self.assertEqual("int x;\n;\nint foo(int y) {}", jast.unparse(tree))
+
     def test_Package(self):
         tree = jast.Package(
             annotations=[jast.Annotation(jast.qname([jast.identifier("foo")]))],
@@ -2072,18 +2101,14 @@ class TestUnparse(unittest.TestCase):
 
     def test_Initializer(self):
         tree = jast.Initializer(
-            body=jast.Block(
-                body=[jast.Expression(value=jast.Constant(jast.IntLiteral(42)))]
-            ),
+            body=jast.Block(body=[jast.Expr(value=jast.Constant(jast.IntLiteral(42)))]),
         )
         self.assertEqual("{\n    42;\n}", jast.unparse(tree))
 
     def test_Initializer_static(self):
         tree = jast.Initializer(
             static=True,
-            body=jast.Block(
-                body=[jast.Expression(value=jast.Constant(jast.IntLiteral(42)))]
-            ),
+            body=jast.Block(body=[jast.Expr(value=jast.Constant(jast.IntLiteral(42)))]),
         )
         self.assertEqual("static {\n    42;\n}", jast.unparse(tree))
 
@@ -2145,7 +2170,7 @@ class TestUnparse(unittest.TestCase):
                 jast.Initializer(
                     body=jast.Block(
                         body=[
-                            jast.Expression(value=jast.Constant(jast.IntLiteral(42))),
+                            jast.Expr(value=jast.Constant(jast.IntLiteral(42))),
                             jast.Block(),
                         ]
                     ),
