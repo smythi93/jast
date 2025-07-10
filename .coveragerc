@@ -1,2 +1,2 @@
 [run]
-omit = src/jast/_parser/Java*
+omit = src/jast/_parser/Java*,src/jast/_parser/sa_java.py

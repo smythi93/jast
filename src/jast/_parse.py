@@ -1,13 +1,11 @@
 import enum
 
-from antlr4.CommonTokenStream import CommonTokenStream
 from antlr4.InputStream import InputStream
 from antlr4.error.ErrorListener import ErrorListener
 from antlr4.error.Errors import ParseCancellationException
 
 from jast._jast import JAST
-from jast._parser.JavaLexer import JavaLexer
-from jast._parser.JavaParser import JavaParser
+from jast._parser import sa_java
 from jast._parser._convert import JASTConverter
 
 
@@ -44,34 +42,59 @@ class _SimpleErrorListener(ErrorListener):
         raise ParseCancellationException(f"Line {line}, Column {column}: error: {msg}")
 
 
+class _SpeedyAntlrErrorListener(sa_java.SA_ErrorListener):
+    """This is invoked from the speedy ANTLR parser when a syntax error is encountered"""
+
+    def __init__(self, filename=None):
+        self.filename = filename
+        super().__init__()
+
+    def syntaxError(
+        self,
+        input_stream,
+        offending_symbol,
+        char_index: int,
+        line: int,
+        column: int,
+        msg,
+    ):
+        raise ParseCancellationException(f"Line {line}, Column {column}: error: {msg}")
+
+
 class _Parser:
     def __init__(self):
-        self._error_listener = _SimpleErrorListener()
         self._parse_modes = list(ParseMode)
         self._converter = JASTConverter()
 
-    def parse(self, src: str, mode: ParseMode | str | int = ParseMode.UNIT) -> JAST:
+    def parse(
+        self,
+        src: str,
+        mode: ParseMode | str | int = ParseMode.UNIT,
+        legacy: bool = False,
+    ) -> JAST:
         if isinstance(mode, str):
             mode = ParseMode(mode)
         elif isinstance(mode, int):
             mode = self._parse_modes[mode]
         stream = InputStream(src)
-        lexer = JavaLexer(stream)
-        lexer.addErrorListener(self._error_listener)
-        token_stream = CommonTokenStream(lexer)
-        parser = JavaParser(token_stream)
-        parser.addErrorListener(self._error_listener)
 
         if mode == ParseMode.UNIT:
-            tree = parser.compilationUnit()
+            entry_rule_name = "compilationUnit"
         elif mode == ParseMode.DECL:
-            tree = parser.declarationStart()
+            entry_rule_name = "declarationStart"
         elif mode == ParseMode.STMT:
-            tree = parser.statementStart()
+            entry_rule_name = "statementStart"
         elif mode == ParseMode.DIRE:
-            tree = parser.directiveStart()
+            entry_rule_name = "directiveStart"
         else:
-            tree = parser.expressionStart()
+            entry_rule_name = "expressionStart"
+        if True or legacy or not sa_java.USE_CPP_IMPLEMENTATION:
+            error_listener = _SimpleErrorListener()
+            parser = sa_java._py_parse
+        else:
+            error_listener = _SpeedyAntlrErrorListener()
+            parser = sa_java._cpp_parse
+        tree = parser(stream, entry_rule_name, error_listener)
 
         return self._converter.visit(tree)
 
@@ -79,7 +102,9 @@ class _Parser:
 _parser = _Parser()
 
 
-def parse(src: str, mode: ParseMode | str | int = ParseMode.UNIT) -> JAST:
+def parse(
+    src: str, mode: ParseMode | str | int = ParseMode.UNIT, legacy: bool = False
+) -> JAST:
     """
     Parse Java source code into an jAST.
 
@@ -88,6 +113,7 @@ def parse(src: str, mode: ParseMode | str | int = ParseMode.UNIT) -> JAST:
                     The default is `ParseMode.UNIT` which is used to parse a complete Java compilation unit.
                     Other modes are `ParseMode.DECL`, `ParseMode.STMT`, and `ParseMode.EXPR`, for parsing
                     Java declarations, statements, and expressions, respectively.
-    :return:        The jAST representing the Java source code.
+    :param legacy:  If True, use the legacy parser implementation.
+    :return:        The jAST represents the Java source code.
     """
-    return _parser.parse(src, mode)
+    return _parser.parse(src, mode, legacy)

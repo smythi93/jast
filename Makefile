@@ -48,6 +48,7 @@ system-dev-tools:
 ## Parser
 
 PARSER = src/jast/_parser
+CPP_PARSER = _cpp_parser
 LEXER_G4 = antlr/java/JavaLexer.g4
 PARSER_G4 = antlr/java/JavaParser.g4
 
@@ -60,19 +61,25 @@ parser: $(PARSERS)
 
 $(PARSERS) &: $(LEXER_G4) $(PARSER_G4)
 	$(ANTLR) -Dlanguage=Python3 -Xexact-output-dir -o $(PARSER) \
-		-visitor $(LEXER_G4) $(PARSER_G4)
+		-visitor -no-listener $(LEXER_G4) $(PARSER_G4)
 	rm $(PARSER)/JavaParserListener.py
-	$(BLACK) src
+	$(BLACK) $(PARSER)
+
+cpp-parser: $(LEXER_G4) $(PARSER_G4)
+	$(ANTLR) -Dlanguage=Cpp -Xexact-output-dir -o $(CPP_PARSER) \
+		-visitor -no-listener $(LEXER_G4) $(PARSER_G4)
+	$(PYTHON) generate-parser.py
+	$(BLACK) $(PARSER)
 
 
 
 ## Test
 test tests:
-	$(PIP) install -e .
+	$(PIP) install -e . --config-settings=build_ext=-j4
 	$(PYTEST) tests
 
 
 ## Installation
 
 install:
-	$(PIP) install -e .
+	$(PIP) install -e . --config-settings=build_ext=-j4

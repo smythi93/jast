@@ -23,8 +23,8 @@ class TestParse(BaseTest):
         with self.assertRaises(ParseCancellationException):
             jast.parse("class A {", jast.ParseMode.UNIT)
 
-    def _test_parse_mode_unit(self, src, mode):
-        tree = jast.parse(src, mode)
+    def _test_parse_mode_unit(self, src, mode, legacy=False):
+        tree = jast.parse(src, mode, legacy=legacy)
         self.assertIsInstance(tree, jast.CompilationUnit)
         self.assertEqual(1, len(tree.body))
         self.assertIsInstance(tree.body[0], jast.Class)
@@ -34,6 +34,10 @@ class TestParse(BaseTest):
         self._test_parse_mode_unit(src, jast.ParseMode.UNIT)
         self._test_parse_mode_unit(src, "unit")
         self._test_parse_mode_unit(src, 0)
+
+    def test_parse_mode_unit_legacy(self):
+        src = "class A {}"
+        self._test_parse_mode_unit(src, jast.ParseMode.UNIT, legacy=True)
 
     def _test_parse_mode_decl(self, src, mode):
         tree = jast.parse(src, mode)

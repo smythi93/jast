@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "java-ast"
-version = "1.0.2"
+version = "1.0.3"
 authors = [
     { name = "Marius Smytzek", email = "marius.smytzek@cispa.de" },
     { name = "Martin Eberlein", email = "martin.eberlein@hu-berlin.de" },
@@ -26,10 +26,14 @@ classifiers = [
 ]
 dependencies = [
     "antlr4-python3-runtime>=4.13.2",
+    "speedy-antlr-tool>=1.4.3",
 ]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.distutils.bdist_wheel]
+universal = true
 
 [project.urls]
 "Homepage" = "https://github.com/smythi93/jast"
