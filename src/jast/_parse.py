@@ -45,20 +45,7 @@ class _SimpleErrorListener(ErrorListener):
 class _SpeedyAntlrErrorListener(sa_java.SA_ErrorListener):
     """This is invoked from the speedy ANTLR parser when a syntax error is encountered"""
 
-    def __init__(self, filename=None):
-        self.filename = filename
-        super().__init__()
-
-    def syntaxError(
-        self,
-        input_stream,
-        offending_symbol,
-        char_index: int,
-        line: int,
-        column: int,
-        msg,
-    ):
-        raise ParseCancellationException(f"Line {line}, Column {column}: error: {msg}")
+    pass
 
 
 class _Parser:
