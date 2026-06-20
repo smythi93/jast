@@ -802,7 +802,8 @@ class JASTConverter(JavaParserVisitor):
     def visitIntegerLiteral(
         self, ctx: JavaParser.IntegerLiteralContext
     ) -> jast.IntLiteral:
-        text = ctx.getText()
+        raw = ctx.getText()
+        text = raw
         long = "l" in text or "L" in text
         text = text.replace("l", "").replace("L", "")
         if ctx.OCT_LITERAL():
@@ -813,12 +814,14 @@ class JASTConverter(JavaParserVisitor):
         return jast.IntLiteral(
             value=eval(text),
             long=long,
+            raw=raw,
         )
 
     def visitFloatLiteral(
         self, ctx: JavaParser.FloatLiteralContext
     ) -> jast.FloatLiteral:
-        text = ctx.getText()
+        raw = ctx.getText()
+        text = raw
         double = "d" in text or "D" in text
         text = text.replace("d", "").replace("D", "").replace("f", "").replace("F", "")
         if ctx.FLOAT_LITERAL():
@@ -828,6 +831,7 @@ class JASTConverter(JavaParserVisitor):
         return jast.FloatLiteral(
             value=value,
             double=double,
+            raw=raw,
         )
 
     def visitAnnotation(self, ctx: JavaParser.AnnotationContext) -> jast.Annotation:

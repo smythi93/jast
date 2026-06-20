@@ -136,9 +136,12 @@ class IntLiteral(literal, int):
     Represents an integer literal in the Java AST.
     """
 
-    def __init__(self, value: int, long: bool = False, *vargs, **kwargs):
+    def __init__(self, value: int, long: bool = False, raw: str = None, *vargs, **kwargs):
         super().__init__(value, *vargs, **kwargs)
         self.long = long
+        # Original source text (e.g. "0xFF", "1_000L"); preserved so that the
+        # unparser can emit the literal exactly, keeping radix and suffix.
+        self.raw = raw
 
     def __new__(cls, value, *vargs, **kwargs):
         obj = int.__new__(cls, value)
@@ -146,7 +149,7 @@ class IntLiteral(literal, int):
         return obj
 
     def __copy__(self):
-        return IntLiteral(self.value, self.long)
+        return IntLiteral(self.value, self.long, self.raw)
 
 
 class FloatLiteral(literal, float):
@@ -154,9 +157,12 @@ class FloatLiteral(literal, float):
     Represents a float literal in the Java AST.
     """
 
-    def __init__(self, value: float, double: bool = False, *vargs, **kwargs):
+    def __init__(self, value: float, double: bool = False, raw: str = None, *vargs, **kwargs):
         super().__init__(value, *vargs, **kwargs)
         self.double = double
+        # Original source text (e.g. "3.14f"); preserved so the unparser can emit
+        # the literal exactly, keeping the float/double suffix.
+        self.raw = raw
 
     def __new__(cls, value, *vargs, **kwargs):
         obj = float.__new__(cls, value)
@@ -164,7 +170,7 @@ class FloatLiteral(literal, float):
         return obj
 
     def __copy__(self):
-        return FloatLiteral(self.value, self.double)
+        return FloatLiteral(self.value, self.double, self.raw)
 
 
 # noinspection PyFinal
@@ -194,7 +200,11 @@ class CharLiteral(literal, str):
         super().__init__(value, *vargs, **kwargs)
 
     def __new__(cls, value, *vargs, **kwargs):
-        assert len(value) == 1, "CharLiteral must be a single character"
+        # A char literal is either a single character or an escape sequence
+        # (e.g. "\\n", "\\u0000", "\\'") whose raw text is kept verbatim.
+        assert len(value) == 1 or value.startswith("\\"), (
+            "CharLiteral must be a single character or an escape sequence"
+        )
         obj = str.__new__(cls, value)
         CharLiteral.__init__(obj, value, *vargs, **kwargs)
         return obj

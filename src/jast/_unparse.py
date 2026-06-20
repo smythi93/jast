@@ -105,6 +105,9 @@ class _Unparser(JNodeVisitor):
         :param start:   A text to add at the start.
         :param end:     A text to add at the end.
         """
+        # Materialize so that iterators/filters (which are always truthy, even
+        # when empty) are handled correctly, e.g. a method with no parameters.
+        items = list(items)
         if items:
             self.write(start)
             seq = iter(items)
@@ -226,14 +229,27 @@ class _Unparser(JNodeVisitor):
         self.interleave(node.identifiers, ".")
 
     def visit_IntLiteral(self, node: jast.IntLiteral):
-        self.write(str(node.value))
+        raw = getattr(node, "raw", None)
+        if raw is not None:
+            self.write(raw)
+            return
+        value = int(node.value)
         if node.long:
-            self.write("l")
+            # decimal fits in a signed long, otherwise emit hex (e.g. masks set)
+            self.write(str(value) if value <= 2**63 - 1 else hex(value & (2**64 - 1)))
+            self.write("L")
+        else:
+            # a decimal int literal must fit in a signed int; otherwise emit hex
+            # (Java accepts hex/oct/binary int literals up to 0xFFFFFFFF)
+            self.write(str(value) if value <= 2**31 - 1 else hex(value & (2**32 - 1)))
 
     def visit_FloatLiteral(self, node: jast.FloatLiteral):
+        raw = getattr(node, "raw", None)
+        if raw is not None:
+            self.write(raw)
+            return
         self.write(str(node.value))
-        if node.double:
-            self.write("d")
+        self.write("d" if node.double else "f")
 
     def visit_BoolLiteral(self, node: jast.BoolLiteral):
         if node.value:
