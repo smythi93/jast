@@ -24,6 +24,12 @@ class TestParse(BaseTest):
         with self.assertRaises(ParseCancellationException):
             jast.parse("class A {", jast.ParseMode.UNIT)
 
+    def test_syntax_error_legacy(self):
+        # The legacy (Python) parser reports syntax errors through its own
+        # error listener, separate from the C++ accelerator's listener.
+        with self.assertRaises(ParseCancellationException):
+            jast.parse("class A {", jast.ParseMode.UNIT, legacy=True)
+
     def _test_parse_mode_unit(self, src, mode, legacy=False):
         tree = jast.parse(src, mode, legacy=legacy)
         self.assertIsInstance(tree, jast.CompilationUnit)
