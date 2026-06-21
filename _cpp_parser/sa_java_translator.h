@@ -139,6 +139,7 @@ class SA_JavaTranslator : public JavaParserBaseVisitor {
     PyObject *ExplicitGenericInvocationExpressionContext_cls = NULL;
     PyObject *ThisExpressionContext_cls = NULL;
     PyObject *MemberReferenceExpressionContext_cls = NULL;
+    PyObject *ObjectCreationExpressionContext_cls = NULL;
     PyObject *MethodCallExpressionContext_cls = NULL;
     PyObject *MethodReferenceExpressionContext_cls = NULL;
     PyObject *ParExprContext_cls = NULL;
@@ -427,6 +428,8 @@ class SA_JavaTranslator : public JavaParserBaseVisitor {
     antlrcpp::Any visitThisExpression(JavaParser::ThisExpressionContext *ctx);
 
     antlrcpp::Any visitMemberReferenceExpression(JavaParser::MemberReferenceExpressionContext *ctx);
+
+    antlrcpp::Any visitObjectCreationExpression(JavaParser::ObjectCreationExpressionContext *ctx);
 
     antlrcpp::Any visitMethodCallExpression(JavaParser::MethodCallExpressionContext *ctx);
 

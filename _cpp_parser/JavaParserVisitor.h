@@ -273,6 +273,8 @@ public:
 
     virtual std::any visitMemberReferenceExpression(JavaParser::MemberReferenceExpressionContext *context) = 0;
 
+    virtual std::any visitObjectCreationExpression(JavaParser::ObjectCreationExpressionContext *context) = 0;
+
     virtual std::any visitMethodCallExpression(JavaParser::MethodCallExpressionContext *context) = 0;
 
     virtual std::any visitMethodReferenceExpression(JavaParser::MethodReferenceExpressionContext *context) = 0;

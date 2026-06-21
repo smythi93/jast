@@ -45,7 +45,11 @@ class _SimpleErrorListener(ErrorListener):
 class _SpeedyAntlrErrorListener(sa_java.SA_ErrorListener):
     """This is invoked from the speedy ANTLR parser when a syntax error is encountered"""
 
-    pass
+    # noinspection PyPep8Naming
+    def syntaxError(
+        self, input_stream, offendingSymbol, char_index, line, column, msg
+    ):
+        raise ParseCancellationException(f"Line {line}, Column {column}: error: {msg}")
 
 
 class _Parser:
@@ -75,7 +79,7 @@ class _Parser:
             entry_rule_name = "directiveStart"
         else:
             entry_rule_name = "expressionStart"
-        if True or legacy or not sa_java.USE_CPP_IMPLEMENTATION:
+        if legacy or not sa_java.USE_CPP_IMPLEMENTATION:
             error_listener = _SimpleErrorListener()
             parser = sa_java._py_parse
         else:

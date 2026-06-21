@@ -643,7 +643,6 @@ prefixExpression
 
 typeExpression
     : '(' annotation* typeType ('&' typeType)* ')' typeExpression // Level 13
-    | NEW creator
     | prefixExpression
     ;
 
@@ -759,6 +758,7 @@ primary
     | identifier                                                    #IdentifierExpression
     | typeTypeOrVoid '.' CLASS                                      #ClassExpression
     | nonWildcardTypeArguments (explicitGenericInvocationSuffix | THIS arguments) #ExplicitGenericInvocationExpression
+    | NEW creator                                                   #ObjectCreationExpression
     | primary '[' expression ']'                                    #ArrayAccessExpression
     | primary bop = '.' (
         identifier

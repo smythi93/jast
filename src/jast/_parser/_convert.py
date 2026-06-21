@@ -11,14 +11,22 @@ from jast._parser.JavaParserVisitor import JavaParserVisitor
 
 class JASTConverter(JavaParserVisitor):
     @staticmethod
-    def _get_location_rule(ctx: ParserRuleContext) -> Dict[str, int]:
-        if ctx.stop:
-            stop = ctx.stop
-        else:
-            stop = ctx.start
+    def _get_location_rule(ctx: ParserRuleContext) -> Dict[str, Optional[int]]:
+        start = ctx.start
+        if start is None:
+            # An empty rule consumes no tokens. The C++ accelerator reports no
+            # start token for such a context (the Python runtime would instead
+            # report the lookahead token), so there is no location to attach.
+            return {
+                "lineno": None,
+                "col_offset": None,
+                "end_lineno": None,
+                "end_col_offset": None,
+            }
+        stop = ctx.stop if ctx.stop else start
         return {
-            "lineno": ctx.start.line,
-            "col_offset": ctx.start.column,
+            "lineno": start.line,
+            "col_offset": start.column,
             "end_lineno": stop.line,
             "end_col_offset": stop.column,
         }
@@ -1504,8 +1512,6 @@ class JASTConverter(JavaParserVisitor):
     def visitTypeExpression(self, ctx: JavaParser.TypeExpressionContext) -> jast.expr:
         if ctx.prefixExpression():
             return self.visitPrefixExpression(ctx.prefixExpression())
-        elif ctx.NEW():
-            return self.visitCreator(ctx.creator())
         else:
             return jast.Cast(
                 annotations=[
@@ -1900,6 +1906,11 @@ class JASTConverter(JavaParserVisitor):
         self, ctx: JavaParser.MethodCallExpressionContext
     ) -> jast.Call:
         return self.visitMethodCall(ctx.methodCall())
+
+    def visitObjectCreationExpression(
+        self, ctx: JavaParser.ObjectCreationExpressionContext
+    ) -> jast.expr:
+        return self.visitCreator(ctx.creator())
 
     def visitMethodReferenceExpression(
         self, ctx: JavaParser.MethodReferenceExpressionContext

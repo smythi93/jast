@@ -2108,8 +2108,6 @@ public:
     AnnotationContext* annotation(size_t i);
     std::vector<antlr4::tree::TerminalNode *> BITAND();
     antlr4::tree::TerminalNode* BITAND(size_t i);
-    antlr4::tree::TerminalNode *NEW();
-    CreatorContext *creator();
     PrefixExpressionContext *prefixExpression();
 
 
@@ -2462,6 +2460,16 @@ public:
     SuperSuffixContext *superSuffix();
     ExplicitGenericInvocationContext *explicitGenericInvocation();
     NonWildcardTypeArgumentsContext *nonWildcardTypeArguments();
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  ObjectCreationExpressionContext : public PrimaryContext {
+  public:
+    ObjectCreationExpressionContext(PrimaryContext *ctx);
+
+    antlr4::tree::TerminalNode *NEW();
+    CreatorContext *creator();
 
     virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
   };

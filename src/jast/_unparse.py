@@ -107,7 +107,8 @@ class _Unparser(JNodeVisitor):
         """
         # Materialize so that iterators/filters (which are always truthy, even
         # when empty) are handled correctly, e.g. a method with no parameters.
-        items = list(items)
+        # ``None`` is treated as empty (e.g. a receiver with no identifiers).
+        items = list(items) if items is not None else []
         if items:
             self.write(start)
             seq = iter(items)
@@ -592,7 +593,12 @@ class _Unparser(JNodeVisitor):
             self.visit(node.type)
 
     def visit_NewObject(self, node: jast.NewObject):
-        with self.require_parens(_Precedence.TYPE, node):
+        # Object creation is self-delimiting (it ends with its argument list or
+        # class body), so a trailing '.', '[', or '::' always binds to it as a
+        # postfix operator -- e.g. `new Solution().run()` needs no parentheses.
+        # (NewArray keeps TYPE precedence because `(new int[3])[0]` differs from
+        # the 2-D creation `new int[3][0]`.)
+        with self.require_parens(_Precedence.PRIMARY, node):
             self.write("new")
             self.visit(node.type_args)
             self.write(" ")

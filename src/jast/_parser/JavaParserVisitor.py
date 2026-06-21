@@ -558,6 +558,12 @@ class JavaParserVisitor(ParseTreeVisitor):
     ):
         return self.visitChildren(ctx)
 
+    # Visit a parse tree produced by JavaParser#ObjectCreationExpression.
+    def visitObjectCreationExpression(
+        self, ctx: JavaParser.ObjectCreationExpressionContext
+    ):
+        return self.visitChildren(ctx)
+
     # Visit a parse tree produced by JavaParser#MethodCallExpression.
     def visitMethodCallExpression(self, ctx: JavaParser.MethodCallExpressionContext):
         return self.visitChildren(ctx)

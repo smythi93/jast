@@ -8,5 +8,12 @@ PARENT_DIR = Path(__file__).parent.absolute()
 generate(
     py_parser_path=str(PARENT_DIR / "src" / "jast" / "_parser" / "JavaParser.py"),
     cpp_output_dir=str(PARENT_DIR / "_cpp_parser"),
-    entry_rule_names=["compilationUnit"],
+    # All entry rules used by jast.ParseMode so every mode is C++-accelerated.
+    entry_rule_names=[
+        "compilationUnit",
+        "declarationStart",
+        "statementStart",
+        "expressionStart",
+        "directiveStart",
+    ],
 )

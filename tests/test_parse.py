@@ -1,4 +1,5 @@
 import itertools
+from pathlib import Path
 
 from antlr4.error.Errors import ParseCancellationException
 from parameterized import parameterized
@@ -38,6 +39,74 @@ class TestParse(BaseTest):
     def test_parse_mode_unit_legacy(self):
         src = "class A {}"
         self._test_parse_mode_unit(src, jast.ParseMode.UNIT, legacy=True)
+
+    def test_issue_1_object_creation_in_main(self):
+        # https://github.com/smythi93/jast/issues/1
+        # A single-statement main() calling a method on a fresh instance used to
+        # fail with "mismatched input '.' expecting ';'".
+        src = (
+            "public class Solution {\n"
+            "    public static void main(String[] args) {\n"
+            "        new Solution().run();\n"
+            "    }\n"
+            "}"
+        )
+        tree = jast.parse(src, jast.ParseMode.UNIT)
+        self.assertIsInstance(tree, jast.CompilationUnit)
+        self.assertEqual(1, len(tree.body))
+        self.assertIsInstance(tree.body[0], jast.Class)
+        main = tree.body[0].body[0]
+        self.assertIsInstance(main, jast.Method)
+        statement = main.body.body[0]
+        self.assertIsInstance(statement, jast.Expr)
+        self.assertIsInstance(statement.value, jast.Member)
+        self.assertIsInstance(statement.value.value, jast.NewObject)
+        self.assertIsInstance(statement.value.member, jast.Call)
+
+    def test_issue_1_main_declaration(self):
+        # https://github.com/smythi93/jast/issues/1
+        # The exact main() method shown in the issue body.
+        src = (
+            "public static void main(String[] args) {\n"
+            "    new Solution().run();\n"
+            "}"
+        )
+        tree = jast.parse(src, jast.ParseMode.DECL)
+        self.assertIsInstance(tree, jast.Method)
+        self._test_identifier(tree.id, "main")
+        statement = tree.body.body[0]
+        self.assertIsInstance(statement, jast.Expr)
+        self.assertIsInstance(statement.value, jast.Member)
+        self.assertIsInstance(statement.value.value, jast.NewObject)
+        self.assertEqual("Solution", statement.value.value.type.id)
+        self.assertIsInstance(statement.value.member, jast.Call)
+        self._test_name(statement.value.member.func, "run")
+
+    def test_issue_1_full_solution(self):
+        # https://github.com/smythi93/jast/issues/1
+        # The exact, complete program from the issue. jast.parse() used to fail
+        # on the `new Solution().run();` in main()
+        # ("Line 98, Column 16: error: mismatched input '.' expecting ';'").
+        src = (Path(__file__).parent / "data" / "issue_1_solution.java").read_text()
+        tree = jast.parse(src, jast.ParseMode.UNIT)
+        self.assertIsInstance(tree, jast.CompilationUnit)
+        self.assertEqual(2, len(tree.imports))
+        self.assertEqual(1, len(tree.body))
+        solution = tree.body[0]
+        self.assertIsInstance(solution, jast.Class)
+        self._test_identifier(solution.id, "Solution")
+        main = next(
+            member
+            for member in solution.body
+            if isinstance(member, jast.Method) and member.id == "main"
+        )
+        statement = main.body.body[0]
+        self.assertIsInstance(statement, jast.Expr)
+        self.assertIsInstance(statement.value, jast.Member)
+        self.assertIsInstance(statement.value.value, jast.NewObject)
+        self.assertEqual("Solution", statement.value.value.type.id)
+        self.assertIsInstance(statement.value.member, jast.Call)
+        self._test_name(statement.value.member.func, "run")
 
     def _test_parse_mode_decl(self, src, mode):
         tree = jast.parse(src, mode)
@@ -1158,6 +1227,51 @@ class TestParse(BaseTest):
         self.assertEqual(2, len(tree.body))
         self.assertIsInstance(tree.body[0], jast.EmptyDecl)
         self.assertIsInstance(tree.body[1], jast.EmptyDecl)
+
+    def test_NewObject_member(self):
+        # https://github.com/smythi93/jast/issues/1
+        # Accessing a member directly on an object creation, e.g. `new X().y`.
+        tree = jast.parse("new X().y", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Member)
+        self.assertIsInstance(tree.value, jast.NewObject)
+        self.assertEqual("X", tree.value.type.id)
+        self._test_name(tree.member, "y")
+
+    def test_NewObject_member_call(self):
+        # https://github.com/smythi93/jast/issues/1
+        # `new Solution().run()` used to fail with
+        # "mismatched input '.' expecting ';'".
+        tree = jast.parse("new Solution().run()", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Member)
+        self.assertIsInstance(tree.value, jast.NewObject)
+        self.assertEqual("Solution", tree.value.type.id)
+        self.assertEqual(0, len(tree.value.args))
+        self.assertIsInstance(tree.member, jast.Call)
+        self._test_name(tree.member.func, "run")
+        self.assertEqual(0, len(tree.member.args))
+
+    def test_NewObject_chained_call(self):
+        # https://github.com/smythi93/jast/issues/1
+        # Postfix operators chain on an object creation: `new X().a().b()`.
+        tree = jast.parse("new X().a().b()", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Member)
+        self.assertIsInstance(tree.member, jast.Call)
+        self._test_name(tree.member.func, "b")
+        inner = tree.value
+        self.assertIsInstance(inner, jast.Member)
+        self.assertIsInstance(inner.value, jast.NewObject)
+        self.assertEqual("X", inner.value.type.id)
+        self.assertIsInstance(inner.member, jast.Call)
+        self._test_name(inner.member.func, "a")
+
+    def test_NewArray_subscript(self):
+        # https://github.com/smythi93/jast/issues/1
+        # Subscripting an array creation with an initializer: `new int[]{...}[0]`.
+        tree = jast.parse("new int[]{1, 2, 3}[0]", jast.ParseMode.EXPR)
+        self.assertIsInstance(tree, jast.Subscript)
+        self.assertIsInstance(tree.value, jast.NewArray)
+        self.assertIsInstance(tree.value.type, jast.Int)
+        self._test_int_constant(tree.index, 0)
 
     def test_NewArray(self):
         tree = jast.parse("new int[42]", jast.ParseMode.EXPR)

@@ -59,11 +59,19 @@ class TestUnparse(unittest.TestCase):
 
     def test_IntLiteral_long(self):
         tree = jast.IntLiteral(42, True)
-        self.assertEqual("42l", jast.unparse(tree))
+        self.assertEqual("42L", jast.unparse(tree))
+
+    def test_IntLiteral_raw(self):
+        tree = jast.IntLiteral(255, raw="0xFF")
+        self.assertEqual("0xFF", jast.unparse(tree))
 
     def test_FloatLiteral(self):
         tree = jast.FloatLiteral(3.14)
-        self.assertEqual("3.14", jast.unparse(tree))
+        self.assertEqual("3.14f", jast.unparse(tree))
+
+    def test_FloatLiteral_raw(self):
+        tree = jast.FloatLiteral(3.14, raw="3.14F")
+        self.assertEqual("3.14F", jast.unparse(tree))
 
     def test_FloatLiteral_double(self):
         tree = jast.FloatLiteral(3.14, True)
@@ -932,6 +940,31 @@ class TestUnparse(unittest.TestCase):
             "new<int, boolean> bar.baz<int, boolean>(1, 2) { ; ; }",
             jast.unparse(tree, indent=-1),
         )
+
+    def test_NewObject_member_call(self):
+        # https://github.com/smythi93/jast/issues/1
+        # Object creation is self-delimiting, so no parentheses are emitted
+        # around it when a member/method is accessed on the new instance.
+        tree = jast.Member(
+            value=jast.NewObject(
+                type=jast.Coit(id=jast.identifier("Solution")),
+                args=[],
+            ),
+            member=jast.Call(func=jast.Name(jast.identifier("run")), args=[]),
+        )
+        self.assertEqual("new Solution().run()", jast.unparse(tree))
+
+    def test_NewArray_subscript_parens(self):
+        # NewArray keeps its parentheses: `(new int[3])[0]` indexes a fresh
+        # 1-D array, whereas `new int[3][0]` would be a 2-D array creation.
+        tree = jast.Subscript(
+            value=jast.NewArray(
+                type=jast.Int(),
+                expr_dims=[jast.Constant(jast.IntLiteral(3))],
+            ),
+            index=jast.Constant(jast.IntLiteral(0)),
+        )
+        self.assertEqual("(new int[3])[0]", jast.unparse(tree))
 
     def test_NewArray(self):
         tree = jast.NewArray(

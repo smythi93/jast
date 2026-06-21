@@ -138,6 +138,7 @@ SA_JavaTranslator::~SA_JavaTranslator() {
     Py_XDECREF(ExplicitGenericInvocationExpressionContext_cls);
     Py_XDECREF(ThisExpressionContext_cls);
     Py_XDECREF(MemberReferenceExpressionContext_cls);
+    Py_XDECREF(ObjectCreationExpressionContext_cls);
     Py_XDECREF(MethodCallExpressionContext_cls);
     Py_XDECREF(MethodReferenceExpressionContext_cls);
     Py_XDECREF(ParExprContext_cls);
@@ -974,6 +975,12 @@ antlrcpp::Any SA_JavaTranslator::visitMemberReferenceExpression(JavaParser::Memb
     };
     if(!MemberReferenceExpressionContext_cls) MemberReferenceExpressionContext_cls = PyObject_GetAttrString(translator->parser_cls, "MemberReferenceExpressionContext");
     PyObject *py_ctx = translator->convert_ctx(this, ctx, MemberReferenceExpressionContext_cls, labels, 1);
+    return py_ctx;
+}
+
+antlrcpp::Any SA_JavaTranslator::visitObjectCreationExpression(JavaParser::ObjectCreationExpressionContext *ctx){
+    if(!ObjectCreationExpressionContext_cls) ObjectCreationExpressionContext_cls = PyObject_GetAttrString(translator->parser_cls, "ObjectCreationExpressionContext");
+    PyObject *py_ctx = translator->convert_ctx(this, ctx, ObjectCreationExpressionContext_cls);
     return py_ctx;
 }
 

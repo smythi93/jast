@@ -16,11 +16,19 @@
 
 #include "sa_java_translator.h"
 antlr4::tree::ParseTree* get_parse_tree_compilationUnit(JavaParser *parser) {return parser->compilationUnit();}
+antlr4::tree::ParseTree* get_parse_tree_declarationStart(JavaParser *parser) {return parser->declarationStart();}
+antlr4::tree::ParseTree* get_parse_tree_statementStart(JavaParser *parser) {return parser->statementStart();}
+antlr4::tree::ParseTree* get_parse_tree_expressionStart(JavaParser *parser) {return parser->expressionStart();}
+antlr4::tree::ParseTree* get_parse_tree_directiveStart(JavaParser *parser) {return parser->directiveStart();}
 
 antlr4::tree::ParseTree* get_parse_tree(JavaParser *parser, const char *entry_rule_name) {
     static std::map<std::string, antlr4::tree::ParseTree* (*)(JavaParser*)> table
     {
-        {"compilationUnit", &get_parse_tree_compilationUnit}
+        {"compilationUnit", &get_parse_tree_compilationUnit},
+        {"declarationStart", &get_parse_tree_declarationStart},
+        {"statementStart", &get_parse_tree_statementStart},
+        {"expressionStart", &get_parse_tree_expressionStart},
+        {"directiveStart", &get_parse_tree_directiveStart}
     };
 
     auto entry = table.find(entry_rule_name);

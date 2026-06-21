@@ -523,6 +523,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitObjectCreationExpression(JavaParser::ObjectCreationExpressionContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitMethodCallExpression(JavaParser::MethodCallExpressionContext *ctx) override {
     return visitChildren(ctx);
   }
