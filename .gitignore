@@ -179,3 +179,4 @@ antlr/java/gen/
 
 # Java
 *.class
+.DS_Store
